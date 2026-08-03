@@ -12,7 +12,7 @@ export function CapturedInputGroup({ group, lastSavedField }: CapturedInputGroup
       <p className="text-caption font-semibold uppercase tracking-wider text-[var(--color-primary-700)]">
         {group.sectionLabel}
       </p>
-      <div className="space-y-3 border-l-2 border-[var(--color-primary-100)] pl-3">
+      <div className="space-y-3.5 rounded-control border border-[var(--color-primary-100)]/60 bg-surface/80 px-3.5 py-3">
         {group.answers.map((answer) => (
           <CapturedInputItem
             key={answer.field}

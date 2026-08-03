@@ -40,25 +40,24 @@ export function QuestionActions({
   };
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Attachment chip — inside the card, above the action row */}
+    <div className="flex flex-col gap-4">
       {attachment ? (
-        <div className="flex items-center gap-2">
-          <span className="text-caption text-text-muted">Supporting file:</span>
+        <div className="flex items-center gap-2 rounded-control border border-border bg-surface px-3 py-2">
+          <span className="text-caption font-medium text-text-muted">Supporting file</span>
           <AttachmentChip attachment={attachment} onRemove={onRemoveAttachment} />
         </div>
       ) : null}
 
-      {/* Action row */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        {/* Left — back + secondary actions */}
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* Secondary actions */}
+        <div className="flex flex-wrap items-center gap-1.5">
           <Button
             variant="ghost"
             size="sm"
             onClick={onBack}
             disabled={!canGoBack || isSaving}
             aria-label="Go back to previous question"
+            className="btn-press"
           >
             <ArrowLeft aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
             Back
@@ -77,6 +76,7 @@ export function QuestionActions({
               onClick={handleAttach}
               disabled={isSaving}
               title="Add a file that supports your answer. Demo only."
+              className="btn-press"
             >
               <Paperclip aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
               Add Supporting File
@@ -84,14 +84,15 @@ export function QuestionActions({
           ) : null}
         </div>
 
-        {/* Right — primary CTA */}
-        <div>
+        {/* Primary CTA */}
+        <div className="flex shrink-0">
           {isLastQuestion ? (
             <Button
               variant="primary"
               size="md"
               onClick={onCompleteInterview}
               disabled={isSaving}
+              className="btn-press min-w-[11rem] shadow-card"
             >
               Continue to Review
               <ChevronRight aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
@@ -102,6 +103,7 @@ export function QuestionActions({
               size="md"
               onClick={onSaveAndContinue}
               disabled={isSaving}
+              className="btn-press min-w-[11rem] shadow-card"
             >
               Save and Continue
               <SendHorizonal aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />

@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Rami — Document Assistant",
+  title: "Rami — AI Document Assistant",
   description: "Guided AI document assistant for MODEE Business Development.",
 };
 

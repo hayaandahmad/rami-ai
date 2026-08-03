@@ -6,7 +6,7 @@ interface QuestionGuidanceProps {
 
 export function QuestionGuidance({ helperText }: QuestionGuidanceProps) {
   return (
-    <div className="flex gap-3 rounded-control border border-[var(--color-primary-100)] bg-[var(--color-primary-50)] px-4 py-3">
+    <div className="flex gap-3 rounded-control border border-[var(--color-primary-100)] bg-[var(--color-primary-50)]/70 px-4 py-3.5">
       <Info
         aria-hidden="true"
         className="mt-0.5 h-4 w-4 shrink-0 text-[var(--color-primary-700)]"

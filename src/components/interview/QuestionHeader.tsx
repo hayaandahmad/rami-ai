@@ -10,13 +10,13 @@ export function QuestionHeader({ sectionId, prompt, questionId }: QuestionHeader
   const headingId = `question-heading-${questionId}`;
 
   return (
-    <div className="space-y-1.5">
-      <p className="text-caption font-semibold uppercase tracking-wider text-[var(--color-primary-700)]">
+    <div className="space-y-2.5">
+      <p className="text-caption font-semibold uppercase tracking-widest text-[var(--color-primary-700)]">
         {getInterviewSectionLabel(sectionId)}
       </p>
       <h2
         id={headingId}
-        className="text-[1.625rem] font-semibold leading-[1.35] text-text-primary"
+        className="max-w-3xl text-[1.625rem] font-semibold leading-[1.35] tracking-tight text-text-primary sm:text-[1.75rem]"
       >
         {prompt}
       </h2>

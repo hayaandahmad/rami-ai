@@ -19,12 +19,8 @@ interface QuestionStageProps {
   validationError: string | null;
   onClearSaveError: () => void;
   isSaving: boolean;
-
-  /** Show the one-time Rami introduction typing animation. */
   showIntro: boolean;
-  /** Show the AI thinking state before follow-up appears. */
   showThinking: boolean;
-
   attachment: MockAttachment | null;
   canGoBack: boolean;
   isLastQuestion: boolean;
@@ -59,7 +55,6 @@ export function QuestionStage({
   const validationId = `validation-${question.id}`;
   const answerRef = useRef<HTMLElement | null>(null);
 
-  // Move focus to the answer area when the question changes.
   useEffect(() => {
     const el = answerRef.current;
     if (!el) return;
@@ -72,27 +67,32 @@ export function QuestionStage({
   return (
     <article
       aria-labelledby={`question-heading-${question.id}`}
-      className="flex flex-col gap-0 rounded-panel border border-border bg-surface shadow-card"
+      className="interview-panel shadow-interview-workspace"
     >
-      {/* Card header — Rami identity */}
-      <div className="px-6 py-5 sm:px-8">
+      {/* Top accent */}
+      <div
+        className="h-0.5 bg-gradient-to-r from-[var(--color-primary-700)] via-[var(--color-primary-600)] to-transparent"
+        aria-hidden="true"
+      />
+
+      {/* Rami identity header */}
+      <div className="px-6 py-5 sm:px-8 sm:py-6">
         <RamiIdentity saveState={saveState} onClearSaveError={onClearSaveError} />
       </div>
 
-      <hr className="border-border" />
+      <hr className="interview-divider" />
 
-      {/* Animated question content — key causes remount on question change */}
-      <div key={question.id} className="question-enter flex flex-col gap-6 px-6 py-6 sm:px-8">
-        {/* One-time introduction — shown only on first entry */}
-        {showIntro ? (
-          <RamiIntro />
-        ) : null}
+      {/* Question body */}
+      <div
+        key={question.id}
+        className="question-enter flex flex-col gap-7 px-6 py-7 sm:px-8 sm:py-8"
+      >
+        {showIntro ? <RamiIntro /> : null}
 
-        {/* Thinking state — replaces question body while checking for follow-up */}
         {showThinking ? (
           <ThinkingState visible />
         ) : (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-6">
             <QuestionHeader
               sectionId={question.sectionId}
               prompt={question.prompt}
@@ -103,7 +103,6 @@ export function QuestionStage({
               <QuestionGuidance helperText={question.helperText} />
             ) : null}
 
-            {/* Answer area — ref used for focus management */}
             <div ref={(el) => { answerRef.current = el; }}>
               <AnswerControl
                 question={question}
@@ -121,9 +120,8 @@ export function QuestionStage({
         )}
       </div>
 
-      {/* Divider + Actions — always visible at the bottom of the card */}
-      <hr className="border-border" />
-      <div className="px-6 py-4 sm:px-8">
+      {/* Action footer */}
+      <div className="interview-action-footer px-6 py-5 sm:px-8">
         <QuestionActions
           canGoBack={canGoBack}
           allowTbc={question.allowTbc}

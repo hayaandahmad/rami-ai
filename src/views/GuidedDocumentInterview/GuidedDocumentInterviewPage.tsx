@@ -123,6 +123,11 @@ export function GuidedDocumentInterviewPage({
         saveState={engine.saveState}
         onSaveAndExit={engine.saveAndExit}
         onClearSaveError={engine.clearSaveError}
+        currentSectionLabel={currentSection?.label}
+        questionNumber={engine.currentIndex + 1}
+        totalQuestions={engine.totalSteps}
+        isFirstEntry={engine.isFirstEntry}
+        isLastQuestion={engine.isOnLastQuestion}
       />
 
       {/* Three-zone interview layout */}

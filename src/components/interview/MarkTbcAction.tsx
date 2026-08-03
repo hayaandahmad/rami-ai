@@ -17,6 +17,7 @@ export function MarkTbcAction({ onMarkTbc, disabled, allowTbc }: MarkTbcActionPr
       onClick={onMarkTbc}
       disabled={disabled}
       title="Mark this answer as To be confirmed"
+      className="btn-press"
     >
       <HelpCircle aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
       Mark as TBC

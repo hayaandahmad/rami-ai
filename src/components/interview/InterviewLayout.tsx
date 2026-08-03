@@ -33,7 +33,7 @@ export function InterviewLayout({
   return (
     <div className="flex flex-col gap-4">
       {/* ── Mobile / tablet nav toggle bar ────────────────────────────────── */}
-      <div className="flex items-center justify-between rounded-control border border-border bg-surface px-4 py-2.5 lg:hidden">
+      <div className="flex items-center justify-between rounded-control border border-border bg-surface px-4 py-3 shadow-card lg:hidden">
         <span className="text-caption text-text-muted">{mobileNavSummary}</span>
         <button
           type="button"

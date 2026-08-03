@@ -1,13 +1,11 @@
-import { AlertTriangle, CheckCircle2, ChevronRight, Circle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronRight, Circle, Map } from "lucide-react";
 import type { InterviewSection, SectionState } from "@/types/interview";
 
 interface InterviewNavigatorProps {
   sections: InterviewSection[];
   sectionStates: Record<string, SectionState>;
   currentSectionId: string | null;
-  /** 0-based index of the current question. */
   currentIndex: number;
-  /** Total number of questions currently visible in the script. */
   totalSteps: number;
 }
 
@@ -66,25 +64,32 @@ export function InterviewNavigator({
   const currentSection = sections.find((s) => s.id === currentSectionId);
 
   return (
-    <nav
-      aria-label="Interview sections"
-      className="flex flex-col rounded-panel border border-border bg-surface shadow-card"
-    >
-      {/* Progress summary */}
-      <div className="border-b border-border px-4 py-3.5">
-        <p className="text-caption font-semibold text-[var(--color-primary-700)]">
+    <nav aria-label="Interview sections" className="interview-panel">
+      {/* Header */}
+      <div className="interview-panel-header">
+        <div className="flex items-center gap-2">
+          <Map
+            aria-hidden="true"
+            className="h-4 w-4 text-[var(--color-primary-700)]"
+            strokeWidth={1.75}
+          />
+          <span className="text-caption font-semibold text-text-primary">
+            Interview Sections
+          </span>
+        </div>
+        <p className="mt-1.5 text-caption font-medium text-[var(--color-primary-700)]">
           {questionLabel}
         </p>
         {currentSection ? (
-          <p className="mt-0.5 text-caption text-text-muted leading-snug">
+          <p className="mt-0.5 text-caption leading-snug text-text-muted">
             {currentSection.label}
           </p>
         ) : null}
       </div>
 
       {/* Section list */}
-      <div className="flex-1 overflow-y-auto py-1.5">
-        <ul role="list" className="space-y-px px-1.5">
+      <div className="max-h-[calc(100vh-18rem)] overflow-y-auto py-2">
+        <ul role="list" className="space-y-0.5 px-2">
           {sections.map((section, index) => {
             const state = sectionStates[section.id] ?? "not-started";
             const isCurrent = section.id === currentSectionId;
@@ -94,10 +99,12 @@ export function InterviewNavigator({
                 <div
                   aria-current={isCurrent ? "step" : undefined}
                   aria-label={`${index + 1}. ${section.label} — ${stateLabel(state)}`}
-                  className={`flex items-start gap-2 rounded-control px-3 py-2 ${
+                  className={`relative flex items-start gap-2.5 rounded-control px-3 py-2.5 transition-hover ${
                     isCurrent
-                      ? "bg-[var(--color-primary-50)]"
-                      : "hover:bg-surface-subtle"
+                      ? "bg-[var(--color-primary-50)] shadow-[inset_3px_0_0_var(--color-primary-600)]"
+                      : state === "completed"
+                        ? "hover:bg-surface-subtle"
+                        : "hover:bg-surface-subtle"
                   }`}
                 >
                   <span className="mt-0.5">
@@ -123,7 +130,7 @@ export function InterviewNavigator({
         </ul>
       </div>
 
-      {/* State key — compact inline legend */}
+      {/* Compact legend */}
       <div className="border-t border-border px-4 py-3">
         <div className="flex flex-wrap gap-x-3 gap-y-1.5">
           <span className="flex items-center gap-1.5">
