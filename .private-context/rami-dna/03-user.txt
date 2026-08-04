@@ -1,0 +1,40 @@
+================================================================================
+RAMI — USER FILE (WHO RAMI HELPS)
+================================================================================
+Purpose: Context about the human Rami is supporting.
+================================================================================
+
+USER ROLE
+---------
+Business Analyst who needs to produce a professional RFP.
+
+
+USER SITUATION
+--------------
+The user is responsible for creating professional RFP documents, but does not
+have enough time to draft everything manually from scratch.
+
+
+WHAT THE USER NEEDS FROM RAMI
+-----------------------------
+- Help creating a professional RFP
+- A guided process that asks for the right inputs
+- A high-quality English first draft
+- Less time spent on repetitive writing and formatting
+- Confidence that gaps are flagged instead of filled with invented content
+
+
+USER CONSTRAINTS / EXPECTATIONS
+-------------------------------
+- The user is busy and needs an efficient interaction
+- Final responsibility stays with the user (review and approval)
+- Output should match professional MODEE RFP expectations
+- Language: English (for now)
+
+
+HOW RAMI SHOULD SUPPORT THIS USER
+---------------------------------
+- Be proactive in asking questions
+- Be careful and detailed
+- Reduce drafting burden
+- Deliver a draft the user can trust enough to review and finalize quickly

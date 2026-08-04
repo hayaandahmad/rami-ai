@@ -1,0 +1,164 @@
+================================================================================
+RAMI QUESTION BANK (CORE) — SINGLE SOURCE
+================================================================================
+Purpose: Questions Rami asks before generating an RFP draft.
+Canonical location: Rami/07-assets/question-bank/
+Aligned with: Rami_Findings_Summary.docx (sections 8–9)
+Status: Active starter bank — expand into structured table later
+================================================================================
+
+USAGE RULES
+-----------
+- Ask one area at a time (not all questions at once)
+- Save each answer
+- Follow up if incomplete
+- Allow [To be confirmed]
+- Confirm input summary with BA before drafting
+- Do not invent missing details
+
+
+--------------------------------------------------------------------------------
+0. DOCUMENT SETUP
+--------------------------------------------------------------------------------
+0.1 What type of RFP/document is this?
+    (system implementation / framework agreement / consulting / assessment /
+     support / connectivity-telecom / other)
+0.2 What is the document/RFP title?
+0.3 What is the beneficiary entity / ministry?
+0.4 What is the RFP or tender number (if any)?
+0.5 What is the deadline?
+0.6 Language is English only for now (do not ask for Arabic/bilingual in Phase 1)
+0.7 Which approved template or reference RFP should be followed?
+
+
+--------------------------------------------------------------------------------
+1. BACKGROUND AND BUSINESS NEED
+--------------------------------------------------------------------------------
+1.1 What is the current situation?
+1.2 What pain points exist today?
+1.3 Why is this project needed now?
+1.4 What are the objectives and expected impact?
+1.5 Are there previous phases, systems, or contracts to consider?
+
+
+--------------------------------------------------------------------------------
+2. ENGAGEMENT TYPE
+--------------------------------------------------------------------------------
+2.1 Is this a one-time project, framework agreement, system implementation,
+    consulting service, assessment, support contract, PoC, or mixed?
+2.2 Are there phases? If yes, list them.
+2.3 What is the expected duration?
+
+
+--------------------------------------------------------------------------------
+3. STAKEHOLDERS AND USERS
+--------------------------------------------------------------------------------
+3.1 Who is the beneficiary / system owner?
+3.2 Who are internal users? External users?
+3.3 What roles are required?
+3.4 Who approves? Who does UAT?
+3.5 Who owns the system after go-live?
+
+
+--------------------------------------------------------------------------------
+4. SCOPE OF WORK
+--------------------------------------------------------------------------------
+4.1 What is in scope?
+4.2 What is out of scope?
+4.3 What are bidder responsibilities?
+4.4 What are MODEE / entity responsibilities?
+4.5 Assumptions, dependencies, constraints?
+
+
+--------------------------------------------------------------------------------
+5. FUNCTIONAL REQUIREMENTS (IF APPLICABLE)
+--------------------------------------------------------------------------------
+5.1 Main modules / services?
+5.2 Key workflows / approvals?
+5.3 Reports / dashboards / notifications needed?
+5.4 Document management / case / ticketing needs?
+5.5 Any AI or advanced features required/optional?
+
+
+--------------------------------------------------------------------------------
+6. TECHNICAL / NON-FUNCTIONAL REQUIREMENTS (IF APPLICABLE)
+--------------------------------------------------------------------------------
+6.1 Hosting / infrastructure model?
+6.2 Integrations / APIs?
+6.3 Security / data residency requirements?
+6.4 Performance / availability / backup / DR?
+6.5 Data migration needs?
+6.6 Accessibility requirements? (English drafting only in Phase 1)
+
+
+--------------------------------------------------------------------------------
+7. DELIVERABLES
+--------------------------------------------------------------------------------
+7.1 What documents/reports/designs/tests/training materials are required?
+7.2 Required formats?
+7.3 Who approves each deliverable?
+
+
+--------------------------------------------------------------------------------
+8. IMPLEMENTATION AND ACCEPTANCE
+--------------------------------------------------------------------------------
+8.1 Stages, timeline, milestones?
+8.2 Testing / UAT rounds?
+8.3 Acceptance criteria and go-live conditions?
+8.4 Rollback plan needed?
+
+
+--------------------------------------------------------------------------------
+9. SUPPORT AND SLA (IF APPLICABLE)
+--------------------------------------------------------------------------------
+9.1 Support period and hours?
+9.2 Severity levels / response / resolution times?
+9.3 Resident engineer / ticketing / reports?
+9.4 Penalties?
+
+
+--------------------------------------------------------------------------------
+10. EVALUATION AND FINANCIALS
+--------------------------------------------------------------------------------
+10.1 Technical vs financial weights?
+10.2 Minimum score / PoC scoring / disqualification rules?
+10.3 Pricing model and cost breakdown requirements?
+10.4 Optional priced items? Taxes?
+
+
+--------------------------------------------------------------------------------
+11. LEGAL AND ANNEXES
+--------------------------------------------------------------------------------
+11.1 Applicable laws / confidentiality / IP?
+11.2 Joint venture / subcontracting rules?
+11.3 Required forms, compliance sheets, questionnaires, annexes?
+
+
+--------------------------------------------------------------------------------
+12. QUALITY / GAP QUESTIONS (ALWAYS USEFUL)
+--------------------------------------------------------------------------------
+12.1 What must not be missed in this RFP?
+12.2 What mistakes happened in previous similar RFPs?
+12.3 Which parts usually cause vendor questions or scope disputes?
+12.4 Which requirements are mandatory, optional, excluded, or pending approval?
+12.5 What should be priced separately as optional?
+12.6 What is still unknown and should be [To be confirmed]?
+12.7 Should Rami generate a risk/ambiguity list before final drafting?
+12.8 What standards, policies, or annexes must be referenced?
+
+
+--------------------------------------------------------------------------------
+MINIMUM STARTER SET (SHORT PATH)
+--------------------------------------------------------------------------------
+1. Document/RFP type
+2. Title
+3. Beneficiary entity
+4. Confirm English-only draft
+5. Background / need
+6. In scope / out of scope
+7. Users
+8. Key requirements
+9. Deliverables
+10. Timeline
+11. Evaluation criteria (if known)
+12. Standards / annexes to include

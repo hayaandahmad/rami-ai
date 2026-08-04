@@ -1,0 +1,148 @@
+Microsoft Azure AI API Costs
+============================
+
+Document purpose: Reference for MODEE / Rami project — Azure OpenAI pricing, cost drivers, and pilot estimates.
+Last updated: July 12, 2026
+Official source: https://azure.microsoft.com/en-us/pricing/details/azure-openai/
+
+NOTE: Microsoft changes prices over time. Always confirm against the official Azure pricing page before budgeting. Figures below are approximate Global Standard pay-as-you-go rates commonly published in 2026.
+
+
+1. How Azure OpenAI Billing Works
+---------------------------------
+
+Azure OpenAI is typically pay-as-you-go:
+
+- You pay for tokens (small pieces of text), not a flat "agent license."
+- Input tokens = text you send (prompts, BA answers, instructions, context).
+- Output tokens = text the model returns (generated RFP sections).
+
+Rough conversion: ~1,000 tokens ≈ 750 words.
+
+There is also an enterprise option called Provisioned Throughput Units (PTU) — reserved capacity billed monthly. This is for heavy production workloads and is NOT needed for an intern / pilot MVP.
+
+
+2. Approximate Model Prices (Global Standard)
+---------------------------------------------
+
+Prices shown as USD per 1 million tokens.
+
+Model              | Input / 1M | Cached input / 1M | Output / 1M | Typical use for Rami
+-------------------|------------|-------------------|-------------|----------------------
+GPT-4.1            | ~$2.00     | ~$0.50            | ~$8.00      | High-quality formal RFP drafting
+GPT-4.1 mini       | ~$0.40     | ~$0.10            | ~$1.60      | Cheaper drafts, good quality balance
+GPT-4.1 nano       | ~$0.10     | ~$0.025           | ~$0.40      | Very cheap / light tasks
+GPT-4o             | ~$2.50     | ~$1.25            | ~$10.00     | Strong multimodal / production drafting
+GPT-4o mini        | ~$0.15     | ~$0.075           | ~$0.60      | Best low-cost option for pilots
+
+Regional / Data Zone notes:
+- Regional or Data Zone deployments can cost roughly 5–10%+ more than Global Standard.
+- Choose region/data controls based on privacy and residency requirements, not price alone.
+
+Batch API (if available for the model):
+- Batch pricing is often about ~50% lower than standard interactive pricing.
+- Useful for offline/bulk jobs; less useful for live BA chat.
+
+
+3. Example Cost Per RFP Draft (Rami)
+------------------------------------
+
+Assumptions for one full RFP generation:
+- Input (instructions + BA answers + context): ~8,000 tokens
+- Output (generated document text): ~12,000 tokens
+
+Model         | Approx. cost per RFP
+--------------|---------------------
+GPT-4o mini   | ~$0.01
+GPT-4.1 mini  | ~$0.02
+GPT-4.1       | ~$0.10
+GPT-4o        | ~$0.14
+
+If the BA regenerates or rewrites sections 3 times, multiply by ~3.
+
+
+4. Monthly Pilot Estimates
+--------------------------
+
+Usage scenario                      | Mini models (4o mini / 4.1 mini) | Full models (4.1 / 4o)
+------------------------------------|----------------------------------|------------------------
+20 RFPs / month                     | ~$0.20 – $1                      | ~$2 – $5
+100 RFPs / month                    | ~$1 – $5                         | ~$10 – $20
+Heavy rewrite loops (≈3× per doc)   | Often still under $50            | Often still under $100
+
+Conclusion for pilot: Token usage for Rami-style document generation is usually low (dollars, not thousands).
+
+
+5. What Is Usually Expensive (Not Tokens)
+-----------------------------------------
+
+Token fees are often the small part. Watch for:
+
+Cost item                              | Notes
+---------------------------------------|------
+Azure subscription / org billing       | Must exist and be approved
+Azure OpenAI access approval           | May require Microsoft / IT onboarding
+Support plans                          | Enterprise support can add monthly cost
+App hosting                            | Separate if Rami is deployed as a web app
+PTU reserved capacity                  | Starts in the thousands USD/month range — skip for MVP
+Enterprise platforms around Azure      | Power Platform / Copilot Studio licenses are separate from raw API tokens
+
+
+6. Recommended Cost Strategy for Rami
+-------------------------------------
+
+1. Pilot / MVP: use GPT-4o mini or GPT-4.1 mini
+2. Important final drafts: optionally upgrade to GPT-4.1 / GPT-4o
+3. Do not buy PTU until usage is high and stable
+4. Prefer enterprise Azure OpenAI over personal OpenAI keys for government data privacy
+
+
+7. Privacy vs Cost Reminder
+---------------------------
+
+Option                                         | Privacy for gov docs              | Cost
+-----------------------------------------------|-----------------------------------|------
+Azure OpenAI (org subscription + controls)     | Stronger enterprise story         | Low–medium token cost
+Personal OpenAI/Gemini keys                    | Weaker for ministry data          | May look cheap but risky
+Local models (e.g. Ollama)                     | Best data locality                | ~$0 API, weaker quality
+
+For MODEE, prefer Azure OpenAI under IT-approved subscription when moving beyond a redacted prototype.
+
+
+8. Questions to Ask IT / Finance
+--------------------------------
+
+1. Do we already have an Azure subscription?
+2. Do we already have Azure OpenAI access approved?
+3. Which region / data zone must we use for government data?
+4. Which models are allowed (mini vs full)?
+5. Is there a monthly budget cap for the pilot?
+6. Are Power Platform / Copilot Studio licenses required separately, or is raw API enough?
+
+
+9. Simple Budget Formula (for proposals)
+----------------------------------------
+
+Monthly AI cost ≈
+  (Number of RFPs per month)
+  × (Average generations per RFP)
+  × (Cost per generation for chosen model)
+
+Example:
+100 RFPs × 2 generations × $0.02 (mini) ≈ $4 / month in token fees.
+
+
+10. Official Links
+------------------
+
+- Azure OpenAI pricing: https://azure.microsoft.com/en-us/pricing/details/azure-openai/
+- Azure OpenAI service overview: https://azure.microsoft.com/en-us/products/ai-services/openai-service
+
+
+11. Document Control
+--------------------
+
+Project:      Rami – AI Document Generation Assistant
+Organization: MODEE
+Author:       (add your name)
+Status:       Working reference – verify prices before procurement

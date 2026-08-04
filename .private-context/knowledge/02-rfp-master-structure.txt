@@ -1,0 +1,82 @@
+================================================================================
+MODEE RFP MASTER STRUCTURE (FROM SAMPLE RFP ANALYSIS)
+================================================================================
+Source: Rami_Findings_Summary.docx (sections 5–7)
+Canonical asset — do not duplicate elsewhere as a second long copy.
+================================================================================
+
+KEY FINDING
+-----------
+Uploaded RFPs do NOT prove one single fixed template.
+They show patterns that should be merged into a flexible master structure.
+
+
+SAMPLE RFP PATTERNS OBSERVED
+----------------------------
+1) ITAS RFP (large system-implementation)
+   Functional requirements, technical requirements, scope of work, support,
+   manpower, acceptance, governance, schedule, annexures.
+
+2) GRC SOW (SOW-heavy technical scope)
+   Solution description, functional/technical scope, administrative procedures,
+   financial proposal requirements, component-based pricing, AI optional pricing,
+   infrastructure, security, support, project management, quality management,
+   annexes.
+   NOTE: Referenced source file "Updated_GRC_SOW Final Version.docx" — add to
+   sample-rfps if available.
+
+3) Performance Assessment RFP (smaller framework/service)
+   Introduction, engagement background, scope, administrative procedures,
+   evaluation, financial/legal terms, annexes.
+   (Likely related to rfp document17egovt2026.pdf)
+
+4) PoC format file
+   Mostly proposal response / forms library.
+   Useful for annexes and bidder forms, not the main RFP body.
+   NOTE: Referenced source "rfp format poc6.docx" — add to assets if available.
+
+
+GENERAL MODEE RFP MASTER STRUCTURE (20 SECTIONS)
+------------------------------------------------
+ 1. Cover Page
+ 2. Table of Contents
+ 3. Abbreviations and Definitions
+ 4. Introduction
+ 5. Background and Business Need
+ 6. Engagement Definition
+ 7. Scope of Work
+ 8. Functional Requirements
+ 9. Technical and Non-Functional Requirements
+10. Implementation Requirements
+11. Deliverables
+12. Project Management and Governance
+13. Acceptance Criteria and Go-Live
+14. Support and Maintenance
+15. Manpower / Resource Requirements
+16. Administrative Procedures and Requirements
+17. Proposal Evaluation Criteria
+18. Financial Proposal Requirements
+19. Legal and Contractual Terms
+20. Annexes
+
+
+MANDATORY vs CONDITIONAL
+------------------------
+Mandatory (usually always include):
+  Cover page, table of contents, introduction, background/business need,
+  engagement definition, scope of work, deliverables, administrative procedures,
+  evaluation criteria, financial requirements, legal terms, annexes.
+
+Conditional (include when relevant to RFP type):
+  Abbreviations, functional requirements, technical requirements,
+  infrastructure/hosting, security, data migration, training, SLA,
+  support and maintenance, manpower requirements, PoC requirements,
+  compliance matrices.
+
+
+HOW RAMI SHOULD USE THIS
+------------------------
+1. Ask: What type of RFP is this?
+2. Load mandatory sections + relevant conditional sections
+3. Ask questions mapped to those sections only
+4. Generate draft following this master structure

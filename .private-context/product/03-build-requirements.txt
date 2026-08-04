@@ -1,0 +1,121 @@
+================================================================================
+BUILD REQUIREMENTS
+================================================================================
+Updated decisions: English only; no scoring
+================================================================================
+
+CORE CAPABILITY CHAIN
+---------------------
+Question bank → answer storage → template/rules retrieval → English draft
+generation → BA review → document export
+
+
+LANGUAGE
+--------
+- All generated RFP content is English only (for now)
+- Arabic / bilingual generation is out of scope for Phase 1
+
+
+CONVERSATION ENGINE
+-------------------
+- Ask one question at a time
+- Save each answer
+- Check missing required fields
+- Follow up when answers are incomplete
+- Generate RFP only after required information is captured (or marked TBC)
+
+
+QUESTION BANK STRUCTURE (TARGET TABLE)
+--------------------------------------
+Fields:
+  question_id
+  RFP type
+  section
+  question text
+  required / optional
+  condition
+  answer field
+  mapped template section
+
+
+ANSWER STORAGE (START SIMPLE)
+-----------------------------
+Options:
+  Google Sheets / Airtable / Excel / Dataverse / PostgreSQL
+Store:
+  project answers
+  draft versions
+  feedback
+MVP recommendation: start with Sheets or Excel.
+
+
+TEMPLATE AND RULES RETRIEVAL
+----------------------------
+Before drafting, load:
+  - relevant master structure
+  - approved RFP sections
+  - standards
+  - previous examples
+  - saved feedback
+
+
+AI DRAFTING RULES
+-----------------
+- Use collected answers + rules to generate professional first draft in English
+- Must NOT invent missing details
+- Missing information → mark as [To be confirmed]
+
+
+HUMAN REVIEW
+------------
+BA must review, edit, approve, or request regeneration.
+Rami does NOT publish or submit final RFPs.
+Rami does NOT score drafts in Phase 1.
+
+
+DOCUMENT GENERATION
+-------------------
+MVP: can start with generated English text
+Later: Word templates, Google Docs, DocuPilot/Documint, or
+Power Automate Word template actions → DOCX/PDF
+
+
+TRACEABILITY
+------------
+Store:
+  which answer produced which section
+  which template/rule was used
+  draft version
+  BA feedback
+  final approval status
+
+
+SECURITY AND COMPLIANCE
+-----------------------
+- Use approved AI platform
+- Avoid personal consumer keys for government data
+- Access control
+- Audit logging
+- Data classification
+- Controlled storage
+
+
+SUGGESTED KNOWLEDGE BASE TABLES
+-------------------------------
+RFP_Template_Sections
+  Master RFP sections, mandatory/conditional status, inclusion conditions
+
+Rami_Questions
+  All questions, required status, conditions
+
+Field_Mapping
+  Maps answer fields → RFP sections / draft placeholders
+
+Rules_and_Standards
+  MODEE / Jordan / local writing and compliance rules (English drafting)
+
+Sample_RFP_References
+  Approved/redacted samples and which type they represent
+
+Draft_History
+  Generated drafts, versions, review comments, approval status

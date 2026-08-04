@@ -1,0 +1,73 @@
+================================================================================
+TOOLS RESEARCH NOTES
+================================================================================
+
+AZURE OPENAI
+------------
+- Preferred enterprise AI API option for quality + privacy story
+- Usually pay-per-token (pilot often cheap: cents–dollars per draft)
+- Full cost details: azure-ai-api-costs.txt in this folder
+
+
+DOCUPILOT
+---------
+What it is good at:
+  - Template + data → generated Word/PDF documents
+  - Low-code automation, integrations, delivery
+
+What it does NOT fully cover for Rami:
+  - Deep agent-led interviewing
+  - Jordan/MODEE standards reasoning
+  - Full RFP narrative drafting from incomplete answers
+
+Verdict:
+  Useful as optional formatter/delivery layer.
+  Not sufficient alone as Rami.
+
+Note: Document scoring is out of scope for Phase 1.
+
+
+OTHER HELPFUL OPTIONS
+---------------------
+Document generation:
+  - Microsoft Word templates + Power Automate
+  - Carbone / Docmosis / Formstack Documents
+  - Docassemble (strong interview → document model)
+
+Guided Q&A:
+  - Microsoft Forms / Google Forms / Typeform
+  - Copilot Studio
+  - Docassemble
+
+AI drafting:
+  - Azure OpenAI / Gemini / Claude
+  - Local Ollama for private cheap prototypes
+
+Workflow glue:
+  - Power Automate
+  - n8n / Make / Zapier
+
+
+CURRENT BUILD PREFERENCE (FROM FINDINGS + DISCUSSIONS)
+------------------------------------------------------
+Preferred MVP style (Findings Summary):
+- Low-code/no-code first
+- Workflow tools: n8n OR Microsoft Power Automate / Copilot Studio
+- Approved LLM (Azure OpenAI preferred if IT allows)
+- Word/Docs output
+
+Also acceptable:
+- If platforms are too expensive → vibe-code a small MVP
+- MVP sequence: ask+save answers FIRST → then English draft → then BA review → then export
+- Language: English only for now
+- Scoring: not included
+
+Answer storage options for MVP:
+- Google Sheets / Airtable / Excel (start simple)
+- Later: Dataverse / PostgreSQL
+
+Document export options later:
+- Word templates / Google Docs / DocuPilot / Documint /
+  Power Automate Word template actions
+
+Confirm IT constraints before choosing final stack.
