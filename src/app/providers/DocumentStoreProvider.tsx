@@ -49,6 +49,24 @@ function documentStoreReducer(
       };
     }
 
+    case "REMOVE_ANSWER": {
+      const existingAnswers = state.answersByDocumentId[action.documentId];
+      if (!existingAnswers || !(action.field in existingAnswers)) {
+        return state;
+      }
+
+      const updatedAnswers = { ...existingAnswers };
+      delete updatedAnswers[action.field];
+
+      return {
+        ...state,
+        answersByDocumentId: {
+          ...state.answersByDocumentId,
+          [action.documentId]: updatedAnswers,
+        },
+      };
+    }
+
     case "SET_INTERVIEW_PROGRESS":
       return {
         ...state,

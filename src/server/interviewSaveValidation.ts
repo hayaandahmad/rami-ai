@@ -37,8 +37,20 @@ export function validateInterviewSaveRequest(
   const sessionResult = validateSession(record.session);
   if (!sessionResult.ok) return sessionResult;
 
+  const staleAnswerQuestionIdsResult = validateStaleAnswerQuestionIds(
+    record.staleAnswerQuestionIds,
+  );
+  if (!staleAnswerQuestionIdsResult.ok) return staleAnswerQuestionIdsResult;
+
+  const base: InterviewSaveRequest = {
+    session: sessionResult.value,
+    ...(staleAnswerQuestionIdsResult.value
+      ? { staleAnswerQuestionIds: staleAnswerQuestionIdsResult.value }
+      : {}),
+  };
+
   if (record.answer === undefined) {
-    return { ok: true, value: { session: sessionResult.value } };
+    return { ok: true, value: base };
   }
 
   const answerResult = validateAnswer(record.answer);
@@ -46,8 +58,28 @@ export function validateInterviewSaveRequest(
 
   return {
     ok: true,
-    value: { answer: answerResult.value, session: sessionResult.value },
+    value: { ...base, answer: answerResult.value },
   };
+}
+
+function validateStaleAnswerQuestionIds(
+  input: unknown,
+): ValidationResult<string[] | undefined> {
+  if (input === undefined) {
+    return { ok: true, value: undefined };
+  }
+
+  if (
+    !Array.isArray(input) ||
+    !input.every((id) => typeof id === "string" && id.length > 0)
+  ) {
+    return {
+      ok: false,
+      error: "staleAnswerQuestionIds must be an array of non-empty strings when provided.",
+    };
+  }
+
+  return { ok: true, value: input as string[] };
 }
 
 function validateAnswer(

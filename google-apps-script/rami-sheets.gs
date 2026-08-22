@@ -50,7 +50,7 @@ var SESSIONS_HEADERS = [
 
 /**
  * Single entry point for Rami's save contract:
- *   { secret, answer?, session }
+ *   { secret, answer?, session, staleAnswerQuestionIds? }
  */
 function doPost(e) {
   try {
@@ -72,6 +72,14 @@ function doPost(e) {
 
       if (request.answer) {
         upsertAnswer_(spreadsheet, request.answer);
+      }
+
+      if (request.staleAnswerQuestionIds && request.staleAnswerQuestionIds.length) {
+        removeAnswers_(
+          spreadsheet,
+          request.session.documentId,
+          request.staleAnswerQuestionIds,
+        );
       }
 
       upsertSession_(spreadsheet, request.session);
@@ -186,6 +194,32 @@ function upsertAnswer_(spreadsheet, answer) {
     sheet.appendRow(row);
   } else {
     sheet.getRange(rowIndex, 1, 1, row.length).setValues([row]);
+  }
+}
+
+/**
+ * Deletes the current answer row(s) for the given document_id +
+ * question_id pairs. Used when a parent answer changes such that a
+ * previously triggered follow-up question is no longer part of Rami's
+ * current structured interview — the row is removed outright (no
+ * history, no soft-delete column) since "answers" is a current-state
+ * table by design. Missing rows are silently ignored.
+ * Must be called while holding the script lock.
+ */
+function removeAnswers_(spreadsheet, documentId, questionIds) {
+  var sheet = spreadsheet.getSheetByName(ANSWERS_SHEET_NAME);
+  if (!sheet) return;
+
+  for (var i = 0; i < questionIds.length; i++) {
+    var rowIndex = findRowByKey_(
+      sheet,
+      ["document_id", "question_id"],
+      [documentId, questionIds[i]],
+    );
+
+    if (rowIndex !== -1) {
+      sheet.deleteRow(rowIndex);
+    }
   }
 }
 

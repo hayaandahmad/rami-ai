@@ -21,6 +21,10 @@ export type DocumentStoreAction =
   | { type: "SET_ACTIVE_DOCUMENT"; documentId: string }
   | { type: "CREATE_DOCUMENT"; document: DocumentProject }
   | { type: "SAVE_ANSWER"; documentId: string; answer: CapturedAnswer }
+  // Removes a single captured answer (by answerField). Used when a parent
+  // answer changes such that a previously triggered follow-up question is
+  // no longer part of the current structured interview.
+  | { type: "REMOVE_ANSWER"; documentId: string; field: string }
   | { type: "SET_INTERVIEW_PROGRESS"; documentId: string; progress: InterviewProgress }
   | { type: "COMPLETE_INTERVIEW"; documentId: string }
   | { type: "CONFIRM_REVIEW"; documentId: string; confirmed: boolean }

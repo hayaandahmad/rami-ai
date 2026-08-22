@@ -36,10 +36,18 @@ export interface SessionPersistencePayload {
 /**
  * Request body accepted by POST /api/interview/save.
  * `answer` is omitted for session-only saves (e.g. interview completion).
+ *
+ * `staleAnswerQuestionIds` lists question_ids whose CURRENT answer row
+ * must be removed from the "answers" sheet in the same locked operation.
+ * This is used when a parent answer changes such that a previously
+ * triggered follow-up question (e.g. q3b) is no longer part of Rami's
+ * current structured interview — the row is deleted outright rather than
+ * soft-deleted, since "answers" is a current-state table, not a history.
  */
 export interface InterviewSaveRequest {
   answer?: AnswerPersistencePayload;
   session: SessionPersistencePayload;
+  staleAnswerQuestionIds?: string[];
 }
 
 export interface InterviewSaveSuccessResponse {
