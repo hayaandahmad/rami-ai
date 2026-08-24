@@ -25,6 +25,55 @@ import type {
 } from './RamiModelProvider';
 import { getModelManifest, type ModelManifest } from './modelManifest';
 
+/** Strips <think>...</think> blocks that Qwen3 generates before its actual response. */
+class ThinkStripper {
+  private buffer = '';
+  private decided = false;
+
+  process(chunk: string): string {
+    if (this.decided) return chunk;
+
+    this.buffer += chunk;
+
+    // If buffer doesn't start with <think>, pass everything through
+    if (this.buffer.length > 10 && !this.buffer.startsWith('<think>')) {
+      this.decided = true;
+      const result = this.buffer;
+      this.buffer = '';
+      return result;
+    }
+
+    // Look for end of thinking block
+    const closeIdx = this.buffer.indexOf('</think>');
+    if (closeIdx !== -1) {
+      this.decided = true;
+      const afterThink = this.buffer.slice(closeIdx + '</think>'.length).trimStart();
+      this.buffer = '';
+      return afterThink;
+    }
+
+    // Buffer is large with no closing tag — something is wrong, pass through
+    if (this.buffer.length > 8000) {
+      this.decided = true;
+      const result = this.buffer;
+      this.buffer = '';
+      return result;
+    }
+
+    return ''; // still buffering the <think> block
+  }
+
+  flush(): string {
+    if (!this.decided) {
+      // Never found </think> — output buffer as-is
+      const result = this.buffer;
+      this.buffer = '';
+      return result;
+    }
+    return '';
+  }
+}
+
 /** Raw Ollama /api/chat message format */
 interface OllamaMessage {
   role: 'system' | 'user' | 'assistant';
@@ -184,6 +233,86 @@ export class LocalModelProvider implements RamiModelProvider {
       durationMs: Date.now() - start,
       modelUsed: json.model,
     };
+  }
+
+  /**
+   * Stream a chat completion from Ollama, yielding text chunks.
+   * Automatically strips Qwen3 <think>...</think> blocks.
+   */
+  async *completeStream(
+    messages: ChatMessage[],
+    options?: InferenceOptions,
+  ): AsyncGenerator<string> {
+    const model = options?.modelOverride ?? this.defaultModel;
+    const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+
+    const body = JSON.stringify({
+      model,
+      messages: messages as OllamaMessage[],
+      stream: true,
+      options: {
+        temperature: options?.temperature ?? 0.7,
+      },
+    });
+
+    const response = await fetchWithTimeout(
+      `${this.baseUrl}/api/chat`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      },
+      timeoutMs,
+    );
+
+    if (!response.ok) {
+      const text = await response.text().catch(() => response.statusText);
+      throw new Error(
+        `LocalModelProvider.completeStream: Ollama returned ${response.status}: ${text}`,
+      );
+    }
+
+    if (!response.body) throw new Error('LocalModelProvider.completeStream: no response body');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    const stripper = new ThinkStripper();
+    let lineBuffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        lineBuffer += decoder.decode(value, { stream: true });
+        const lines = lineBuffer.split('\n');
+        lineBuffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const parsed = JSON.parse(line) as OllamaChatResponse;
+            if (parsed.message?.content) {
+              const chunk = stripper.process(parsed.message.content);
+              if (chunk) yield chunk;
+            }
+            if (parsed.done) {
+              const remaining = stripper.flush();
+              if (remaining) yield remaining;
+              return;
+            }
+          } catch {
+            // skip malformed lines
+          }
+        }
+      }
+
+      // Flush any remaining buffer
+      const remaining = stripper.flush();
+      if (remaining) yield remaining;
+    } finally {
+      reader.releaseLock();
+    }
   }
 
   async embed(text: string): Promise<number[]> {

@@ -730,6 +730,55 @@
     min-height: var(--spacing-header);
   }
 
+  /* ── Rami chat message body ──────────────────────────────────────────── */
+  .rami-message-body p {
+    margin-bottom: 0.75em;
+  }
+  .rami-message-body p:last-child {
+    margin-bottom: 0;
+  }
+  .rami-message-body ul.rami-list {
+    list-style: disc;
+    padding-left: 1.25rem;
+    margin-bottom: 0.75em;
+  }
+  .rami-message-body ul.rami-list li {
+    margin-bottom: 0.25em;
+  }
+  .rami-message-body code.rami-inline-code {
+    font-family: ui-monospace, monospace;
+    font-size: 0.85em;
+    background: var(--color-neutral-100);
+    border: 1px solid var(--color-neutral-200);
+    border-radius: 0.25rem;
+    padding: 0.1em 0.35em;
+    color: var(--color-neutral-800);
+  }
+
+  /* Streaming cursor — blinking bar at end of streaming text */
+  .rami-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1em;
+    vertical-align: text-bottom;
+    background: var(--color-primary-500);
+    border-radius: 1px;
+    margin-left: 2px;
+    animation: rami-cursor-blink 0.8s step-end infinite;
+  }
+
+  @keyframes rami-cursor-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* Suppress cursor animation if user prefers reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .rami-cursor {
+      animation: none;
+    }
+  }
+
   .typewriter-cursor {
     color: var(--color-primary-700);
     font-weight: 500;
@@ -800,5 +849,13 @@
   .intro-cursor {
     animation: none;
     opacity: 0;
+  }
+
+  .thinking-dot {
+    animation: none;
+  }
+
+  .rami-cursor {
+    animation: none;
   }
 }

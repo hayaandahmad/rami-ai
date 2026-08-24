@@ -1,6 +1,11 @@
-import { AppLayout } from "@/layouts/AppLayout";
-import { GuidedDocumentInterviewPage } from "@/views/GuidedDocumentInterview/GuidedDocumentInterviewPage";
-import { getDocumentTitle } from "@/utils/documentBreadcrumbs";
+/**
+ * Interview route — now renders the Rami conversational workspace (Phase 2).
+ * The legacy GuidedDocumentInterviewPage is retained at
+ * src/views/GuidedDocumentInterview/ but is no longer the primary entry point.
+ */
+
+import { ChatLayout } from '@/layouts/ChatLayout';
+import { RamiChatWorkspace } from '@/views/RamiChat/RamiChatWorkspace';
 
 interface InterviewRouteProps {
   params: Promise<{ documentId: string }>;
@@ -8,17 +13,10 @@ interface InterviewRouteProps {
 
 export default async function InterviewRoute({ params }: InterviewRouteProps) {
   const { documentId } = await params;
-  const documentTitle = getDocumentTitle(documentId);
 
   return (
-    <AppLayout
-      breadcrumbs={[
-        { label: "Dashboard / Workspace", href: "/workspace" },
-        { label: documentTitle, href: `/documents/${documentId}/interview` },
-        { label: "Interview" },
-      ]}
-    >
-      <GuidedDocumentInterviewPage documentId={documentId} />
-    </AppLayout>
+    <ChatLayout>
+      <RamiChatWorkspace sessionId={documentId} documentId={documentId} />
+    </ChatLayout>
   );
 }
