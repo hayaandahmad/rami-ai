@@ -141,3 +141,24 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Rami knowledge sources (RFP examples, question bank, general template).
+# These files are intentionally versioned with the project — the project owner
+# has approved their inclusion in this repository.
+# Decision superseded Aug 2026: earlier passes blocked these; this project no
+# longer treats them as sensitive/private (see DECISIONS.md #14-updated).
+
+# Rami: permanently excluded AI and local-runtime artifacts.
+# Ollama stores model weights in ~/.ollama (outside repo) — listed here as
+# an explicit safety net if anyone runs Ollama with a custom OLLAMA_MODELS path
+# pointing inside the repo.
+*.gguf
+*.ggml
+*.bin
+*.safetensors
+# Local knowledge vector index (Phase 3 — flat file or SQLite)
+.rami-index/
+*.rami-index
+# Temporary DOCX/PDF extraction directories
+.rami-extract/
+tmp-extract/

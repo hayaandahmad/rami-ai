@@ -1,0 +1,17 @@
+{
+  "_comment": "Rami local AI model manifest. Hardware: RTX 4060 Laptop 8GB VRAM / i9-14900HX / 15.6GB RAM. See .private-context/architecture/local-ai-deployment.md for rationale.",
+  "provider": "ollama",
+  "inferenceBaseUrl": "http://localhost:11434",
+  "models": {
+    "default": "qwen3:8b",
+    "_default_note": "Qwen3 8B — balanced default. ~4.7GB VRAM in q4_K_M quantization. Fits RTX 4060 8GB comfortably.",
+    "lightweight": "qwen3:4b",
+    "_lightweight_note": "Qwen3 4B — fallback for lower-VRAM machines or fast extraction calls. ~2.5GB VRAM.",
+    "quality": "qwen3:14b",
+    "_quality_note": "Qwen3 14B — optional higher-quality drafting. ~8-10GB VRAM in Q4; borderline for 8GB VRAM. Do NOT pull automatically. Pull manually only if testing justifies it."
+  },
+  "embeddings": {
+    "model": "nomic-embed-text",
+    "_note": "Phase-3 RAG embeddings. ~270MB. Not required until Phase 3 implementation."
+  }
+}
