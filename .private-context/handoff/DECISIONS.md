@@ -2,6 +2,8 @@
 
 Durable decisions that must not be silently reversed in future implementation passes.
 
+Second-laptop reproduce-and-run (not a behavior change): `.private-context/handoff/SECOND_MACHINE_HANDOFF.md`.
+
 ---
 
 ## #1 — Zero paid AI API cost constraint

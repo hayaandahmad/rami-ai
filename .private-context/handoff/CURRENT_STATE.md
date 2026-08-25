@@ -1,5 +1,22 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-25 (Phase 2.1 complete)
+Last updated: 2026-08-26 (Phase 2.1 complete; second-machine handoff added)
+
+## Second-machine reproduction
+To clone this repository onto another Windows laptop and run the **current** Rami (not Phase 3), start at:
+
+```text
+.private-context/handoff/SECOND_MACHINE_HANDOFF.md
+```
+
+The copy/paste execution prompt is:
+
+```text
+.private-context/handoff/SECOND_MACHINE_PROMPT_2.md
+```
+
+That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase 3.
+
+---
 
 ## Phase status
 - **Phase 1**: ✅ Complete — local AI foundations (commit `dbf362a`)
@@ -125,6 +142,8 @@ Last updated: 2026-08-25 (Phase 2.1 complete)
 .private-context/handoff/CURRENT_STATE.md   ← this file
 .private-context/handoff/DECISIONS.md
 .private-context/handoff/NEXT_STEPS.md
+.private-context/handoff/SECOND_MACHINE_HANDOFF.md   ← second-laptop reproduction only
+.private-context/handoff/SECOND_MACHINE_PROMPT_2.md  ← copy/paste Prompt 2 after handoff is read
 .private-context/architecture/rami-agent-architecture.md
 .private-context/architecture/local-ai-deployment.md
 .private-context/product/conversational-rfp-workflow.md

@@ -1,6 +1,14 @@
 # Rami — Next Steps
 
-Last updated: 2026-08-25 (Phase 2.1 complete)
+Last updated: 2026-08-26 (Phase 2.1 complete; second-machine handoff added)
+
+## If you are setting up a second Windows laptop
+
+You are **not** here to start Phase 3.
+
+Read `.private-context/handoff/SECOND_MACHINE_HANDOFF.md` and stop until the human pastes Prompt 2 from `.private-context/handoff/SECOND_MACHINE_PROMPT_2.md`.
+
+---
 
 ## Phase 2.1 — Complete ✅
 All six Phase 2.1 correction items are done:
