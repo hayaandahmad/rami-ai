@@ -1,9 +1,10 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-25 (Phase 2 complete)
+Last updated: 2026-08-25 (Phase 2.1 complete)
 
 ## Phase status
 - **Phase 1**: ✅ Complete — local AI foundations (commit `dbf362a`)
-- **Phase 2**: ✅ Complete — conversational AI workspace (this commit)
+- **Phase 2**: ✅ Complete — conversational AI workspace
+- **Phase 2.1**: ✅ Complete — bilingual polish, section applicability, progress semantics, question priority, users normalization
 - **Phase 3**: ⏳ Next — historical RAG, embeddings, PDF ingestion
 - **Phase 4**: ⏳ Pending — live section drafting in right pane
 - **Phase 5**: ⏳ Pending — final RFP assembly
@@ -72,7 +73,7 @@ Last updated: 2026-08-25 (Phase 2 complete)
 
 ---
 
-## What is working (Phase 2)
+## What is working (Phase 2 + 2.1)
 - Full conversational loop: message → extraction → memory → gap → response
 - Real Ollama streaming for responses (`completeStream()` AsyncGenerator)
 - `<think>...</think>` blocks stripped automatically from Qwen3 output
@@ -91,6 +92,17 @@ Last updated: 2026-08-25 (Phase 2 complete)
 - A4 document preview shell
 - Polished error experience (Ollama unavailable message, retry)
 - localStorage persistence (conversation survives page refresh)
+- **Phase 2.1 additions:**
+  - Bilingual Arabic/English conversation (replies in user's language)
+  - RTL rendering for Arabic messages (`dir="rtl"` per message, not app-wide)
+  - Language detection: deterministic Arabic-character ratio (no LLM call)
+  - Language tracked in session + returned in SSE `done` event
+  - Conditional RFP sections correctly activated (HR system → 19/20, consulting → 12)
+  - `applicableSectionCount` returned in SSE events; synced to client
+  - Progress UI separated: "Sections X/Y approved" + "Information Z% gathered"
+  - Next-best-question priority: business-critical fields first, admin details last
+  - `users` field normalized to `UsersValue` shape regardless of LLM output format
+  - Arabic line-height CSS increased for readability
 
 ---
 

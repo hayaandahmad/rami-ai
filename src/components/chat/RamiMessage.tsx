@@ -1,13 +1,14 @@
 /**
  * RamiMessage — renders an assistant message in the chat.
  * Modern AI-chat layout: avatar + name, then text below.
- * No giant speech bubbles — clean and readable.
+ * Supports Arabic RTL messages via per-message dir attribute.
  */
 
 'use client';
 
 import { Sparkles } from 'lucide-react';
 import type { ConversationMessage } from '@/types/conversation';
+import { detectMessageLanguage } from '@/hooks/useRamiChat';
 
 /** Basic markdown rendering for common patterns (bold, lists, code). */
 function renderMarkdown(text: string): string {
@@ -21,7 +22,6 @@ function renderMarkdown(text: string): string {
       .split('\n\n')
       .map((para) => {
         if (para.trim().startsWith('- ') || para.trim().startsWith('* ')) {
-          // List items
           const items = para
             .split('\n')
             .filter((line) => line.trim().startsWith('- ') || line.trim().startsWith('* '))
@@ -42,6 +42,10 @@ interface RamiMessageProps {
 export function RamiMessage({ message }: RamiMessageProps) {
   const showCursor = message.isStreaming && message.content.length > 0;
 
+  // Determine direction from stored language tag or live detection
+  const lang = message.language ?? detectMessageLanguage(message.content);
+  const isArabic = lang === 'ar';
+
   return (
     <div className="flex items-start gap-3 group">
       {/* Avatar */}
@@ -60,6 +64,8 @@ export function RamiMessage({ message }: RamiMessageProps) {
         </span>
         <div
           className="rami-message-body text-body leading-relaxed text-text-primary"
+          dir={isArabic ? 'rtl' : 'ltr'}
+          lang={isArabic ? 'ar' : 'en'}
           dangerouslySetInnerHTML={{
             __html: message.content
               ? renderMarkdown(message.content) + (showCursor ? '<span class="rami-cursor" aria-hidden="true" />' : '')

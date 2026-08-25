@@ -12,7 +12,8 @@
     "ai:setup": "powershell -ExecutionPolicy Bypass -File scripts/setup-local-ai.ps1",
     "ai:setup:quality": "powershell -ExecutionPolicy Bypass -File scripts/setup-local-ai.ps1 -PullQuality",
     "ai:check": "powershell -ExecutionPolicy Bypass -File scripts/check-local-ai.ps1",
-    "ai:smoke": "npx tsx scripts/smoke-test-ai.ts"
+    "ai:smoke": "npx tsx scripts/smoke-test-ai.ts",
+    "validate:users-norm": "npx tsx scripts/test-users-norm.ts"
   },
   "dependencies": {
     "lucide-react": "^1.28.0",

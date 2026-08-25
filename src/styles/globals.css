@@ -745,6 +745,18 @@
   .rami-message-body ul.rami-list li {
     margin-bottom: 0.25em;
   }
+
+  /* RTL Arabic text — increase line-height for readability */
+  .rami-message-body[dir="rtl"],
+  p[dir="rtl"] {
+    line-height: 1.9;
+    font-size: 1rem;
+  }
+  /* Indent RTL lists to the right */
+  .rami-message-body[dir="rtl"] ul.rami-list {
+    padding-left: 0;
+    padding-right: 1.25rem;
+  }
   .rami-message-body code.rami-inline-code {
     font-family: ui-monospace, monospace;
     font-size: 0.85em;

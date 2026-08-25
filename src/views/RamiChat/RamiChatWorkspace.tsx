@@ -6,7 +6,7 @@
  * 2. Active: scrollable chat, no split yet
  * 3. RFP workspace: left chat + right A4 preview (after intent=CREATE_RFP)
  *
- * The split transition is CSS-animated — smooth, not jarring.
+ * Phase 2.1: applicabilityContext now synced from server via SSE events.
  */
 
 'use client';
@@ -20,7 +20,6 @@ import { SectionProgress } from '@/components/rfp/SectionProgress';
 import { DocumentPreviewShell } from '@/components/rfp/DocumentPreviewShell';
 import type { SectionLifecycleState } from '@/types/sectionState';
 import type { RfpIntent } from '@/types/conversation';
-import type { SectionApplicabilityContext } from '@/schema/rfpSchema';
 
 interface RamiChatWorkspaceProps {
   sessionId: string;
@@ -34,31 +33,36 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
 
   // Section states live on the server; client tracks a lightweight display state
   const [sectionStates] = useState<Record<string, SectionLifecycleState>>({});
+  // Information completeness is tracked server-side and returned in SSE 'done' events
   const [completionPercent, setCompletionPercent] = useState(0);
 
   const onIntentChange = useCallback((intent: RfpIntent) => {
     if (intent === 'CREATE_RFP') {
-      // Small delay so the transition feels intentional
       setTimeout(() => setRightPaneVisible(true), 150);
     }
   }, []);
 
   const onFactsExtracted = useCallback(
     (_facts: unknown[], updatedFieldIds: string[]) => {
-      // Update client memory snapshot for progress display
-      // The full memory lives on the server; we track field IDs for UI feedback only
+      // Optimistic completion bump: refined by server-side gaps on next 'done' event
       if (updatedFieldIds.length > 0) {
-        setCompletionPercent((prev) => {
-          const newVal = Math.min(100, prev + updatedFieldIds.length * 3);
-          return newVal;
-        });
+        setCompletionPercent((prev) => Math.min(95, prev + updatedFieldIds.length * 3));
       }
     },
     [],
   );
 
-  const { messages, status, isGenerating, rfpIntent, errorMessage, sendMessage, retryLastMessage, clearError } =
-    useRamiChat({ sessionId, documentId, onIntentChange, onFactsExtracted });
+  const {
+    messages,
+    status,
+    isGenerating,
+    rfpIntent,
+    errorMessage,
+    applicabilityContext,
+    sendMessage,
+    retryLastMessage,
+    clearError,
+  } = useRamiChat({ sessionId, documentId, onIntentChange, onFactsExtracted });
 
   const handleSubmit = useCallback(() => {
     if (!composerValue.trim()) return;
@@ -69,16 +73,20 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
   const isInitialState = messages.length === 0 && !isGenerating;
   const showSplit = rfpIntent === 'CREATE_RFP' && rightPaneVisible;
 
-  // Applicability context is empty until Phase 3 populates document type
-  // All 20 sections are shown until filtering data is available
-  const applicabilityContext: SectionApplicabilityContext = {};
-
+  // Build applicability context from server-synced values
+  const sectionApplicabilityCtx = {
+    documentType: applicabilityContext.documentType ?? '',
+    engagementType: applicabilityContext.engagementType ?? '',
+    hasDeliveryMilestone: applicabilityContext.documentType === 'system-implementation',
+    hasSupportPeriod: ['system-implementation', 'support'].includes(applicabilityContext.documentType ?? ''),
+    hasNamedRoles: false,
+    isLargeEngagement: applicabilityContext.documentType === 'system-implementation',
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden bg-surface">
       {/* ── Top bar ────────────────────────────────────────────────────────── */}
       <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-        {/* Left: Rami identity */}
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-primary-100)] to-[var(--color-primary-50)] ring-1 ring-[var(--color-primary-200)]">
             <Sparkles
@@ -101,9 +109,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
           </div>
         </div>
 
-        {/* Right: controls */}
         <div className="flex items-center gap-2">
-          {/* Mobile tab switcher (only in split mode) */}
           {showSplit && (
             <div className="flex rounded-lg border border-border bg-[var(--color-neutral-50)] p-0.5 md:hidden">
               <button
@@ -131,7 +137,6 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
             </div>
           )}
 
-          {/* Desktop toggle for right pane */}
           {showSplit && (
             <button
               type="button"
@@ -155,7 +160,6 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
         {/* ── Initial centered state ──────────────────────────────────────── */}
         {isInitialState && (
           <div className="flex w-full flex-col">
-            {/* Hero section */}
             <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
               <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--color-primary-100)] to-[var(--color-primary-50)] ring-1 ring-[var(--color-primary-200)] shadow-[0_8px_24px_rgba(19,62,103,0.08)]">
                 <Sparkles
@@ -172,7 +176,6 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
               </p>
             </div>
 
-            {/* Composer anchored at bottom in initial state */}
             <ChatComposer
               value={composerValue}
               onChange={setComposerValue}
@@ -209,34 +212,31 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
               />
             </div>
 
-            {/* Divider */}
             {showSplit && (
               <div className="hidden shrink-0 md:block">
                 <div className="h-full w-px bg-border" />
               </div>
             )}
 
-            {/* Right: Document pane */}
             {showSplit && (
               <div
                 className={`flex flex-col overflow-hidden transition-all duration-300 ease-out ${
                   mobileTab === 'document' ? 'flex w-full md:w-2/5' : 'hidden md:flex md:w-2/5'
                 }`}
               >
-                {/* Section progress in right pane header */}
                 <div className="shrink-0 p-3">
                   <SectionProgress
                     sectionStates={sectionStates}
-                    applicabilityContext={applicabilityContext}
+                    applicabilityContext={sectionApplicabilityCtx}
+                    applicableSectionCount={applicabilityContext.applicableSectionCount}
                     completionPercent={completionPercent}
                   />
                 </div>
 
-                {/* A4 document shell */}
                 <div className="flex-1 overflow-hidden">
                   <DocumentPreviewShell
                     sectionStates={sectionStates}
-                    applicabilityContext={applicabilityContext}
+                    applicabilityContext={sectionApplicabilityCtx}
                   />
                 </div>
               </div>

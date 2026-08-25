@@ -104,3 +104,36 @@ Durable decisions that must not be silently reversed in future implementation pa
 **Trade-off**: Sessions reset if the Node.js process restarts. localStorage provides client-side recovery of conversation history. Acceptable for Phase 2 prototype.
 **Phase 3 migration path**: Replace server Map with a lightweight embedded store (e.g. better-sqlite3) keyed by sessionId.
 **Status**: Active for Phase 2.
+
+---
+
+## #16 — Bilingual conversation: Arabic + English (Phase 2.1)
+**Decision**: Rami replies in the user's dominant conversational language (Arabic or English). Language is detected deterministically by Arabic-character ratio (threshold: >15% of message chars). No LLM call for language detection.
+**Language tracking**: `ConversationLanguage` (`'ar' | 'en'`) stored in session and in each `ConversationMessage`. Returned in SSE `done` event so client can tag messages.
+**RTL**: Arabic messages use `dir="rtl"` on the message text container only. The application layout (sidebar, preview pane) remains LTR.
+**Document language**: RFP document content, section headings, and formal templates remain English regardless of conversation language. Conversation language and document language are separate concerns.
+**Status**: Active.
+
+---
+
+## #17 — Conditional section applicability is server-computed (Phase 2.1)
+**Decision**: `isSectionApplicable()` uses `documentType` and `engagementType` from `ProjectMemory` to determine which of the 8 conditional RFP sections are active. The result (`applicableSectionCount`) is returned in SSE events so the client reflects the correct count.
+**Example**: `system-implementation` → 19 applicable sections. `consulting` → 12 (mandatory only).
+**No hardcoding by project name**: Section activation is based on canonical `documentType` values in `rfpSchema.ts`, not project name strings.
+**Status**: Active.
+
+---
+
+## #18 — Next-question priority model (Phase 2.1)
+**Decision**: Fields are prioritized by a deterministic `FIELD_BUSINESS_PRIORITY` map in `gapEngine.ts`. Business-critical fields (documentType, businessNeed, users, scope, integrations) are asked before administrative details (documentTitle, tenderNumber, proposalDeadline).
+**Implementation**: Composite score = `businessPriority × 100 + sectionOrder + explicitAskBonus`. LLM has no control over question order.
+**Working title**: If `documentTitle` is unknown, discovery is not blocked. The absence of a formal title does not prevent Rami from asking about scope, users, and requirements first.
+**Status**: Active.
+
+---
+
+## #19 — Users field normalization (Phase 2.1)
+**Decision**: LLM may extract `users` as a plain string ("150 employees"), an array, or an object. `normalizeUsersValue()` in `memoryUpdater.ts` converts all these into the canonical `UsersValue` shape: `{ internal: string[], external: string[] }`.
+**Rule**: "citizen/external/public/customer" strings are classified as `external`; others as `internal`.
+**The canonical type is NOT weakened**: The `UsersValue` interface remains strongly typed. Normalization is a translation step in the updater.
+**Status**: Active.

@@ -1,6 +1,17 @@
 # Rami — Next Steps
 
-Last updated: 2026-08-25
+Last updated: 2026-08-25 (Phase 2.1 complete)
+
+## Phase 2.1 — Complete ✅
+All six Phase 2.1 correction items are done:
+1. ✅ Bilingual Arabic/English conversation — Rami replies in the user's language
+2. ✅ Conditional section applicability — system-impl shows 18–19 sections; consulting shows 12
+3. ✅ Progress semantics — "Sections X/Y approved" and "Information Z% gathered" clearly separated
+4. ✅ Next-question priority — business-critical fields before administrative details
+5. ✅ Users normalization — `UsersValue` shape enforced via `normalizeUsersValue()`
+6. ✅ RTL rendering — Arabic messages use `dir="rtl"` per message, not app-wide
+
+---
 
 ## Immediate: Phase 3 — Historical RFP Knowledge (RAG)
 
@@ -45,12 +56,12 @@ Phase 2 is complete. Phase 3 immediately follows.
 
 ---
 
-## Known Phase 2 limitations
+## Known limitations (post Phase 2.1)
 1. **Sessions reset on server restart** — in-memory store; client-side localStorage provides recovery of history but memory is lost. Mitigate by adding SQLite store in Phase 3.
-2. **Section progress not yet accurate** — right pane shows all 20 sections with NOT_STARTED state because section state transitions are deterministic (Phase 4). The completion percent is approximate.
-3. **Document title/beneficiary not shown in A4 shell** — these live in server memory and aren't synced to the client in Phase 2 (planned for Phase 3 with a GET /api/rami/session endpoint).
-4. **`users` field** — extraction returns simple string "200 staff"; the ProjectMemory type expects `UsersValue` (`{ internal: string[], external: string[] }`). Phase 3 should add normalization for complex field values.
-5. **No BA confirmation UI** — EXTRACTED values need a path to CONFIRMED. Phase 4 should add inline confirmation actions.
+2. **Section progress not yet accurate** — right pane shows all applicable sections with NOT_STARTED state because section state transitions are Phase 4. The information completion percent is approximate (client-side optimistic update).
+3. **Document title/beneficiary not shown in A4 shell** — these live in server memory and aren't synced to the client (planned for Phase 3 with a GET /api/rami/session endpoint).
+4. **No BA confirmation UI** — EXTRACTED values need a path to CONFIRMED. Phase 4 should add inline confirmation actions.
+5. **`completionPercent` is optimistic** — current calculation bumps by 3% per extracted field as client-side heuristic. Real calculation requires server to return `gaps.completionPercent` in the done event. Phase 3 should include this in the SSE payload.
 
 ---
 

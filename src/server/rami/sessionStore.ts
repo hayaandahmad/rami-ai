@@ -56,6 +56,7 @@ export function createSession(sessionId: string, documentId?: string): RamiServe
       documentId,
       rfpIntent: 'NONE',
       messages: [],
+      language: 'en',
       activeSection: null,
       createdAt: now,
       updatedAt: now,

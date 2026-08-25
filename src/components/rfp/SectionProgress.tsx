@@ -1,5 +1,6 @@
 /**
  * SectionProgress — compact dynamic RFP section progress control.
+ * Separates "Sections approved" from "Information gathered" clearly.
  * Derived from getApplicableSections() — never hardcoded.
  */
 
@@ -15,7 +16,10 @@ interface SectionProgressProps {
   sectionStates?: Record<string, SectionLifecycleState>;
   applicabilityContext?: SectionApplicabilityContext;
   activeSection?: string | null;
+  /** Information completeness: 0–100 */
   completionPercent?: number;
+  /** Override: total applicable section count (if already computed server-side) */
+  applicableSectionCount?: number;
 }
 
 const STATE_LABEL: Record<SectionLifecycleState, string> = {
@@ -63,6 +67,7 @@ export function SectionProgress({
   applicabilityContext = {},
   activeSection,
   completionPercent = 0,
+  applicableSectionCount,
 }: SectionProgressProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -74,7 +79,8 @@ export function SectionProgress({
     (s) => sectionStates[s.sectionId] === 'APPROVED',
   ).length;
 
-  const total = applicableSections.length;
+  // Prefer server-computed count (reflects memory state); fall back to local filter
+  const total = applicableSectionCount ?? applicableSections.length;
 
   return (
     <div className="rounded-xl border border-border bg-surface shadow-card">
@@ -84,13 +90,27 @@ export function SectionProgress({
         onClick={() => setIsExpanded((v) => !v)}
         aria-expanded={isExpanded}
         className="flex w-full items-center justify-between gap-3 px-4 py-3"
-        aria-label={`RFP Progress: ${approvedCount} of ${total} sections approved`}
+        aria-label={`RFP Progress: ${approvedCount} of ${total} sections approved, ${completionPercent}% information gathered`}
       >
-        <div className="flex items-center gap-3">
-          <span className="text-small font-semibold text-text-primary">RFP Progress</span>
-          <span className="text-caption text-text-muted tabular-nums">
-            {approvedCount} / {total}
-          </span>
+        {/* Two clearly labelled metrics */}
+        <div className="flex items-center gap-4">
+          <div className="flex flex-col items-start">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-text-muted">
+              Sections
+            </span>
+            <span className="text-small font-semibold tabular-nums text-text-primary">
+              {approvedCount} / {total} approved
+            </span>
+          </div>
+          <div className="h-7 w-px bg-border" aria-hidden="true" />
+          <div className="flex flex-col items-start">
+            <span className="text-[10px] font-medium uppercase tracking-wide text-text-muted">
+              Information
+            </span>
+            <span className="text-small font-semibold tabular-nums text-[var(--color-primary-700)]">
+              {completionPercent}% gathered
+            </span>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -112,11 +132,6 @@ export function SectionProgress({
             )}
           </div>
 
-          {/* Percentage */}
-          <span className="text-caption font-medium tabular-nums text-[var(--color-primary-700)]">
-            {completionPercent}%
-          </span>
-
           {isExpanded ? (
             <ChevronUp aria-hidden="true" className="h-4 w-4 shrink-0 text-text-muted" strokeWidth={1.75} />
           ) : (
@@ -125,12 +140,13 @@ export function SectionProgress({
         </div>
       </button>
 
-      {/* Progress bar */}
+      {/* Information progress bar */}
       <div className="mx-4 mb-3 h-1 rounded-full bg-[var(--color-neutral-100)]">
         <div
           className="h-full rounded-full bg-[var(--color-primary-600)] transition-all duration-500"
           style={{ width: `${completionPercent}%` }}
           role="progressbar"
+          aria-label="Information completeness"
           aria-valuenow={completionPercent}
           aria-valuemin={0}
           aria-valuemax={100}

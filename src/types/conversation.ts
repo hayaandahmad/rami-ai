@@ -3,12 +3,17 @@
  * Authority: .private-context/architecture/rami-agent-architecture.md
  */
 
+/** Conversation language detected from user messages. */
+export type ConversationLanguage = 'ar' | 'en';
+
 /** A single message in the Rami conversation. */
 export interface ConversationMessage {
   id: string;
   role: 'user' | 'assistant' | 'system';
   content: string;
   createdAt: string; // ISO-8601
+  /** Dominant language of this message. */
+  language?: ConversationLanguage;
   /** Streaming is in progress for this message (assistant only). */
   isStreaming?: boolean;
   /** Extracted facts from this message (assistant acknowledgement metadata). */
@@ -32,6 +37,8 @@ export interface RamiConversation {
   documentId?: string;
   rfpIntent: RfpIntent;
   messages: ConversationMessage[];
+  /** Dominant language of the conversation so far. */
+  language: ConversationLanguage;
   /** Canonical section currently being worked on (null = pre-RFP). */
   activeSection: string | null;
   createdAt: string;
@@ -62,6 +69,8 @@ export interface GapAnalysis {
   filledCount: number;
   totalRequired: number;
   completionPercent: number;
+  /** How many RFP sections are applicable given current context. */
+  applicableSectionCount: number;
   nextPriorityFieldId: string | null;
   nextPriorityLabel: string | null;
 }
@@ -79,6 +88,14 @@ export interface StreamEvent {
   sessionId?: string;
   updatedFieldIds?: string[];
   rfpIntent?: RfpIntent;
+  /** Language used in this response */
+  language?: ConversationLanguage;
+  /** Document type for applicability context */
+  documentType?: string;
+  /** Engagement type for applicability context */
+  engagementType?: string;
+  /** Number of applicable sections */
+  applicableSectionCount?: number;
   /** For 'error' */
   message?: string;
 }

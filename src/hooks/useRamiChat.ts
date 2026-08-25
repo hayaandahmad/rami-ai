@@ -2,17 +2,24 @@
  * useRamiChat — client-side hook for the Rami conversational engine.
  *
  * Manages:
- * - Conversation messages
+ * - Conversation messages (with per-message language tag for RTL)
  * - Streaming state
  * - RFP intent detection
  * - ProjectMemory update notifications
+ * - Applicability context (documentType, engagementType, applicableSectionCount)
  * - localStorage persistence (backup for navigation recovery)
  */
 
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { ConversationMessage, StreamEvent, RfpIntent, ExtractedFact } from '@/types/conversation';
+import type {
+  ConversationMessage,
+  ConversationLanguage,
+  StreamEvent,
+  RfpIntent,
+  ExtractedFact,
+} from '@/types/conversation';
 
 const STORAGE_KEY_PREFIX = 'rami-chat-v1:';
 const MAX_STORED_MESSAGES = 50;
@@ -51,11 +58,25 @@ function saveToStorage(sessionId: string, data: StoredChat) {
   }
 }
 
+/** Detect Arabic character dominance for client-side RTL rendering. */
+export function detectMessageLanguage(text: string): ConversationLanguage {
+  if (!text) return 'en';
+  const arabicCount = (text.match(/[\u0600-\u06FF]/g) ?? []).length;
+  return arabicCount / text.length > 0.15 ? 'ar' : 'en';
+}
+
 export type ChatStatus =
   | 'idle'
   | 'thinking'    // extraction in progress
   | 'streaming'   // response text streaming
   | 'error';
+
+/** Applicability context synced from the server via SSE events. */
+export interface ApplicabilityContext {
+  documentType?: string;
+  engagementType?: string;
+  applicableSectionCount: number;
+}
 
 export interface UseRamiChatOptions {
   sessionId: string;
@@ -80,6 +101,9 @@ export function useRamiChat({
     return stored?.rfpIntent ?? 'NONE';
   });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [applicabilityContext, setApplicabilityContext] = useState<ApplicabilityContext>({
+    applicableSectionCount: 12, // default to mandatory count
+  });
 
   // Track streaming message id
   const streamingIdRef = useRef<string | null>(null);
@@ -102,12 +126,16 @@ export function useRamiChat({
 
       setErrorMessage(null);
 
+      // Detect language client-side for optimistic RTL rendering of user message
+      const userLang = detectMessageLanguage(content.trim());
+
       // Add user message optimistically
       const userId = `msg-${Date.now()}-u`;
       const userMsg: ConversationMessage = {
         id: userId,
         role: 'user',
         content: content.trim(),
+        language: userLang,
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, userMsg]);
@@ -140,6 +168,7 @@ export function useRamiChat({
         const decoder = new TextDecoder();
         let lineBuffer = '';
         let accumulatedText = '';
+        let responseLang: ConversationLanguage = userLang;
 
         while (true) {
           const { done, value } = await reader.read();
@@ -171,6 +200,15 @@ export function useRamiChat({
                     setRfpIntent(event.rfpIntent);
                     onIntentChange?.(event.rfpIntent);
                   }
+                  if (event.applicableSectionCount !== undefined) {
+                    setApplicabilityContext((prev) => ({
+                      ...prev,
+                      documentType: event.documentType,
+                      engagementType: event.engagementType,
+                      applicableSectionCount: event.applicableSectionCount!,
+                    }));
+                  }
+                  if (event.language) responseLang = event.language;
                   break;
 
                 case 'text':
@@ -196,10 +234,20 @@ export function useRamiChat({
                   if (event.updatedFieldIds) {
                     setLastUpdatedFields(event.updatedFieldIds);
                   }
+                  if (event.language) responseLang = event.language;
+                  if (event.applicableSectionCount !== undefined) {
+                    setApplicabilityContext((prev) => ({
+                      ...prev,
+                      documentType: event.documentType,
+                      engagementType: event.engagementType,
+                      applicableSectionCount: event.applicableSectionCount!,
+                    }));
+                  }
+                  // Tag the assistant message with server-confirmed language
                   setMessages((prev) =>
                     prev.map((m) =>
                       m.id === assistantId
-                        ? { ...m, isStreaming: false, content: accumulatedText }
+                        ? { ...m, isStreaming: false, content: accumulatedText, language: responseLang }
                         : m,
                     ),
                   );
@@ -257,6 +305,7 @@ export function useRamiChat({
     rfpIntent,
     errorMessage,
     lastUpdatedFields,
+    applicabilityContext,
     sendMessage,
     retryLastMessage,
     clearError,
