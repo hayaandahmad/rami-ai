@@ -1,6 +1,6 @@
 # Rami — Next Steps
 
-Last updated: 2026-08-26 (Phase 2.1 complete; second-machine handoff added)
+Last updated: 2026-08-26 (Phase 2.2 Adaptive Control Plane complete; not committed)
 
 ## If you are setting up a second Windows laptop
 
@@ -10,76 +10,73 @@ Read `.private-context/handoff/SECOND_MACHINE_HANDOFF.md` and stop until the hum
 
 ---
 
-## Phase 2.1 — Complete ✅
-All six Phase 2.1 correction items are done:
-1. ✅ Bilingual Arabic/English conversation — Rami replies in the user's language
-2. ✅ Conditional section applicability — system-impl shows 18–19 sections; consulting shows 12
-3. ✅ Progress semantics — "Sections X/Y approved" and "Information Z% gathered" clearly separated
-4. ✅ Next-question priority — business-critical fields before administrative details
-5. ✅ Users normalization — `UsersValue` shape enforced via `normalizeUsersValue()`
-6. ✅ RTL rendering — Arabic messages use `dir="rtl"` per message, not app-wide
+## Phase 2.2 — Complete ✅ (working tree; commit only when human asks)
+
+Adaptive Control Plane implemented:
+- ProjectContext classifiers (UNDETERMINED defaults; not duplicated into ProjectMemory)
+- PackId freeze + field tags on existing 52 fields
+- GapStatus / materiality / depth / NextAction
+- Correction vs contradiction in memoryUpdater
+- Materiality-only stop + safe UNKNOWN
+- Server `completionPercent` / `collectionSufficient` / `nextActionType` on SSE
+- `npm run validate:phase2-adaptive` (16/16)
+
+Authority: `.private-context/architecture/adaptive-question-architecture.md`
 
 ---
 
-## Immediate: Phase 3 — Historical RFP Knowledge (RAG)
+## Immediate: Phase 2.3 — Domain Requirement Catalog Expansion
 
-Phase 2 is complete. Phase 3 immediately follows.
+Do **not** start until the human asks.
 
-### Phase 3 objectives
-1. **Ingest approved historical RFPs** — parse `.private-context/knowledge/*.pdf` (MoDEE Stage 3, OFA MPLS, RFP eGovt 2026) and `GeneralTemplate.docx` into text chunks
-2. **Generate embeddings** — use `nomic-embed-text` (already in manifest) to create vector embeddings per chunk
-3. **Build local vector index** — flat-file or SQLite-backed (stored in `.rami-index/`, already gitignored)
-4. **Implement retrieval** — given a missing field or section context, retrieve source-attributed chunks
-5. **Provenance**: retrieval results MUST carry source metadata and arrive as `REFERENCE` status — never as `CONFIRMED`
-6. **`SEARCH_HISTORICAL_RFPS` action type** — already defined in `src/types/conversation.ts` as a placeholder; implement it in Phase 3
-7. **`PROPOSE_VALUE` action type** — when a `REFERENCE` chunk strongly matches a missing field, propose it to the BA with attribution
+### Objectives
+1. Expand domain-specific requirement catalogs (AI/agentic, data platform, connectivity, ARIS/BPR, etc.) beyond the 52-field tags
+2. Keep PackId names frozen from Phase 2.2
+3. Preserve ProjectContext vs ProjectMemory separation
+4. Keep gap/NextAction/stop rules; enrich which fields become applicable per pack/domain
 
-### Files to create in Phase 3
-- `src/server/rag/ingestionPipeline.ts`
-- `src/server/rag/chunkStrategy.ts`
-- `src/server/rag/vectorIndex.ts`
-- `src/server/rag/retrieval.ts`
-- `scripts/ingest-knowledge.ts`
-- `scripts/build-rag-index.ts`
+### Explicitly still later
+- Phase 3 RAG / embeddings / PDF ingestion
+- Phase 4 drafting / confirm UI
+- Phase 5 DOCX assembly
+
+---
+
+## Phase 3 — Historical RFP Knowledge (RAG)
+
+After Phase 2.3 (or if human reorders):
+
+1. Ingest approved historical RFPs into text chunks
+2. Embeddings via `nomic-embed-text` (manifest already lists it; do not pull in 2.2)
+3. Local vector index under `.rami-index/`
+4. Retrieval with `REFERENCE` provenance only
+5. Implement `SEARCH_HISTORICAL_RFPS` / `PROPOSE_VALUE` placeholders
 
 ---
 
 ## Phase 4 — Live Section Drafting
-
-### Objectives
-- Generate real draft prose for each RFP section when `READY_TO_DRAFT`
-- Display draft in the right pane (replace placeholder with real content)
-- BA review and approval flow
-- Section revision via conversation ("make the SLA stricter")
-- `CONFIRMED` status for accepted drafts
-- Implement section state transitions in the full UI
-
----
+- Real draft prose; BA review; CONFIRMED promotion UI; section state transitions
 
 ## Phase 5 — Final RFP Assembly and Export
-- Assemble all `APPROVED` section drafts into a complete RFP document
-- DOCX export (using docx.js or similar)
-- Cover page with metadata from ProjectMemory
-- Table of contents
+- Assemble APPROVED drafts; DOCX export
 
 ---
 
-## Known limitations (post Phase 2.1)
-1. **Sessions reset on server restart** — in-memory store; client-side localStorage provides recovery of history but memory is lost. Mitigate by adding SQLite store in Phase 3.
-2. **Section progress not yet accurate** — right pane shows all applicable sections with NOT_STARTED state because section state transitions are Phase 4. The information completion percent is approximate (client-side optimistic update).
-3. **Document title/beneficiary not shown in A4 shell** — these live in server memory and aren't synced to the client (planned for Phase 3 with a GET /api/rami/session endpoint).
-4. **No BA confirmation UI** — EXTRACTED values need a path to CONFIRMED. Phase 4 should add inline confirmation actions.
-5. **`completionPercent` is optimistic** — current calculation bumps by 3% per extracted field as client-side heuristic. Real calculation requires server to return `gaps.completionPercent` in the done event. Phase 3 should include this in the SSE payload.
+## Known limitations (post Phase 2.2)
+1. Sessions still reset on server restart (in-memory store)
+2. Section progress states still mostly NOT_STARTED until Phase 4
+3. No BA confirmation UI (EXTRACTED may be KNOWN for questioning; CONFIRMED UI is Phase 4)
+4. Domain catalogs still thin (Phase 2.3)
+5. No RAG / generation / DOCX yet
 
 ---
 
-## Phase 3 first action
+## Phase 2.3 first action (when asked)
 Read:
 ```
+.private-context/architecture/adaptive-question-architecture.md
 .private-context/handoff/CURRENT_STATE.md
 .private-context/handoff/DECISIONS.md
-.private-context/architecture/rfp-knowledge-architecture.md
-.private-context/analysis/historical-rfp-findings.md
+src/schema/fieldControlMeta.ts
+src/types/projectContext.ts
 ```
-
-Then read the Phase 2 API route and session store to understand the runtime architecture before adding RAG integration.

@@ -15,9 +15,14 @@ export type SectionClassification = 'mandatory' | 'conditional';
 
 /** Applicability context used by isSectionApplicable(). */
 export interface SectionApplicabilityContext {
-  /** e.g. 'system-implementation' | 'framework-agreement' | 'consulting' | 'assessment' | 'support' | 'connectivity-telecom' */
+  /** e.g. 'system-implementation' | 'framework-agreement' | 'consulting' | ... */
   documentType?: string;
   engagementType?: string;
+  /** Phase 2.2 classifiers — optional; section outline may show without implying field requirements. */
+  documentStage?: string;
+  primaryDomain?: string;
+  contractingGranularity?: string;
+  activePacks?: string[];
   hasDeliveryMilestone?: boolean;
   hasSupportPeriod?: boolean;
   hasNamedRoles?: boolean;
@@ -64,29 +69,69 @@ export function isSectionApplicable(
 ): boolean {
   if (section.classification === 'mandatory') return true;
 
-  const { documentType = '', isLargeEngagement = false } = ctx;
+  const { documentType = '', primaryDomain = '', activePacks = [] } = ctx;
+  const domain = (primaryDomain || '').toUpperCase();
+  const packs = new Set(activePacks);
+
+  // While packs are CORE-only / domain UNDETERMINED: still allow preview of
+  // conditional sections based on documentType when known; otherwise hide
+  // system-heavy conditionals so outline stays generic.
+  const isSystem =
+    domain === 'SYSTEM_IMPLEMENTATION' ||
+    documentType === 'system-implementation' ||
+    packs.has('SYSTEM_IMPLEMENTATION');
+  const isConnectivity =
+    domain === 'CONNECTIVITY' ||
+    documentType === 'connectivity-telecom' ||
+    packs.has('CONNECTIVITY');
+  const isSupport =
+    domain === 'SLA_SUPPORT' ||
+    documentType === 'support' ||
+    packs.has('SLA_SUPPORT');
+  const isConsulting =
+    domain === 'CONSULTING' ||
+    domain === 'BPR' ||
+    documentType === 'consulting';
+
+  // Consulting / BPR without system pack: do not show system technical sections
+  if (isConsulting && !isSystem) {
+    if (
+      [
+        'functionalRequirements',
+        'technicalRequirements',
+        'implementationRequirements',
+        'acceptanceCriteria',
+        'supportMaintenance',
+        'manpowerRequirements',
+      ].includes(section.sectionId)
+    ) {
+      return false;
+    }
+  }
+
+  const { isLargeEngagement = false } = ctx;
 
   switch (section.sectionId) {
     case 'abbreviations':
-      return ['system-implementation', 'connectivity-telecom'].includes(documentType);
+      return isSystem || isConnectivity;
 
     case 'functionalRequirements':
-      return ['system-implementation'].includes(documentType);
+      return isSystem;
 
     case 'technicalRequirements':
-      return ['system-implementation', 'connectivity-telecom', 'support'].includes(documentType);
+      return isSystem || isConnectivity || isSupport;
 
     case 'implementationRequirements':
-      return ['system-implementation'].includes(documentType) || isLargeEngagement;
+      return isSystem || isLargeEngagement;
 
     case 'projectManagementGovernance':
-      return isLargeEngagement || ['system-implementation'].includes(documentType);
+      return isLargeEngagement || isSystem || packs.has('PMO');
 
     case 'acceptanceCriteria':
-      return ctx.hasDeliveryMilestone ?? ['system-implementation'].includes(documentType);
+      return ctx.hasDeliveryMilestone ?? isSystem;
 
     case 'supportMaintenance':
-      return ctx.hasSupportPeriod ?? ['system-implementation', 'support'].includes(documentType);
+      return ctx.hasSupportPeriod ?? (isSystem || isSupport || isConnectivity);
 
     case 'manpowerRequirements':
       return ctx.hasNamedRoles ?? isLargeEngagement;

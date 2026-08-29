@@ -23,13 +23,9 @@ export interface ConversationMessage {
 /** High-level RFP intent state. */
 export type RfpIntent = 'NONE' | 'POSSIBLE' | 'CREATE_RFP';
 
-/** Phase 2 action types (extensible for Phase 3 RAG). */
-export type NextAction =
-  | { type: 'ASK_FIELD'; fieldId: string; label: string }
-  | { type: 'PROPOSE_VALUE'; fieldId: string; proposedValue: unknown }
-  | { type: 'SEARCH_HISTORICAL_RFPS'; fieldId: string }  // Phase 3
-  | { type: 'READY_TO_DRAFT'; sectionId: string }          // Phase 4
-  | { type: 'OPEN_ENDED' };                                // free conversation
+/** Re-export Phase 2.2 NextAction (ASK_REQUIREMENTS cluster, etc.). */
+export type { NextAction, ClarifyTargetKind } from './nextAction';
+export { normalizeAskRequirements } from './nextAction';
 
 /** The full runtime conversational session. */
 export interface RamiConversation {
@@ -51,6 +47,8 @@ export interface ExtractedFact {
   value: unknown;
   /** 'high' = explicitly stated; 'medium' = inferred */
   confidence: 'high' | 'medium';
+  /** Phase 2.2: assert | correction | conflict */
+  updateKind?: 'assert' | 'correction' | 'conflict';
 }
 
 /** Result of the structured extraction call. */
@@ -61,18 +59,40 @@ export interface ExtractionResult {
   internalContext?: string;
 }
 
-/** Gap analysis result from deterministic gap engine. */
+import type { NextAction } from './nextAction';
+import type { GapStatus, Materiality } from './gapStatus';
+import type { PackId } from './projectContext';
+
+/** Per-field gap snapshot from gap engine v2. */
+export interface FieldGapSnapshot {
+  fieldId: string;
+  gapStatus: GapStatus;
+  materiality: Materiality;
+  packs: PackId[];
+  deferredTo?: string;
+}
+
+/** Gap analysis result from deterministic gap engine (Phase 2.2). */
 export interface GapAnalysis {
-  missingRequired: string[];      // fieldIds
-  missingConditional: string[];   // fieldIds (applicable but missing)
-  tbcFields: string[];            // fieldIds marked TBC
+  /** @deprecated Prefer fieldGaps; kept for Phase 2.1 callers. */
+  missingRequired: string[];
+  /** @deprecated Prefer fieldGaps. */
+  missingConditional: string[];
+  /** Fields with GapStatus UNKNOWN or legacy provenance TBC. */
+  tbcFields: string[];
   filledCount: number;
   totalRequired: number;
   completionPercent: number;
-  /** How many RFP sections are applicable given current context. */
   applicableSectionCount: number;
+  /** @deprecated Prefer nextAction ASK_REQUIREMENTS.primaryFieldId */
   nextPriorityFieldId: string | null;
   nextPriorityLabel: string | null;
+  /** Phase 2.2: full per-field gap snapshots for active/applicable fields. */
+  fieldGaps: FieldGapSnapshot[];
+  /** Deterministic next action for the phraser. */
+  nextAction: NextAction;
+  /** Materiality-based stop — never a field-count threshold. */
+  collectionSufficient: boolean;
 }
 
 /** SSE event types sent from the API to the client. */
@@ -96,6 +116,12 @@ export interface StreamEvent {
   engagementType?: string;
   /** Number of applicable sections */
   applicableSectionCount?: number;
+  /** Server-authoritative information completeness (0–100). */
+  completionPercent?: number;
+  /** Materiality-based stop flag. */
+  collectionSufficient?: boolean;
+  /** Serialized next action for client debugging / UI. */
+  nextActionType?: string;
   /** For 'error' */
   message?: string;
 }

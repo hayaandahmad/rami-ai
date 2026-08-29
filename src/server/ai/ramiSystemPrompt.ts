@@ -1,28 +1,24 @@
 /**
  * Rami system prompt and persona configuration.
- * Kept server-side — never exposed to the browser.
- *
- * Supports Arabic and English conversation.
- * RFP document language always defaults to English.
+ * Phase 2.2: obey deterministic NextAction; do not choose the field cluster.
  */
+
+import type { NextAction } from '@/types/nextAction';
+import { PROJECT_MEMORY_FIELDS } from '@/schema/projectMemoryFields';
 
 export type ConversationLanguage = 'ar' | 'en';
 
-/** Detect the dominant language of a message using Arabic character ratio. */
 export function detectLanguage(text: string): ConversationLanguage {
   if (!text || text.trim().length === 0) return 'en';
   const arabicCount = (text.match(/[\u0600-\u06FF]/g) ?? []).length;
   return arabicCount / text.length > 0.15 ? 'ar' : 'en';
 }
 
-/** Determine the conversation language from current message and session history. */
 export function resolveConversationLanguage(
   currentMessage: string,
   sessionLanguage: ConversationLanguage,
 ): ConversationLanguage {
   const msgLang = detectLanguage(currentMessage);
-  // If the user writes clearly in a language, follow them.
-  // If language is ambiguous (short/mixed), keep the session language.
   const arabicCount = (currentMessage.match(/[\u0600-\u06FF]/g) ?? []).length;
   const latinCount = (currentMessage.match(/[a-zA-Z]/g) ?? []).length;
   if (arabicCount > 5) return 'ar';
@@ -36,18 +32,22 @@ You are Rami, a professional Business Analysis and RFP (Request for Proposal) pr
 PERSONALITY:
 - Communicate naturally and professionally, like an experienced senior BA colleague
 - Be concise — avoid verbose explanations or robotic confirmations
-- Acknowledge what the user said briefly and naturally, then ask one focused question
+- Acknowledge what the user said briefly and naturally, then follow the NEXT ACTION instruction exactly
 - Never say "Thank you for your response" or "Now I will ask" — that is robotic
 - Never repeat back every piece of information just to confirm it
-- When appropriate, briefly echo the most important new context and move forward
 
 BEHAVIOR:
 - You help Business Analysts prepare RFP documents for government digital projects
 - You extract information from free-form messages — users do not need to answer structured forms
-- If the user provides multiple facts in one message, acknowledge the context naturally and ask about the MOST IMPORTANT missing piece
+- If the user provides multiple facts in one message, acknowledge briefly
 - Never ask for information that has already been provided
-- If the user is unsure, it is acceptable to mark something as "to be confirmed" and move on
-- Keep questions focused — ask one thing at a time, occasionally two if they are closely related
+- If the user is unsure, it is acceptable to mark something as unknown / to be confirmed and move on
+- Ask ONE natural question that may cover a small tightly-related cluster when instructed — never a numbered questionnaire
+
+CRITICAL CONTROL RULE:
+- The NEXT ACTION block is authoritative. You must follow it.
+- You do NOT choose which requirement to ask next.
+- You do NOT invent FULL_RFP / procurement questions when classification is unresolved.
 
 SCOPE:
 - You assist with: project background, scope, engagement type, stakeholders, requirements, deliverables, evaluation, legal terms, and RFP structure
@@ -77,10 +77,35 @@ export function buildSystemPrompt(language: ConversationLanguage): string {
   return (BASE_PROMPT + (language === 'ar' ? ARABIC_ADDITION : ENGLISH_ADDITION)).trim();
 }
 
-/** Legacy export for backward compat — defaults to English. */
 export const RAMI_SYSTEM_PROMPT = buildSystemPrompt('en');
 
-/** A shorter system prompt context block describing the current RFP state. */
+function fieldLabel(fieldId: string): string {
+  return PROJECT_MEMORY_FIELDS.find((f) => f.fieldId === fieldId)?.label ?? fieldId;
+}
+
+/** Build the authoritative NEXT ACTION instruction for the phraser. */
+export function buildNextActionBlock(nextAction: NextAction): string {
+  switch (nextAction.type) {
+    case 'ASK_REQUIREMENTS': {
+      const primary = fieldLabel(nextAction.primaryFieldId);
+      const related = nextAction.relatedFieldIds.map(fieldLabel);
+      const cluster =
+        related.length > 0
+          ? `Primary topic: "${primary}". You MAY naturally also cover these tightly related topics in the SAME question: ${related.map((r) => `"${r}"`).join(', ')}. Do not add other topics.`
+          : `Ask only about: "${primary}".`;
+      return `NEXT ACTION = ASK_REQUIREMENTS\n${cluster}\nPhrase ONE natural conversational question (not a numbered list).`;
+    }
+    case 'CLARIFY_CONTRADICTION':
+      return `NEXT ACTION = CLARIFY_CONTRADICTION\nTarget (${nextAction.targetKind}): ${nextAction.targetId}\nAsk which value should govern. Do not invent a reconciliation.`;
+    case 'STOP_COLLECTION':
+      return `NEXT ACTION = STOP_COLLECTION\nReason: ${nextAction.reason}\nStop interviewing. Briefly summarize that core information is sufficient for now and note any deferred/unknown items. Do not ask another discovery question.`;
+    case 'OPEN_ENDED':
+      return `NEXT ACTION = OPEN_ENDED\nInvite the BA to share more about the project type, need, or scope. Stay conservative — do not jump into procurement detail.`;
+    default:
+      return `NEXT ACTION = ${nextAction.type}\nContinue helpfully without inventing facts.`;
+  }
+}
+
 export function buildContextBlock(options: {
   documentType?: string;
   documentTitle?: string;
@@ -90,16 +115,32 @@ export function buildContextBlock(options: {
   totalRequired: number;
   nextFieldLabel?: string | null;
   language?: ConversationLanguage;
+  nextAction?: NextAction;
+  documentStage?: string;
+  primaryDomain?: string;
+  collectionSufficient?: boolean;
 }): string {
   const parts: string[] = ['CURRENT PROJECT STATE:'];
 
   if (options.documentTitle) parts.push(`- Project title: ${options.documentTitle}`);
   if (options.beneficiaryEntity) parts.push(`- Beneficiary entity: ${options.beneficiaryEntity}`);
-  if (options.documentType) parts.push(`- Document type: ${options.documentType}`);
+  if (options.documentType) parts.push(`- Document type (signal): ${options.documentType}`);
+  if (options.documentStage) parts.push(`- Document stage: ${options.documentStage}`);
+  if (options.primaryDomain) parts.push(`- Primary domain: ${options.primaryDomain}`);
   if (options.activeSection) parts.push(`- Current focus: ${options.activeSection}`);
-  parts.push(`- Information gathered: ${options.filledCount} of ${options.totalRequired} required fields`);
-  if (options.nextFieldLabel) {
-    parts.push(`- NEXT PRIORITY: Ask about: "${options.nextFieldLabel}" — phrase it naturally in context`);
+  parts.push(
+    `- Information gathered: ${options.filledCount} of ${options.totalRequired} tracked core fields`,
+  );
+  if (options.collectionSufficient) {
+    parts.push('- Collection sufficient: yes (stop interviewing)');
+  }
+  if (options.nextAction) {
+    parts.push('');
+    parts.push(buildNextActionBlock(options.nextAction));
+  } else if (options.nextFieldLabel) {
+    parts.push(
+      `- NEXT PRIORITY: Ask about: "${options.nextFieldLabel}" — phrase it naturally in context`,
+    );
   }
 
   return parts.join('\n');

@@ -33,8 +33,6 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
 
   // Section states live on the server; client tracks a lightweight display state
   const [sectionStates] = useState<Record<string, SectionLifecycleState>>({});
-  // Information completeness is tracked server-side and returned in SSE 'done' events
-  const [completionPercent, setCompletionPercent] = useState(0);
 
   const onIntentChange = useCallback((intent: RfpIntent) => {
     if (intent === 'CREATE_RFP') {
@@ -42,15 +40,8 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
     }
   }, []);
 
-  const onFactsExtracted = useCallback(
-    (_facts: unknown[], updatedFieldIds: string[]) => {
-      // Optimistic completion bump: refined by server-side gaps on next 'done' event
-      if (updatedFieldIds.length > 0) {
-        setCompletionPercent((prev) => Math.min(95, prev + updatedFieldIds.length * 3));
-      }
-    },
-    [],
-  );
+  // Completeness comes from server SSE — no client +3 heuristic
+  const onFactsExtracted = useCallback((_facts: unknown[], _updatedFieldIds: string[]) => {}, []);
 
   const {
     messages,
@@ -63,6 +54,8 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
     retryLastMessage,
     clearError,
   } = useRamiChat({ sessionId, documentId, onIntentChange, onFactsExtracted });
+
+  const completionPercent = applicabilityContext.completionPercent ?? 0;
 
   const handleSubmit = useCallback(() => {
     if (!composerValue.trim()) return;

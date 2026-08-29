@@ -1,5 +1,5 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-26 (Phase 2.1 complete; second-machine handoff added)
+Last updated: 2026-08-26 (Phase 2.2 Adaptive Control Plane complete; not committed)
 
 ## Second-machine reproduction
 To clone this repository onto another Windows laptop and run the **current** Rami (not Phase 3), start at:
@@ -22,7 +22,9 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 - **Phase 1**: ✅ Complete — local AI foundations (commit `dbf362a`)
 - **Phase 2**: ✅ Complete — conversational AI workspace
 - **Phase 2.1**: ✅ Complete — bilingual polish, section applicability, progress semantics, question priority, users normalization
-- **Phase 3**: ⏳ Next — historical RAG, embeddings, PDF ingestion
+- **Phase 2.2**: ✅ Complete — Adaptive Control Plane (ProjectContext, packs, GapStatus, NextAction, materiality stop). Working tree only until human asks to commit.
+- **Phase 2.3**: ⏳ Next — Domain Requirement Catalog Expansion (do not start until asked)
+- **Phase 3**: ⏳ Pending — historical RAG, embeddings, PDF ingestion
 - **Phase 4**: ⏳ Pending — live section drafting in right pane
 - **Phase 5**: ⏳ Pending — final RFP assembly
 
@@ -120,15 +122,49 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
   - Next-best-question priority: business-critical fields first, admin details last
   - `users` field normalized to `UsersValue` shape regardless of LLM output format
   - Arabic line-height CSS increased for readability
+- **Phase 2.2 additions:**
+  - ProjectContext classifiers (UNDETERMINED → evidence); CORE-only packs while unresolved
+  - GapStatus + materiality stop + safe UNKNOWN; ASK_REQUIREMENTS cluster (≤3 IDs)
+  - Correction vs contradiction in memoryUpdater; CLARIFY with targetKind/targetId
+  - Server-driven `completionPercent` / `collectionSufficient` / `nextActionType` on SSE (no client +3 heuristic)
+
+---
+
+## Phase 2.2 Adaptive Control Plane (implemented)
+
+Authority: `.private-context/architecture/adaptive-question-architecture.md`
+
+### Created
+- `src/types/projectContext.ts` — classifiers + PackId freeze + ComplexityProfile (not duplicated into ProjectMemory)
+- `src/types/gapStatus.ts` — GapStatus / Materiality / FieldGapState
+- `src/types/nextAction.ts` — ASK_REQUIREMENTS, CLARIFY_CONTRADICTION (`targetKind`/`targetId`), STOP_COLLECTION, OPEN_ENDED + placeholders
+- `src/schema/fieldControlMeta.ts` — packs / materiality / depth tags for all 52 fields
+- `src/server/rami/projectClassifier.ts` — signals → ProjectContext (UNDETERMINED defaults)
+- `src/server/rami/questionPackEngine.ts` — activatePacks; CORE-only while unresolved
+- `scripts/validate-phase2-adaptive.ts` + `npm run validate:phase2-adaptive`
+
+### Sensitive modified
+- `gapEngine.ts` — pack applicability, GapStatus, ASK cluster, materiality stop, safe UNKNOWN, context contradiction
+- `memoryUpdater.ts` — correction vs conflict (superseding / competing); no silent HIGH overwrite
+- `route.ts` — extract → apply → classify → packs → gaps; SSE `completionPercent` / `collectionSufficient` / `nextActionType`
+- Also: provenance alias, conversation, sessionStore, extractionSchema, ramiSystemPrompt, rfpSchema, projectMemoryFields, useRamiChat, RamiChatWorkspace (removed +3 heuristic)
+
+### Locked clarifications applied
+1. Classifiers live only on ProjectContext
+2. PackId names frozen (CORE … ASSESSMENT_TESTING); no 2.3 catalogs
+3. Safe UNKNOWN defined for stop
+4. CLARIFY_CONTRADICTION targets `memory_field` or `project_context`
 
 ---
 
 ## What is NOT implemented yet
+- **Phase 2.3 domain catalogs** (AI/CDC/telecom/ARIS expansion fields)
 - **RAG**: No embedding, PDF ingestion, vector retrieval (Phase 3)
 - **Real section drafting**: Right pane shows placeholder shell only (Phase 4)
-- **Google Sheets** for ProjectMemory persistence (deferred to Phase 3)
+- **Google Sheets** for ProjectMemory persistence (deferred)
 - **Section state transitions**: Sections always start NOT_STARTED (Phase 4)
-- **BA confirmation flow**: EXTRACTED → CONFIRMED promotion (Phase 3/4)
+- **BA confirmation flow**: EXTRACTED → CONFIRMED promotion (Phase 4)
+- **DOCX / final assembly** (Phase 5)
 
 ---
 
@@ -144,12 +180,15 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 .private-context/handoff/NEXT_STEPS.md
 .private-context/handoff/SECOND_MACHINE_HANDOFF.md   ← second-laptop reproduction only
 .private-context/handoff/SECOND_MACHINE_PROMPT_2.md  ← copy/paste Prompt 2 after handoff is read
+.private-context/architecture/adaptive-question-architecture.md  ← Phase 2.2 authority
 .private-context/architecture/rami-agent-architecture.md
 .private-context/architecture/local-ai-deployment.md
 .private-context/product/conversational-rfp-workflow.md
-src/types/conversation.ts
+src/types/projectContext.ts
+src/types/nextAction.ts
 src/app/api/rami/chat/route.ts
 src/server/rami/gapEngine.ts
 src/server/rami/memoryUpdater.ts
+src/server/rami/projectClassifier.ts
 src/views/RamiChat/RamiChatWorkspace.tsx
 ```

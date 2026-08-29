@@ -10,6 +10,9 @@
  */
 
 import type { RfpSectionId } from './rfpSchema';
+import type { PackId } from '@/types/projectContext';
+import type { ExplorationDepth, Materiality } from '@/types/gapStatus';
+import { getFieldControlMeta } from './fieldControlMeta';
 
 export type FieldRequirement = 'required' | 'conditional';
 
@@ -38,6 +41,14 @@ export interface ProjectMemoryFieldDef {
   baConfirmationRequired: boolean;
   /** Free-text note for implementation reference. */
   notes?: string;
+}
+
+/** Phase 2.2 control-plane view of a field (packs / materiality / depth). */
+export interface ProjectMemoryFieldControlView extends ProjectMemoryFieldDef {
+  packs: PackId[];
+  materiality: Materiality;
+  defaultDepth: ExplorationDepth;
+  relatedAskPeers: string[];
 }
 
 /**
@@ -655,4 +666,18 @@ export function getFieldsForSection(sectionId: string): readonly ProjectMemoryFi
 /** Returns only the required fields. */
 export function getRequiredFields(): readonly ProjectMemoryFieldDef[] {
   return PROJECT_MEMORY_FIELDS.filter((f) => f.requirement === 'required');
+}
+
+/** Merge static field def with Phase 2.2 pack/materiality metadata. */
+export function getFieldControlView(fieldId: string): ProjectMemoryFieldControlView | undefined {
+  const def = getFieldDef(fieldId);
+  if (!def) return undefined;
+  const meta = getFieldControlMeta(fieldId);
+  return {
+    ...def,
+    packs: meta.packs,
+    materiality: meta.materiality,
+    defaultDepth: meta.defaultDepth,
+    relatedAskPeers: meta.relatedAskPeers ?? [],
+  };
 }

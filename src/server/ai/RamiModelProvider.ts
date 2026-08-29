@@ -84,6 +84,15 @@ export interface RamiModelProvider {
   ): Promise<CompletionResult>;
 
   /**
+   * Stream a free-form chat completion as text chunks.
+   * Providers should strip model-specific reasoning wrappers before yielding.
+   */
+  completeStream(
+    messages: ChatMessage[],
+    options?: InferenceOptions,
+  ): AsyncGenerator<string>;
+
+  /**
    * Send a message and get a structured JSON response conforming to the
    * given JSON Schema. The provider must use the backend's native
    * schema-constrained output mechanism (e.g. Ollama's `format` field)

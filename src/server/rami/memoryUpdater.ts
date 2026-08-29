@@ -1,42 +1,48 @@
 /**
  * ProjectMemory update logic — applies extracted facts to the session memory.
- * Authority: .private-context/architecture/rfp-knowledge-architecture.md §1-2
+ * Authority: rfp-knowledge-architecture.md + Phase 2.2 correction/contradiction rules.
  *
- * Rules:
- * - Extracted values from LLM get status EXTRACTED (not CONFIRMED)
- * - CONFIRMED values are not silently overwritten
- * - Provenance history is preserved via updateMemoryField
- * - Unknown fieldIds are rejected
- * - riskNotes are accumulated, not replaced
+ * Correction vs contradiction:
+ * - updateKind=correction OR explicit superseding language → history + replace (NOT CONTRADICTORY)
+ * - updateKind=conflict OR competing-source language OR two simultaneous values without supersession
+ *   → CONTRADICTORY + do not silent-overwrite
+ * - Ambiguous material conflict without clear supersession → prefer contradiction (clarify)
+ *
+ * Do NOT use: same field + ba-message + ba-message = correction (too broad).
  */
 
 import { createMemoryField, updateMemoryField } from '@/types/provenance';
 import { isValidFieldId } from '@/server/ai/extractionSchema';
 import type { ProjectMemory, UsersValue } from '@/types/projectMemory';
 import type { ExtractedFact } from '@/types/conversation';
+import type { GapStatus } from '@/types/gapStatus';
+import { getFieldControlMeta } from '@/schema/fieldControlMeta';
 
-/**
- * Normalize an LLM-extracted users value into the canonical UsersValue shape.
- * The LLM may return a plain string ("150 employees"), an array, or an object.
- * This function always returns a valid UsersValue or null if value is unusable.
- */
+export type FactUpdateKind = 'assert' | 'correction' | 'conflict';
+
+export interface ExtractedFactWithKind extends ExtractedFact {
+  updateKind?: FactUpdateKind;
+}
+
 function normalizeUsersValue(raw: unknown): UsersValue | null {
   if (raw === null || raw === undefined) return null;
 
-  // Already correctly shaped
   if (typeof raw === 'object' && !Array.isArray(raw)) {
     const obj = raw as Record<string, unknown>;
     const internal = Array.isArray(obj['internal'])
       ? (obj['internal'] as unknown[]).map(String)
-      : obj['internal'] ? [String(obj['internal'])] : [];
+      : obj['internal']
+        ? [String(obj['internal'])]
+        : [];
     const external = Array.isArray(obj['external'])
       ? (obj['external'] as unknown[]).map(String)
-      : obj['external'] ? [String(obj['external'])] : [];
+      : obj['external']
+        ? [String(obj['external'])]
+        : [];
     if (internal.length > 0 || external.length > 0) return { internal, external };
     return null;
   }
 
-  // Array of strings — classify each item
   if (Array.isArray(raw)) {
     const internal: string[] = [];
     const external: string[] = [];
@@ -53,11 +59,9 @@ function normalizeUsersValue(raw: unknown): UsersValue | null {
     return null;
   }
 
-  // Plain string — treat as internal users description
   if (typeof raw === 'string') {
     const trimmed = raw.trim();
     if (!trimmed) return null;
-    // Detect external-user hints
     if (/citizen|external|public|customer/i.test(trimmed)) {
       return { internal: [], external: [trimmed] };
     }
@@ -67,35 +71,101 @@ function normalizeUsersValue(raw: unknown): UsersValue | null {
   return null;
 }
 
+/** Detect explicit superseding language in the BA message. */
+export function hasSupersedingLanguage(message: string): boolean {
+  return /\b(actually|instead|correct that|change that|make that|not\s+\d|rather than|replace|updated? to|should be|correction)\b/i.test(
+    message,
+  );
+}
+
+/** Detect competing-source language. */
+export function hasCompetingSourceLanguage(message: string): boolean {
+  return /\b(but the|whereas|however the|annex says|document says|main (document|rfp)|conflicts? with|one source|another source|two different|vs\.?|versus)\b/i.test(
+    message,
+  );
+}
+
 export interface MemoryUpdateResult {
-  applied: string[];   // fieldIds successfully applied
-  rejected: string[];  // fieldIds rejected (unknown, type mismatch, etc.)
-  protected: string[]; // fieldIds skipped because CONFIRMED
+  applied: string[];
+  rejected: string[];
+  protected: string[];
+  /** Fields marked CONTRADICTORY this turn. */
+  contradicted: string[];
+  corrected: string[];
+}
+
+type MemoryFieldBag = {
+  fieldId: string;
+  current: { status: string; value: unknown; sourceType?: string };
+  history: unknown[];
+  gapStatus?: GapStatus;
+  deferredTo?: string;
+  contradiction?: { values: unknown[]; sources: string[]; severity: 'BLOCKING' | 'WARNING' };
+};
+
+function markContradiction(
+  existing: MemoryFieldBag,
+  newValue: unknown,
+  sourceRef: string | undefined,
+  memoryRecord: Record<string, unknown>,
+  fieldId: string,
+): void {
+  const meta = getFieldControlMeta(fieldId);
+  const severity =
+    meta.materiality === 'CRITICAL' || meta.materiality === 'HIGH' ? 'BLOCKING' : 'WARNING';
+  const updated: MemoryFieldBag = {
+    ...existing,
+    gapStatus: 'CONTRADICTORY',
+    contradiction: {
+      values: [existing.current.value, newValue],
+      sources: [
+        String(existing.current.sourceType ?? 'existing'),
+        sourceRef ?? 'ba-message',
+      ],
+      severity,
+    },
+  };
+  memoryRecord[fieldId] = updated;
+}
+
+function resolveUpdateKind(
+  fact: ExtractedFactWithKind,
+  latestMessage: string | undefined,
+): FactUpdateKind {
+  if (fact.updateKind === 'correction' || fact.updateKind === 'conflict') {
+    return fact.updateKind;
+  }
+  if (latestMessage && hasCompetingSourceLanguage(latestMessage)) return 'conflict';
+  if (latestMessage && hasSupersedingLanguage(latestMessage)) return 'correction';
+  return 'assert';
 }
 
 /**
- * Apply a list of extracted facts to the project memory.
- * Returns which fields were applied, rejected, or protected.
+ * Apply extracted facts with correction / contradiction awareness.
  */
 export function applyExtractedFacts(
   memory: ProjectMemory,
-  facts: ExtractedFact[],
+  facts: ExtractedFactWithKind[],
   sourceRef?: string,
+  latestMessage?: string,
 ): MemoryUpdateResult {
   const applied: string[] = [];
   const rejected: string[] = [];
   const protected_: string[] = [];
+  const contradicted: string[] = [];
+  const corrected: string[] = [];
+
+  const memoryRecord = memory as unknown as Record<string, unknown>;
 
   for (const fact of facts) {
-    const { fieldId, value, confidence } = fact;
+    const { fieldId, value } = fact;
+    const updateKind = resolveUpdateKind(fact, latestMessage);
 
-    // Reject unknown field IDs
     if (!isValidFieldId(fieldId)) {
       rejected.push(fieldId);
       continue;
     }
 
-    // Reject null/undefined/empty values
     if (value === null || value === undefined) {
       rejected.push(fieldId);
       continue;
@@ -109,7 +179,6 @@ export function applyExtractedFacts(
       continue;
     }
 
-    // Normalize users field to canonical UsersValue shape
     let normalizedValue: unknown = value;
     if (fieldId === 'users') {
       const users = normalizeUsersValue(value);
@@ -120,83 +189,152 @@ export function applyExtractedFacts(
       normalizedValue = users;
     }
 
-    const memoryRecord = memory as unknown as Record<string, unknown>;
-    const existingField = memoryRecord[fieldId];
+    const existingField = memoryRecord[fieldId] as MemoryFieldBag | undefined;
 
     try {
       if (!existingField) {
-        // Field never set — create it
-        memoryRecord[fieldId] = createMemoryField(
-          fieldId,
-          normalizedValue,
-          'EXTRACTED',
-          'ba-message',
-          sourceRef,
-        );
-        applied.push(fieldId);
-      } else {
-        // Field exists — check if CONFIRMED (don't silently overwrite)
-        const existing = existingField as {
-          current: { status: string; value: unknown };
+        memoryRecord[fieldId] = {
+          ...createMemoryField(fieldId, normalizedValue, 'EXTRACTED', 'ba-message', sourceRef),
+          gapStatus: 'KNOWN' as GapStatus,
         };
+        applied.push(fieldId);
+        continue;
+      }
 
-        if (existing.current.status === 'CONFIRMED') {
-          // Only update if value actually changed
-          if (JSON.stringify(existing.current.value) !== JSON.stringify(normalizedValue)) {
-            // User is correcting a previously CONFIRMED value — treat as new EXTRACTED
-            // (requires explicit BA re-confirmation to become CONFIRMED again)
-            memoryRecord[fieldId] = updateMemoryField(
-              existing as Parameters<typeof updateMemoryField>[0],
-              normalizedValue,
-              'EXTRACTED',
-              'ba-message',
-              sourceRef,
-            );
-            applied.push(fieldId);
-          } else {
-            protected_.push(fieldId); // same value, no change needed
-          }
+      const existing = existingField;
+      const sameValue =
+        JSON.stringify(existing.current.value) === JSON.stringify(normalizedValue);
+
+      if (sameValue) {
+        protected_.push(fieldId);
+        continue;
+      }
+
+      // Conflict: competing evidence — do not overwrite
+      if (updateKind === 'conflict') {
+        markContradiction(existing, normalizedValue, sourceRef, memoryRecord, fieldId);
+        contradicted.push(fieldId);
+        continue;
+      }
+
+      // Correction: explicit supersession — preserve history; keep EXTRACTED (or re-open CONFIRMED)
+      if (updateKind === 'correction') {
+        const newEntry = {
+          value: normalizedValue,
+          status: 'EXTRACTED' as const,
+          sourceType: 'ba-message' as const,
+          sourceRef,
+          updatedAt: new Date().toISOString(),
+        };
+        // EXTRACTED→EXTRACTED is not a provenance transition — value replace with history
+        memoryRecord[fieldId] = {
+          fieldId,
+          current: newEntry,
+          history: [...(existing.history ?? []), existing.current],
+          gapStatus: 'KNOWN' as GapStatus,
+          contradiction: undefined,
+        };
+        applied.push(fieldId);
+        corrected.push(fieldId);
+        continue;
+      }
+
+      // assert with existing different value and no supersession signal:
+      // if material CRITICAL/HIGH → clarify (contradiction); else treat as soft correction
+      if (existing.current.value !== undefined && existing.current.value !== null) {
+        const meta = getFieldControlMeta(fieldId);
+        const material = meta.materiality === 'CRITICAL' || meta.materiality === 'HIGH';
+        if (material && !hasSupersedingLanguage(latestMessage ?? '')) {
+          markContradiction(existing, normalizedValue, sourceRef, memoryRecord, fieldId);
+          contradicted.push(fieldId);
           continue;
         }
+      }
 
-        // riskNotes: accumulate as array
-        if (fieldId === 'riskNotes') {
-          const currentNotes = Array.isArray(existing.current.value)
-            ? existing.current.value as string[]
-            : [];
-          const newNote = Array.isArray(normalizedValue) ? normalizedValue as string[] : [String(normalizedValue)];
-          const merged = [...currentNotes, ...newNote];
-          memoryRecord[fieldId] = updateMemoryField(
-            existing as Parameters<typeof updateMemoryField>[0],
-            merged,
-            'EXTRACTED',
-            'ba-message',
-            sourceRef,
-          );
-          applied.push(fieldId);
-          continue;
-        }
-
-        // Standard update
-        if (JSON.stringify(existing.current.value) !== JSON.stringify(normalizedValue)) {
-          memoryRecord[fieldId] = updateMemoryField(
+      if (existing.current.status === 'CONFIRMED') {
+        memoryRecord[fieldId] = {
+          ...updateMemoryField(
             existing as Parameters<typeof updateMemoryField>[0],
             normalizedValue,
             'EXTRACTED',
             'ba-message',
             sourceRef,
-          );
-          applied.push(fieldId);
-        }
-        // else: same value, skip silently
+          ),
+          gapStatus: 'KNOWN' as GapStatus,
+        };
+        applied.push(fieldId);
+        continue;
       }
+
+      if (fieldId === 'riskNotes') {
+        const currentNotes = Array.isArray(existing.current.value)
+          ? (existing.current.value as string[])
+          : [];
+        const newNote = Array.isArray(normalizedValue)
+          ? (normalizedValue as string[])
+          : [String(normalizedValue)];
+        memoryRecord[fieldId] = {
+          ...updateMemoryField(
+            existing as Parameters<typeof updateMemoryField>[0],
+            [...currentNotes, ...newNote],
+            'EXTRACTED',
+            'ba-message',
+            sourceRef,
+          ),
+          gapStatus: 'KNOWN' as GapStatus,
+        };
+        applied.push(fieldId);
+        continue;
+      }
+
+      memoryRecord[fieldId] = {
+        ...updateMemoryField(
+          existing as Parameters<typeof updateMemoryField>[0],
+          normalizedValue,
+          'EXTRACTED',
+          'ba-message',
+          sourceRef,
+        ),
+        gapStatus: 'KNOWN' as GapStatus,
+        contradiction: undefined,
+      };
+      applied.push(fieldId);
     } catch {
       rejected.push(fieldId);
     }
-
-    // Suppress unused variable warning for confidence — it can be used for Phase 3 trust scoring
-    void confidence;
   }
 
-  return { applied, rejected, protected: protected_ };
+  return { applied, rejected, protected: protected_, contradicted, corrected };
+}
+
+/** Mark a field as intentionally deferred (GapStatus DEFERRED). */
+export function markFieldDeferred(
+  memory: ProjectMemory,
+  fieldId: string,
+  deferredTo: string,
+): void {
+  if (!isValidFieldId(fieldId)) return;
+  const memoryRecord = memory as unknown as Record<string, unknown>;
+  const existing = memoryRecord[fieldId] as MemoryFieldBag | undefined;
+  if (!existing) {
+    memoryRecord[fieldId] = {
+      fieldId,
+      current: {
+        value: null,
+        status: 'TBC',
+        sourceType: 'ba-message',
+        updatedAt: new Date().toISOString(),
+      },
+      history: [],
+      gapStatus: 'DEFERRED' as GapStatus,
+      deferredTo,
+    };
+    return;
+  }
+  memoryRecord[fieldId] = {
+    ...existing,
+    gapStatus: 'DEFERRED' as GapStatus,
+    deferredTo,
+    contradiction: undefined,
+  };
 }

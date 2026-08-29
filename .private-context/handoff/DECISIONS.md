@@ -139,3 +139,46 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 **Rule**: "citizen/external/public/customer" strings are classified as `external`; others as `internal`.
 **The canonical type is NOT weakened**: The `UsersValue` interface remains strongly typed. Normalization is a translation step in the updater.
 **Status**: Active.
+
+---
+
+## #20 — ProjectContext is the control plane; ProjectMemory stays facts (Phase 2.2)
+**Decision**: `documentStage`, `contractingGranularity`, `primaryDomain`, `secondaryDomains`, `complexity`, and `activePacks` live only on `ProjectContext`. They are never duplicated into `ProjectMemory`. Existing `documentType` / `engagementType` memory fields remain as compatibility + classification signals only.
+**Status**: Active. Hard rule.
+
+---
+
+## #21 — UNDETERMINED classifiers + CORE-only packs (Phase 2.2)
+**Decision**: Unresolved classifiers use `UNDETERMINED` (not silent FULL_RFP / SINGLE_PROJECT defaults). While stage / granularity / primaryDomain is UNDETERMINED, `activePacks = CORE` only unless evidence explicitly supports another pack. Preview outline visibility does not imply required/missing.
+**Status**: Active.
+
+---
+
+## #22 — PackId freeze (Phase 2.2)
+**Decision**: Pack names are frozen: CORE, PROCUREMENT, PRE_QUALIFICATION, FRAMEWORK, BPR, DOWNSTREAM_DT_RFP, SYSTEM_IMPLEMENTATION, DATA_PLATFORM, CONNECTIVITY, AI_AGENTIC, SECURITY, PMO, TRAINING_CHANGE, SLA_SUPPORT, ASSESSMENT_TESTING. Packs are metadata tags on fields, not duplicated engines. Phase 2.3 may expand catalogs under these IDs but must not rename them casually.
+**Status**: Active.
+
+---
+
+## #23 — Five axes stay separate (Phase 2.2)
+**Decision**: Applicability ≠ materiality ≠ depth ≠ GapStatus ≠ ProvenanceStatus. LOW complexity never auto-means NOT_APPLICABLE. Provenance TBC remains @deprecated compatibility and maps to GapStatus UNKNOWN in gap logic.
+**Status**: Active.
+
+---
+
+## #24 — NextAction ASK cluster + typed contradiction targets (Phase 2.2)
+**Decision**: `ASK_REQUIREMENTS` is 1 primary + 0–2 related (max 3 field IDs). `CLARIFY_CONTRADICTION` uses `targetKind: 'memory_field' | 'project_context'` + `targetId` so either a memory field or a classifier conflict can be clarified.
+**Status**: Active.
+
+---
+
+## #25 — Materiality-only stop + safe UNKNOWN (Phase 2.2)
+**Decision**: `collectionSufficient` / `STOP_COLLECTION` use materiality rules only — never answered-field-count thresholds. UNKNOWN is non-blocking only when materiality is STANDARD/LOW, it does not block a CRITICAL/HIGH dependency, and it is not needed to resolve scope, acceptance, legal/commercial structure, or another blocking requirement.
+**Status**: Active.
+
+---
+
+## #26 — Correction vs contradiction (Phase 2.2)
+**Decision**: Correction requires superseding language or `updateKind=correction` (history kept; not CONTRADICTORY). Conflict requires competing language, `updateKind=conflict`, or two values without clear supersession → CONTRADICTORY + clarify. Ambiguous HIGH/CRITICAL conflicts without supersession prefer clarify over silent overwrite. Do not treat “same field + two ba-messages” alone as correction.
+**Status**: Active.
+

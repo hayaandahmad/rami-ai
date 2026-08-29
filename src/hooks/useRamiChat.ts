@@ -76,6 +76,8 @@ export interface ApplicabilityContext {
   documentType?: string;
   engagementType?: string;
   applicableSectionCount: number;
+  completionPercent: number;
+  collectionSufficient?: boolean;
 }
 
 export interface UseRamiChatOptions {
@@ -103,6 +105,7 @@ export function useRamiChat({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [applicabilityContext, setApplicabilityContext] = useState<ApplicabilityContext>({
     applicableSectionCount: 12, // default to mandatory count
+    completionPercent: 0,
   });
 
   // Track streaming message id
@@ -200,15 +203,22 @@ export function useRamiChat({
                     setRfpIntent(event.rfpIntent);
                     onIntentChange?.(event.rfpIntent);
                   }
-                  if (event.applicableSectionCount !== undefined) {
-                    setApplicabilityContext((prev) => ({
-                      ...prev,
-                      documentType: event.documentType,
-                      engagementType: event.engagementType,
-                      applicableSectionCount: event.applicableSectionCount!,
-                    }));
-                  }
                   if (event.language) responseLang = event.language;
+                  setApplicabilityContext((prev) => ({
+                    ...prev,
+                    documentType: event.documentType ?? prev.documentType,
+                    engagementType: event.engagementType ?? prev.engagementType,
+                    applicableSectionCount:
+                      event.applicableSectionCount !== undefined
+                        ? event.applicableSectionCount
+                        : prev.applicableSectionCount,
+                    completionPercent:
+                      event.completionPercent !== undefined
+                        ? event.completionPercent
+                        : prev.completionPercent,
+                    collectionSufficient:
+                      event.collectionSufficient ?? prev.collectionSufficient,
+                  }));
                   break;
 
                 case 'text':
@@ -241,6 +251,11 @@ export function useRamiChat({
                       documentType: event.documentType,
                       engagementType: event.engagementType,
                       applicableSectionCount: event.applicableSectionCount!,
+                      completionPercent:
+                        event.completionPercent !== undefined
+                          ? event.completionPercent
+                          : prev.completionPercent,
+                      collectionSufficient: event.collectionSufficient ?? prev.collectionSufficient,
                     }));
                   }
                   // Tag the assistant message with server-confirmed language

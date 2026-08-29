@@ -15,11 +15,17 @@ import { RFP_SECTIONS } from '@/schema/rfpSchema';
 import type { ProjectMemory } from '@/types/projectMemory';
 import type { SectionStateRecord } from '@/types/sectionState';
 import type { RamiConversation } from '@/types/conversation';
+import type { ProjectContext } from '@/types/projectContext';
+import { createEmptyProjectContext } from '@/types/projectContext';
 
 export interface RamiServerSession {
   sessionId: string;
   conversation: RamiConversation;
   memory: ProjectMemory;
+  /** Phase 2.2 control-plane — NOT duplicated into ProjectMemory. */
+  projectContext: ProjectContext;
+  /** Context-level contradictions e.g. conflicting documentStage signals. */
+  contextContradictions: Array<{ targetId: string; values: unknown[] }>;
   sectionStates: Record<string, SectionStateRecord>;
   createdAt: string;
   updatedAt: string;
@@ -62,6 +68,8 @@ export function createSession(sessionId: string, documentId?: string): RamiServe
       updatedAt: now,
     },
     memory: createEmptyProjectMemory(),
+    projectContext: createEmptyProjectContext(),
+    contextContradictions: [],
     sectionStates,
     createdAt: now,
     updatedAt: now,
@@ -72,7 +80,18 @@ export function createSession(sessionId: string, documentId?: string): RamiServe
 }
 
 export function getOrCreateSession(sessionId: string, documentId?: string): RamiServerSession {
-  return getStore().get(sessionId) ?? createSession(sessionId, documentId);
+  const existing = getStore().get(sessionId);
+  if (existing) {
+    // Hydrate Phase 2.2 fields for sessions created before 2.2 (HMR / in-memory)
+    if (!existing.projectContext) {
+      existing.projectContext = createEmptyProjectContext();
+    }
+    if (!existing.contextContradictions) {
+      existing.contextContradictions = [];
+    }
+    return existing;
+  }
+  return createSession(sessionId, documentId);
 }
 
 export function saveSession(session: RamiServerSession): void {

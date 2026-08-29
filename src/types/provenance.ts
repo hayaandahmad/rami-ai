@@ -7,12 +7,24 @@
  * CONFIRMED. There is no code path from REFERENCE directly to CONFIRMED.
  */
 
-export type InformationStatus =
+/**
+ * Provenance answers: where did this value come from / how was it accepted?
+ * Completeness ("do we know it?") lives in GapStatus — see gapStatus.ts.
+ *
+ * Target long-term provenance: CONFIRMED | EXTRACTED | REFERENCE | PROPOSED.
+ * TBC is @deprecated compatibility — map to GapStatus UNKNOWN in gap logic.
+ * Do not remove TBC until Phase 4 / legacy interview retirement.
+ */
+export type ProvenanceStatus =
   | 'CONFIRMED'   // BA explicitly stated or approved this value
   | 'EXTRACTED'   // LLM extracted from a BA message; not yet explicitly confirmed
   | 'REFERENCE'   // Sourced from historical-RFP retrieval; describes a different past engagement
   | 'PROPOSED'    // A REFERENCE or template-default offered to the BA as a starting point
-  | 'TBC';        // Explicitly deferred; drafting may proceed with this gap flagged
+  /** @deprecated Use GapStatus UNKNOWN for "I don't know". Kept for compatibility. */
+  | 'TBC';
+
+/** @deprecated Prefer ProvenanceStatus. Alias retained for Phase 2.1 compatibility. */
+export type InformationStatus = ProvenanceStatus;
 
 /** Valid transitions from one status to another. Enforced by isSectionTransitionAllowed(). */
 export const ALLOWED_PROVENANCE_TRANSITIONS: ReadonlyMap<

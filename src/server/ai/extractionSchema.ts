@@ -1,23 +1,26 @@
 /**
  * JSON Schema and prompt for structured fact extraction from BA messages.
- * Authority: .private-context/analysis/question-information-mapping.md
- *
- * The extraction call is separate from the conversational response call.
- * It uses temperature=0 for determinism.
- *
- * IMPORTANT: The schema only asks the model to extract facts EXPLICITLY stated
- * or clearly implied in the message. It must NOT fabricate absent information.
+ * Phase 2.2: adds classifier signals + updateKind; does NOT choose NextAction.
  */
 
 import { CANONICAL_FIELD_IDS } from '@/schema/projectMemoryFields';
 
-/** JSON Schema for the structured extraction output. */
+/** Optional classifier / conflict signals from extraction (LLM → TypeScript). */
+export interface ExtractionSignals {
+  documentStageSignal?: string;
+  granularitySignal?: string;
+  domainSignals?: string[];
+  deferredStatements?: Array<{ topic: string; deferredTo: string }>;
+  conflictCandidates?: Array<{ fieldId: string; values: unknown[] }>;
+}
+
 export const EXTRACTION_JSON_SCHEMA = {
   type: 'object',
   properties: {
     extractedFacts: {
       type: 'array',
-      description: 'Facts explicitly stated or clearly implied in the BA message. Only include fields you are confident about.',
+      description:
+        'Facts explicitly stated or clearly implied in the BA message. Only include fields you are confident about.',
       items: {
         type: 'object',
         properties: {
@@ -33,6 +36,12 @@ export const EXTRACTION_JSON_SCHEMA = {
             enum: ['high', 'medium'],
             description: 'high = explicitly stated; medium = clearly implied',
           },
+          updateKind: {
+            type: 'string',
+            enum: ['assert', 'correction', 'conflict'],
+            description:
+              'assert = new/normal fact; correction = BA supersedes prior value (actually/make that); conflict = competing simultaneous values/sources',
+          },
         },
         required: ['fieldId', 'value', 'confidence'],
       },
@@ -42,15 +51,50 @@ export const EXTRACTION_JSON_SCHEMA = {
       enum: ['CREATE_RFP', 'POSSIBLE', 'NONE'],
       description: 'Whether the message clearly indicates intent to create an RFP',
     },
+    documentStageSignal: {
+      type: 'string',
+      description:
+        'If clearly stated: RFI | MARKET_SOUNDING | PRE_QUALIFICATION | FULL_RFP | FRAMEWORK_QUALIFICATION | SOW_OR_CALL_OFF | CONTRACT_OR_AWARD. Else omit.',
+    },
+    granularitySignal: {
+      type: 'string',
+      description: 'If clearly stated: SINGLE_PROJECT | FRAMEWORK | ASSIGNMENT. Else omit.',
+    },
+    domainSignals: {
+      type: 'array',
+      items: { type: 'string' },
+      description: 'Domain hints if stated (consulting, BPR, system-implementation, etc.)',
+    },
+    deferredStatements: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          topic: { type: 'string' },
+          deferredTo: { type: 'string' },
+        },
+      },
+      description: 'Topics the BA says belong to a later stage/SOW',
+    },
+    conflictCandidates: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          fieldId: { type: 'string' },
+          values: { type: 'array' },
+        },
+      },
+      description: 'When the BA presents two competing values for the same fact',
+    },
     internalContext: {
       type: 'string',
-      description: 'Brief one-sentence summary of what was discussed, to inform the next response',
+      description: 'Brief one-sentence summary of what was discussed',
     },
   },
   required: ['extractedFacts', 'rfpIntentSignal'],
 } as const;
 
-/** Build the extraction system message describing canonical field IDs. */
 export function buildExtractionSystemPrompt(): string {
   const fieldList = Array.from(CANONICAL_FIELD_IDS).join(', ');
   return `/no_think
@@ -59,6 +103,7 @@ You are a structured information extraction engine for an RFP preparation system
 Extract ONLY facts that are explicitly stated or clearly implied in the Business Analyst's message.
 Do NOT infer, assume, or fabricate any information not present in the message.
 Do NOT extract partial or uncertain values — omit them entirely.
+Do NOT decide workflow, next questions, packs, or stop conditions.
 
 CANONICAL FIELD IDs you may use (use these exact strings):
 ${fieldList}
@@ -71,11 +116,15 @@ FIELD GUIDANCE:
 - engagementDuration: e.g. "12 months", "2 years"
 - evaluationWeights: e.g. "70/30 technical/financial"
 
+UPDATE KIND (per fact):
+- assert: normal new fact
+- correction: BA clearly supersedes a prior value ("actually", "make that", "instead")
+- conflict: BA presents competing simultaneous sources/values ("document says X but annex says Y")
+
 Only return fieldIds from the list above. Do not invent new field names.
 If no facts were extractable, return an empty extractedFacts array.`.trim();
 }
 
-/** Validate that an extracted fieldId is canonical. */
 export function isValidFieldId(fieldId: string): boolean {
   return CANONICAL_FIELD_IDS.has(fieldId);
 }

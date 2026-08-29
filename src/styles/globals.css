@@ -871,3 +871,198 @@
     animation: none;
   }
 }
+
+/* ── Rami engine floating control (Modal / local) ───────────────────────── */
+.rami-engine-control {
+  position: fixed;
+  z-index: 9999;
+  touch-action: none;
+  user-select: none;
+  max-width: min(340px, calc(100vw - 16px));
+}
+
+.rami-engine-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-surface-elevated);
+  box-shadow: 0 8px 24px rgba(18, 59, 99, 0.12);
+  color: var(--color-text-primary);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: grab;
+}
+
+.rami-engine-pill:active {
+  cursor: grabbing;
+}
+
+.rami-engine-pill-text {
+  white-space: nowrap;
+}
+
+.rami-engine-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--color-neutral-400, #9ca3af);
+  flex-shrink: 0;
+}
+
+.rami-engine-dot--ready,
+.rami-engine-dot--busy {
+  background: var(--color-success-700);
+}
+
+.rami-engine-dot--starting,
+.rami-engine-dot--loading,
+.rami-engine-dot--warming_up,
+.rami-engine-dot--shutting_down {
+  background: var(--color-warning-700);
+}
+
+.rami-engine-dot--error {
+  background: var(--color-error-700);
+}
+
+.rami-engine-dot--off {
+  background: var(--color-neutral-500);
+}
+
+.rami-engine-panel {
+  width: 320px;
+  padding: 0.85rem 0.95rem 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  box-shadow: 0 16px 40px rgba(18, 59, 99, 0.16);
+  cursor: grab;
+}
+
+.rami-engine-panel:active {
+  cursor: grabbing;
+}
+
+.rami-engine-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.65rem;
+}
+
+.rami-engine-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.rami-engine-icon-btn {
+  border: 0;
+  background: var(--color-surface-muted);
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 0.4rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.rami-engine-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem 0.75rem;
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+}
+
+.rami-engine-meta dt {
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
+
+.rami-engine-meta dd {
+  margin: 0.1rem 0 0;
+  color: var(--color-text-primary);
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.rami-engine-est,
+.rami-engine-perf {
+  font-size: 0.72rem;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-subtle);
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.55rem;
+  line-height: 1.45;
+}
+
+.rami-engine-est-title {
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.2rem;
+}
+
+.rami-engine-est-note {
+  margin-top: 0.35rem;
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+}
+
+.rami-engine-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+}
+
+.rami-engine-actions button {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border-radius: 0.5rem;
+  padding: 0.4rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rami-engine-btn-primary {
+  background: var(--color-action-primary) !important;
+  color: var(--color-text-inverse) !important;
+  border-color: var(--color-action-primary) !important;
+}
+
+.rami-engine-btn-danger {
+  background: var(--color-error-100) !important;
+  color: var(--color-error-700) !important;
+  border-color: #fecaca !important;
+}
+
+.rami-engine-error {
+  background: var(--color-error-100);
+  color: var(--color-error-700);
+  border-radius: 0.55rem;
+  padding: 0.55rem 0.65rem;
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.rami-engine-error pre {
+  white-space: pre-wrap;
+  font-size: 0.65rem;
+  margin: 0.35rem 0;
+  max-height: 5rem;
+  overflow: auto;
+}
+

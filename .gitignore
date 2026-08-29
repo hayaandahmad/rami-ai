@@ -162,3 +162,9 @@ vite.config.ts.timestamp-*
 # Temporary DOCX/PDF extraction directories
 .rami-extract/
 tmp-extract/
+
+# Modal PoC (isolated tooling — never commit secrets or local usage state)
+.venv-modal/
+infra/modal-poc/.usage/
+infra/modal-poc/.session-state.json
+infra/modal-poc/**/__pycache__/
