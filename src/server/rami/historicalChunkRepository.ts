@@ -161,6 +161,39 @@ export async function listChunks(opts?: {
   return r.rows.map(mapChunkRow);
 }
 
+/**
+ * Merge answer mapped_field_ids onto existing chunks without touching chunk_text
+ * or embeddings (no re-embed).
+ */
+export async function syncChunkMappedFieldsFromAnswers(): Promise<number> {
+  const chunks = await listChunks();
+  let updated = 0;
+  for (const c of chunks) {
+    if (!c.sourceAnswerIds.length) continue;
+    const r = await query<{ mapped_field_ids: unknown }>(
+      `SELECT mapped_field_ids FROM historical_question_answers
+       WHERE answer_id = ANY($1::text[])`,
+      [c.sourceAnswerIds],
+    );
+    const merged = new Set(c.mappedFieldIds);
+    for (const row of r.rows) {
+      for (const f of asStringArray(row.mapped_field_ids)) merged.add(f);
+    }
+    const next = [...merged];
+    if (next.length === c.mappedFieldIds.length && next.every((f) => c.mappedFieldIds.includes(f))) {
+      continue;
+    }
+    await query(
+      `UPDATE historical_knowledge_chunks
+       SET mapped_field_ids = $1::jsonb, updated_at = NOW()
+       WHERE chunk_id = $2`,
+      [JSON.stringify(next), c.chunkId],
+    );
+    updated += 1;
+  }
+  return updated;
+}
+
 export async function getChunkById(
   chunkId: string,
 ): Promise<HistoricalKnowledgeChunk | null> {

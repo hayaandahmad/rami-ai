@@ -49,7 +49,7 @@ function setExtracted(
 console.log('\n=== Rami Phase 2.2 Adaptive Validation ===\n');
 
 console.log('0. Metadata');
-check('All 52 fields have control meta', () => {
+check('All canonical fields have control meta', () => {
   const missing = assertAllFieldsHaveControlMeta();
   if (missing.length) throw new Error(`Missing meta: ${missing.join(', ')}`);
 });

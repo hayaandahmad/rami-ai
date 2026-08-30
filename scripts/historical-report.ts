@@ -175,7 +175,7 @@ async function main() {
         `| ${g.candidateFieldOrTopic} | ${g.severity} | ${g.datasetCount} | ${g.hitCount} | ${g.partialExistingFields.join(', ') || '—'} |`,
     ),
     '',
-    'Do **not** expand the 52-field model from this report automatically.',
+    'Do **not** expand the information model from this report automatically. Promotions require the evidence-matrix criteria in DECISIONS #43.',
     '',
     'RAG / embeddings: **not implemented**.',
     '',

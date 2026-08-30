@@ -1,5 +1,5 @@
 /**
- * 52 canonical project information requirements.
+ * Canonical project information requirements (52 legacy + 7 promoted 2026-08).
  * Authority: .private-context/analysis/question-information-mapping.md
  *
  * These are the ONLY facts that belong in structured project memory.
@@ -52,7 +52,7 @@ export interface ProjectMemoryFieldControlView extends ProjectMemoryFieldDef {
 }
 
 /**
- * All 52 canonical information requirements, in Question Bank group order.
+ * Canonical information requirements, in Question Bank group order.
  * Groups: 0=DocumentSetup, 1=Background, 2=Engagement, 3=Stakeholders,
  *         4=Scope, 5=Functional, 6=Technical, 7=Deliverables,
  *         8=Implementation, 9=Support, 10=Evaluation, 11=Legal, 12=riskNotes
@@ -629,6 +629,87 @@ export const PROJECT_MEMORY_FIELDS: readonly ProjectMemoryFieldDef[] = [
     notes: 'Template lists 12 candidate annexes usable as a PROPOSED checklist. Absorbs Q-Bank duplicate 12.8.',
   },
 
+  // ── Group 18: Promoted procurement / delivery facts (evidence-driven 2026-08) ──
+  {
+    fieldId: 'awardModel',
+    label: 'Award Model and Supplier Count',
+    targetSections: ['evaluationCriteria', 'engagementDefinition'],
+    requirement: 'conditional',
+    category: 'PROJECT_INFORMATION',
+    explicitAskIfMissing: true,
+    historicalRetrievalSupported: true,
+    baConfirmationRequired: true,
+    notes:
+      'Structured { model, supplierCount }. Evidence 7/7 historical RFPs. Not a ProjectContext classifier.',
+  },
+  {
+    fieldId: 'callOffOrSowProcess',
+    label: 'Call-off / SOW Process',
+    targetSections: ['engagementDefinition', 'scopeOfWork'],
+    requirement: 'conditional',
+    category: 'PROJECT_INFORMATION',
+    explicitAskIfMissing: true,
+    historicalRetrievalSupported: true,
+    baConfirmationRequired: true,
+    notes: 'FRAMEWORK / ASSIGNMENT only. Evidence 4/7 framework datasets. N/A for one-off RFPs.',
+  },
+  {
+    fieldId: 'namedKeyPersonnel',
+    label: 'Named Key Personnel Requirements',
+    targetSections: ['manpowerRequirements'],
+    requirement: 'conditional',
+    category: 'PROJECT_INFORMATION',
+    explicitAskIfMissing: true,
+    historicalRetrievalSupported: true,
+    baConfirmationRequired: true,
+    notes:
+      'Array of { role, minExperience?, qualification?, cvRequired?, notes? }. Distinct from stakeholderRoles. N/A when no named staff.',
+  },
+  {
+    fieldId: 'clarificationContact',
+    label: 'Clarification Contact',
+    targetSections: ['administrativeProcedures'],
+    requirement: 'conditional',
+    category: 'PROJECT_INFORMATION',
+    explicitAskIfMissing: true,
+    historicalRetrievalSupported: true,
+    baConfirmationRequired: false,
+    notes: 'Tender admin contact. PROCUREMENT/PQ only. TBC allowed. Evidence 7/7.',
+  },
+  {
+    fieldId: 'submissionChannel',
+    label: 'Proposal Submission Channel',
+    targetSections: ['administrativeProcedures'],
+    requirement: 'conditional',
+    category: 'PROJECT_INFORMATION',
+    explicitAskIfMissing: true,
+    historicalRetrievalSupported: true,
+    baConfirmationRequired: false,
+    notes: 'Portal/email/address — not general comms. Distinct from proposalDeadline. TBC allowed.',
+  },
+  {
+    fieldId: 'governanceCadence',
+    label: 'Governance and Reporting Cadence',
+    targetSections: ['projectManagementGovernance'],
+    requirement: 'conditional',
+    category: 'PROJECT_INFORMATION',
+    explicitAskIfMissing: true,
+    historicalRetrievalSupported: true,
+    baConfirmationRequired: false,
+    notes: 'Steering/PMO/progress-report cadence. Distinct from engagementPhases. Ask only when governance section applies.',
+  },
+  {
+    fieldId: 'knowledgeTransferRequirements',
+    label: 'Knowledge Transfer Requirements',
+    targetSections: ['implementationRequirements', 'deliverables'],
+    requirement: 'conditional',
+    category: 'PROJECT_INFORMATION',
+    explicitAskIfMissing: true,
+    historicalRetrievalSupported: true,
+    baConfirmationRequired: false,
+    notes: 'KT / handover / ToT — not a duplicate of deliverableItems. System/training packs. N/A when no handover.',
+  },
+
   // ── Group 12 spinoff: Risk Notes (aggregate, not explicitly asked) ────────
   {
     fieldId: 'riskNotes',
@@ -643,7 +724,21 @@ export const PROJECT_MEMORY_FIELDS: readonly ProjectMemoryFieldDef[] = [
   },
 ] as const satisfies ProjectMemoryFieldDef[];
 
-/** Total canonical field count — must equal 52. Validated at module level. */
+/** Legacy count before 2026-08 evidence-driven expansion. */
+export const LEGACY_CANONICAL_FIELD_COUNT = 52;
+
+/** Promoted in the 2026-08 information-model expansion. */
+export const PROMOTED_FIELD_IDS = [
+  'awardModel',
+  'callOffOrSowProcess',
+  'namedKeyPersonnel',
+  'clarificationContact',
+  'submissionChannel',
+  'governanceCadence',
+  'knowledgeTransferRequirements',
+] as const;
+
+/** Total canonical field count — validated at module level. */
 export const CANONICAL_FIELD_COUNT = PROJECT_MEMORY_FIELDS.length;
 
 /** Set of all canonical field IDs for fast membership checks. */

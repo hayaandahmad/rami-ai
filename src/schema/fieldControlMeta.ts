@@ -1,6 +1,6 @@
 /**
  * Phase 2.2 field control metadata: packs, materiality, default depth.
- * Does NOT add Phase 2.3 domain catalog fields — tags the existing 52 only.
+ * Pack/materiality/depth tags for every canonical Field.
  */
 
 import type { PackId } from '@/types/projectContext';
@@ -29,7 +29,7 @@ const D = {
 };
 
 /**
- * Control metadata for all 52 canonical fields.
+ * Control metadata for all canonical fields.
  * Pack tags are frozen PackIds; Phase 2.3 may add more fields under these packs.
  */
 export const FIELD_CONTROL_META: Record<string, FieldControlMeta> = {
@@ -280,6 +280,48 @@ export const FIELD_CONTROL_META: Record<string, FieldControlMeta> = {
     packs: ['PROCUREMENT', 'PRE_QUALIFICATION'],
     materiality: M.HIGH,
     defaultDepth: D.STANDARD,
+  },
+
+  awardModel: {
+    packs: ['PROCUREMENT', 'FRAMEWORK', 'PRE_QUALIFICATION'],
+    materiality: M.HIGH,
+    defaultDepth: D.STANDARD,
+    relatedAskPeers: ['callOffOrSowProcess'],
+  },
+  callOffOrSowProcess: {
+    packs: ['FRAMEWORK'],
+    materiality: M.HIGH,
+    defaultDepth: D.STANDARD,
+    relatedAskPeers: ['awardModel'],
+  },
+  namedKeyPersonnel: {
+    packs: ['PMO', 'FRAMEWORK', 'SYSTEM_IMPLEMENTATION'],
+    materiality: M.HIGH,
+    defaultDepth: D.STANDARD,
+  },
+  clarificationContact: {
+    packs: ['PROCUREMENT', 'PRE_QUALIFICATION'],
+    materiality: M.STANDARD,
+    defaultDepth: D.SHORT,
+    relatedAskPeers: ['submissionChannel', 'proposalDeadline'],
+  },
+  submissionChannel: {
+    packs: ['PROCUREMENT', 'PRE_QUALIFICATION'],
+    materiality: M.STANDARD,
+    defaultDepth: D.SHORT,
+    relatedAskPeers: ['clarificationContact', 'proposalDeadline'],
+  },
+  governanceCadence: {
+    packs: ['PMO'],
+    materiality: M.STANDARD,
+    defaultDepth: D.STANDARD,
+    relatedAskPeers: ['engagementPhases'],
+  },
+  knowledgeTransferRequirements: {
+    packs: ['TRAINING_CHANGE', 'SYSTEM_IMPLEMENTATION'],
+    materiality: M.STANDARD,
+    defaultDepth: D.STANDARD,
+    relatedAskPeers: ['deliverableItems'],
   },
 
   riskNotes: { packs: ['CORE'], materiality: M.LOW, defaultDepth: D.SHORT },

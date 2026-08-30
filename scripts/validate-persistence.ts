@@ -15,9 +15,16 @@ import {
 } from '../src/server/db/factMapper';
 import { convertToJod, parseDurationMonths, parseMoneyHint } from '../src/server/db/projectNormalization';
 import { getConfiguredProviderKind } from '../src/server/ai/providerConfig';
-import { PROJECT_MEMORY_FIELDS } from '../src/schema/projectMemoryFields';
+import {
+  CANONICAL_FIELD_COUNT,
+  PROJECT_MEMORY_FIELDS,
+} from '../src/schema/projectMemoryFields';
 import { RFP_SECTIONS } from '../src/schema/rfpSchema';
-import { QUESTION_SEEDS, countQuestionFieldLinks } from '../src/schema/questionBankSeed';
+import {
+  CANONICAL_QUESTION_COUNT,
+  QUESTION_SEEDS,
+  countQuestionFieldLinks,
+} from '../src/schema/questionBankSeed';
 import { getFieldDataType } from '../src/server/db/fieldTypes';
 import { isDatabaseConfigured } from '../src/server/db/config';
 import { existsSync, readFileSync } from 'fs';
@@ -40,8 +47,9 @@ function run(name: string, fn: () => void) {
 
 console.log('\n=== Persistence unit checks (no live PostgreSQL required) ===\n');
 
-run('canonical field count is 52', () => {
-  assert.equal(PROJECT_MEMORY_FIELDS.length, 52);
+run('canonical field count is 59', () => {
+  assert.equal(PROJECT_MEMORY_FIELDS.length, CANONICAL_FIELD_COUNT);
+  assert.equal(CANONICAL_FIELD_COUNT, 59);
 });
 
 run('every field can seed a NOT NULL section_id', () => {
@@ -61,9 +69,10 @@ run('canonical section count is 20', () => {
   assert.equal(RFP_SECTIONS.length, 20);
 });
 
-run('question bank seed is 62 unique IDs', () => {
-  assert.equal(QUESTION_SEEDS.length, 62);
-  assert.equal(new Set(QUESTION_SEEDS.map((q) => q.questionId)).size, 62);
+run('question bank seed is 69 unique IDs', () => {
+  assert.equal(QUESTION_SEEDS.length, CANONICAL_QUESTION_COUNT);
+  assert.equal(CANONICAL_QUESTION_COUNT, 69);
+  assert.equal(new Set(QUESTION_SEEDS.map((q) => q.questionId)).size, 69);
 });
 
 run('QuestionFields is many-to-many (3.4 maps two fields)', () => {
@@ -220,6 +229,8 @@ run('field data types match runtime', () => {
   assert.equal(getFieldDataType('businessObjectives'), 'array');
   assert.equal(getFieldDataType('users'), 'object');
   assert.equal(getFieldDataType('rollbackPlanNeeded'), 'boolean');
+  assert.equal(getFieldDataType('awardModel'), 'object');
+  assert.equal(getFieldDataType('namedKeyPersonnel'), 'array');
 });
 
 run('migration file exists', () => {

@@ -9,6 +9,7 @@ import type {
   HistoricalRfpDocument,
 } from '@/types/historicalRfp';
 import type { PoolClient } from 'pg';
+import { mergeHistoricalMappedFields } from '@/schema/historicalPromotedFieldMap';
 
 interface DocRow {
   historical_rfp_id: string;
@@ -217,7 +218,7 @@ async function upsertAnswer(client: PoolClient, a: HistoricalImportPayloadAnswer
       a.answerText,
       a.extractionStatus,
       a.sourceLocator,
-      JSON.stringify(a.mappedFieldIds),
+      JSON.stringify(mergeHistoricalMappedFields(a.mappedFieldIds, a.exactQuestionText)),
       a.excelRelPath,
       a.pdfAvailable,
     ],
@@ -318,6 +319,41 @@ export async function countHistoricalTables(): Promise<{
 export async function countLiveProjectFacts(): Promise<number> {
   const r = await query<{ n: string }>(`SELECT COUNT(*)::text AS n FROM project_facts`);
   return Number(r.rows[0].n);
+}
+
+/**
+ * Deterministic promoted-Field backfill on existing historical Q&A rows.
+ * Question-text patterns only — no LLM inference.
+ */
+export async function backfillPromotedHistoricalFieldMappings(): Promise<{
+  answersScanned: number;
+  answersUpdated: number;
+  byField: Record<string, number>;
+}> {
+  const answers = await listHistoricalAnswers();
+  const byField: Record<string, number> = {};
+  let answersUpdated = 0;
+  await withTransaction(async (client) => {
+    for (const a of answers) {
+      const merged = mergeHistoricalMappedFields(a.mappedFieldIds, a.exactQuestionText);
+      const changed =
+        merged.length !== a.mappedFieldIds.length ||
+        merged.some((f) => !a.mappedFieldIds.includes(f));
+      if (changed) {
+        await client.query(
+          `UPDATE historical_question_answers
+           SET mapped_field_ids = $1::jsonb, updated_at = NOW()
+           WHERE answer_id = $2`,
+          [JSON.stringify(merged), a.answerId],
+        );
+        answersUpdated += 1;
+      }
+      for (const f of merged) {
+        byField[f] = (byField[f] ?? 0) + 1;
+      }
+    }
+  });
+  return { answersScanned: answers.length, answersUpdated, byField };
 }
 
 export async function countLiveProjectTables(): Promise<Record<string, number>> {

@@ -1,6 +1,6 @@
 /**
  * Structured project memory — the canonical, queryable store of facts
- * about the current engagement, keyed by the 52 canonical field IDs.
+ * about the current engagement, keyed by the canonical field IDs.
  * Authority: .private-context/architecture/rfp-knowledge-architecture.md §1
  *
  * Domain organisation follows question-information-mapping.md groups:
@@ -47,6 +47,26 @@ export interface PricingModelAndCostBreakdownValue {
 export interface OptionalItemsAndTaxesValue {
   optionalPricedItems: string[];
   taxesNote?: string;
+}
+
+export type AwardModelKind =
+  | 'single-supplier'
+  | 'multi-supplier'
+  | 'ranked-panel'
+  | 'service-specific';
+
+export interface AwardModelValue {
+  /** Controlled award pattern — free text allowed if BA uses other wording. */
+  model: AwardModelKind | string;
+  supplierCount?: number | string;
+}
+
+export interface NamedKeyPerson {
+  role: string;
+  minExperience?: string;
+  qualification?: string;
+  cvRequired?: boolean;
+  notes?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -130,6 +150,15 @@ export interface ProjectMemory {
   jvSubcontractingRules: ProjectMemoryField<string>         | null;
   requiredAnnexes:       ProjectMemoryField<string[]>       | null;
 
+  // ── promoted procurement / delivery (2026-08) ─────────────────────────────
+  awardModel:            ProjectMemoryField<AwardModelValue> | null;
+  callOffOrSowProcess:   ProjectMemoryField<string>         | null;
+  namedKeyPersonnel:     ProjectMemoryField<NamedKeyPerson[]> | null;
+  clarificationContact:  ProjectMemoryField<string>         | null;
+  submissionChannel:     ProjectMemoryField<string>         | null;
+  governanceCadence:     ProjectMemoryField<string>         | null;
+  knowledgeTransferRequirements: ProjectMemoryField<string[]> | null;
+
   // ── risk notes (aggregate spinoff) ────────────────────────────────────────
   riskNotes:             ProjectMemoryField<string[]>       | null;
 }
@@ -198,6 +227,13 @@ export function createEmptyProjectMemory(): ProjectMemory {
     legalTerms: null,
     jvSubcontractingRules: null,
     requiredAnnexes: null,
+    awardModel: null,
+    callOffOrSowProcess: null,
+    namedKeyPersonnel: null,
+    clarificationContact: null,
+    submissionChannel: null,
+    governanceCadence: null,
+    knowledgeTransferRequirements: null,
     riskNotes: null,
   };
 }

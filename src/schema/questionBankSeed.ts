@@ -87,7 +87,32 @@ export const QUESTION_SEEDS: readonly QuestionSeed[] = [
   { questionId: '12.6', questionText: 'What is still unknown and should be [To be confirmed]?', sectionId: 'background', fieldIds: [] },
   { questionId: '12.7', questionText: 'Should Rami generate a risk/ambiguity list before final drafting?', sectionId: 'background', fieldIds: [] },
   { questionId: '12.8', questionText: 'What standards, policies, or annexes must be referenced?', sectionId: 'annexes', fieldIds: ['requiredAnnexes'] },
+
+  // Group 18 — promoted facts. IDs start at 18.x to avoid colliding with historical Suggested Addition 13.x–17.x.
+  { questionId: '18.1', questionText: 'How many suppliers will be awarded, and what is the award model (single winner, multi-supplier, ranked panel, or service-specific)?', sectionId: 'evaluationCriteria', fieldIds: ['awardModel'] },
+  { questionId: '18.2', questionText: 'If this is a framework agreement, how will work orders / call-offs / SOWs be issued, allocated, or mini-competed?', sectionId: 'engagementDefinition', fieldIds: ['callOffOrSowProcess'] },
+  { questionId: '18.3', questionText: 'Which named key personnel roles must the bidder nominate, with CVs and minimum qualifications or experience?', sectionId: 'manpowerRequirements', fieldIds: ['namedKeyPersonnel'] },
+  { questionId: '18.4', questionText: 'Who is the clarification contact (name, email, or channel) and any clarification deadline?', sectionId: 'administrativeProcedures', fieldIds: ['clarificationContact'] },
+  { questionId: '18.5', questionText: 'How and where must proposals be submitted (portal, email, address)?', sectionId: 'administrativeProcedures', fieldIds: ['submissionChannel'] },
+  { questionId: '18.6', questionText: 'What governance and reporting cadence is required (steering committee, PMO, progress reports)?', sectionId: 'projectManagementGovernance', fieldIds: ['governanceCadence'] },
+  { questionId: '18.7', questionText: 'What knowledge-transfer, training-of-trainers, or operational handover obligations apply?', sectionId: 'implementationRequirements', fieldIds: ['knowledgeTransferRequirements'] },
 ];
+
+/** Question count present in the 7 historical Excel workbooks (pre-expansion). */
+export const HISTORICAL_WORKBOOK_QUESTION_COUNT = 62;
+
+/** Current canonical Question Bank size (workbook + promoted 18.x). */
+export const CANONICAL_QUESTION_COUNT = QUESTION_SEEDS.length;
+
+export const PROMOTED_QUESTION_IDS = [
+  '18.1',
+  '18.2',
+  '18.3',
+  '18.4',
+  '18.5',
+  '18.6',
+  '18.7',
+] as const;
 
 export function countQuestionFieldLinks(): number {
   return QUESTION_SEEDS.reduce((n, q) => n + q.fieldIds.length, 0);

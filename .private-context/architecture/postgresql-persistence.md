@@ -8,7 +8,7 @@ Do not implement RAG or training in this layer. Generated RFP prose is stored se
 | Concept | Role after this phase |
 |---|---|
 | PostgreSQL | Authoritative project truth |
-| `ProjectMemory` | Hydrated runtime business model (same 52-field types) |
+| `ProjectMemory` | Hydrated runtime business model (59-field types; missing new Fields stay unresolved) |
 | `ProjectContext` classifiers | **Persisted snapshot** (not fully re-derivable) |
 | `activePacks` / `collectionSufficient` / gaps | Deterministically recomputed after hydrate |
 | Server `Map` | Optional process cache only |

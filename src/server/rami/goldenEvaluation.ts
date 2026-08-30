@@ -3,8 +3,15 @@
  * Deterministic coverage reports + extraction-eval contract (no model runs).
  */
 
-import { QUESTION_SEEDS } from '@/schema/questionBankSeed';
-import { PROJECT_MEMORY_FIELDS } from '@/schema/projectMemoryFields';
+import {
+  HISTORICAL_WORKBOOK_QUESTION_COUNT,
+  QUESTION_SEEDS,
+} from '@/schema/questionBankSeed';
+import {
+  LEGACY_CANONICAL_FIELD_COUNT,
+  PROJECT_MEMORY_FIELDS,
+  PROMOTED_FIELD_IDS,
+} from '@/schema/projectMemoryFields';
 import {
   getHistoricalDocument,
   listHistoricalAnswers,
@@ -42,6 +49,9 @@ export async function buildGoldenRfpCase(
       (statusDistribution[statusBucket(a.extractionStatus)] ?? 0) + 1;
     for (const f of a.mappedFieldIds) supported.add(f);
   }
+  for (const a of noncanonical.filter((x) => !x.isCanonical)) {
+    for (const f of a.mappedFieldIds) supported.add(f);
+  }
   const supportedFieldIds = [...supported].sort();
   const unsupportedFieldIds = CANONICAL_FIELD_IDS.filter((f) => !supported.has(f));
   return {
@@ -51,7 +61,7 @@ export async function buildGoldenRfpCase(
     excelRelPath: doc.excelRelPath,
     pdfRelPath: doc.pdfRelPath,
     evaluationEligibility: doc.evaluationEligibility,
-    expectedCanonicalQuestionCount: CANONICAL_QIDS.length,
+    expectedCanonicalQuestionCount: HISTORICAL_WORKBOOK_QUESTION_COUNT,
     expectedCanonicalQuestionIds: [...CANONICAL_QIDS],
     statusDistribution,
     supportedFieldIds,
@@ -78,7 +88,8 @@ export async function evaluateQuestionCoverage(
     canonicalOnly: true,
   });
   const found = new Set(answers.map((a) => a.canonicalQuestionId!).filter(Boolean));
-  const missingQuestionIds = CANONICAL_QIDS.filter((id) => !found.has(id));
+  const workbookIds = CANONICAL_QIDS.filter((id) => !id.startsWith('18.'));
+  const missingQuestionIds = workbookIds.filter((id) => !found.has(id));
   const unexpectedCanonicalIds = [...found].filter((id) => !CANONICAL_QIDS.includes(id));
   const statusDistribution: Record<string, number> = {};
   let tbcCount = 0;
@@ -96,7 +107,7 @@ export async function evaluateQuestionCoverage(
   }
   return {
     historicalRfpId,
-    expectedCanonical: CANONICAL_QIDS.length,
+    expectedCanonical: HISTORICAL_WORKBOOK_QUESTION_COUNT,
     matchedCanonical: found.size,
     missingQuestionIds,
     unexpectedCanonicalIds,
@@ -113,12 +124,11 @@ export async function evaluateFieldCoverage(
 ): Promise<FieldCoverageReport> {
   const answers = await listHistoricalAnswers({
     historicalRfpId,
-    canonicalOnly: true,
   });
   const fieldToQuestionIds: Record<string, string[]> = {};
   const multiFieldQuestions: Array<{ questionId: string; fieldIds: string[] }> = [];
   for (const a of answers) {
-    const qid = a.canonicalQuestionId!;
+    const qid = a.canonicalQuestionId || a.sourceQuestionId;
     if (a.mappedFieldIds.length > 1) {
       multiFieldQuestions.push({ questionId: qid, fieldIds: a.mappedFieldIds });
     }
@@ -196,6 +206,37 @@ export async function buildExtractionContractForRfp(
       mappedFieldIds: a.mappedFieldIds,
     })),
   });
+}
+
+/** Historical support for Fields promoted after the 52-field workbook era. */
+export async function reportPromotedFieldHistoricalSupport(): Promise<
+  Array<{
+    fieldId: string;
+    answerCount: number;
+    rfpIds: string[];
+    legacyFieldCount: number;
+    currentFieldCount: number;
+  }>
+> {
+  const out: Array<{
+    fieldId: string;
+    answerCount: number;
+    rfpIds: string[];
+    legacyFieldCount: number;
+    currentFieldCount: number;
+  }> = [];
+  for (const fieldId of PROMOTED_FIELD_IDS) {
+    const answers = await listHistoricalAnswers({ fieldId });
+    const rfpIds = [...new Set(answers.map((a) => a.historicalRfpId))].sort();
+    out.push({
+      fieldId,
+      answerCount: answers.length,
+      rfpIds,
+      legacyFieldCount: LEGACY_CANONICAL_FIELD_COUNT,
+      currentFieldCount: PROJECT_MEMORY_FIELDS.length,
+    });
+  }
+  return out;
 }
 
 /** Deterministic field-detection metrics helper for future predicted sets. */

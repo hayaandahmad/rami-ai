@@ -12,7 +12,7 @@ import type { GapStatus, Materiality } from '@/types/gapStatus';
 import type { GapAnalysis, FieldGapSnapshot } from '@/types/conversation';
 import type { NextAction } from '@/types/nextAction';
 import { normalizeAskRequirements } from '@/types/nextAction';
-import { PROJECT_MEMORY_FIELDS } from '@/schema/projectMemoryFields';
+import { PROJECT_MEMORY_FIELDS, PROMOTED_FIELD_IDS } from '@/schema/projectMemoryFields';
 import { getFieldControlMeta } from '@/schema/fieldControlMeta';
 import {
   RFP_SECTIONS,
@@ -29,7 +29,19 @@ const MATERIALITY_RANK: Record<Materiality, number> = {
   LOW: 3,
 };
 
-/** Build section applicability context from memory + ProjectContext. */
+function hasNamedKeyPersonnelEvidence(memory: ProjectMemory): boolean {
+  const bag = memory.namedKeyPersonnel as
+    | { current?: { value?: unknown }; gapStatus?: GapStatus }
+    | null
+    | undefined;
+  if (!bag?.current) return false;
+  if (bag.gapStatus === 'NOT_APPLICABLE') return false;
+  const v = bag.current.value;
+  if (Array.isArray(v)) return v.length > 0;
+  if (typeof v === 'string') return v.trim().length > 0;
+  return Boolean(v);
+}
+
 export function buildApplicabilityContext(
   memory: ProjectMemory,
   projectContext?: ProjectContext,
@@ -55,7 +67,7 @@ export function buildApplicabilityContext(
     activePacks: ctx.activePacks,
     hasDeliveryMilestone: isSystem,
     hasSupportPeriod: isSystem || isSupport || isConnectivity,
-    hasNamedRoles: false,
+    hasNamedRoles: hasNamedKeyPersonnelEvidence(memory),
     isLargeEngagement: isSystem || ctx.complexity.process === 'HIGH',
   };
 }
@@ -146,6 +158,7 @@ function computeGapStatus(
   const field = (memory as unknown as Record<string, unknown>)[fieldId] as
     | { gapStatus?: GapStatus }
     | undefined;
+  if (field?.gapStatus === 'NOT_APPLICABLE') return { status: 'NOT_APPLICABLE' };
   if (field?.gapStatus === 'UNKNOWN') return { status: 'UNKNOWN' };
 
   if (isFieldFilled(memory, fieldId)) return { status: 'KNOWN' };
@@ -343,10 +356,21 @@ function chooseAskOrStop(
   }
 
   if (needsAsk.length === 0) {
-    // Check remaining MISSING are only LOW / deferred handled already
     const leftoverBlocking = actionableMissing.filter(
       (g) => g.materiality === 'CRITICAL' || g.materiality === 'HIGH',
     );
+    const promotedStandardMissing = actionableMissing.filter(
+      (g) =>
+        (PROMOTED_FIELD_IDS as readonly string[]).includes(g.fieldId) &&
+        g.materiality === 'STANDARD',
+    );
+    if (leftoverBlocking.length === 0 && promotedStandardMissing.length > 0) {
+      return buildAskCluster(
+        promotedStandardMissing[0].fieldId,
+        promotedStandardMissing,
+        memory,
+      );
+    }
     if (leftoverBlocking.length === 0) {
       return {
         type: 'STOP_COLLECTION',

@@ -34,9 +34,9 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 
 ---
 
-## #5 — Canonical 52-field information model is the memory definition
-**Decision**: `src/schema/projectMemoryFields.ts` `PROJECT_MEMORY_FIELDS` (52 fields) defines what can be stored in `ProjectMemory`. The LLM extraction schema validates against this set.
-**Status**: Active.
+## #5 — Canonical information model is the memory definition
+**Decision**: `src/schema/projectMemoryFields.ts` `PROJECT_MEMORY_FIELDS` defines what can be stored in `ProjectMemory`. The LLM extraction schema validates against this set.
+**Status**: **Superseded count by #43** (52 → 59). The rule (Fields are the only memory keys) remains Active.
 
 ---
 
@@ -280,4 +280,19 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 ## #42 — Controlled live RAG: policy-gated REFERENCE + PROPOSED proposals
 **Decision**: Live chat may retrieve only when `evaluateHistoricalRetrievalPolicy` triggers (explicit example / past-RFP / guidance with field focus). Missing fields alone never trigger retrieval. Mode: **structured-first** when Field/Section/Question IDs known (eval showed stronger MRR); **hybrid** for free-text; vector-only is not default. Surfaced cards are labeled REFERENCE. PENDING proposals live in `historical_field_proposals` and **must not** write `project_facts`. BA Accept (optionally modified) writes `CONFIRMED` ProjectFact with `sourceType=historical-retrieval` and PROPOSED lineage in history. Reject stores REJECTED and blocks immediate re-propose of the same chunk+field. Extraction continues to use the BA message only. Generation-time RAG remains off. `procurementStage` is not a canonical Field and must not be inferred from retrieval alone.
 **Status**: Active. Binding.
+
+---
+
+## #43 — Evidence-driven canonical information-model expansion (52→59 / 62→69)
+**Decision**: Promote only the minimum Fields/Questions justified by the 7 historical RFPs. Reject frequency-only and boilerplate Suggested Additions. Historical workbook IDs stay 62; new Questions use `18.x` to avoid `13.x`–`17.x` collisions.
+
+| Kind | Items |
+|---|---|
+| ProjectMemory Fields | `awardModel`, `callOffOrSowProcess`, `namedKeyPersonnel`, `clarificationContact`, `submissionChannel`, `governanceCadence`, `knowledgeTransferRequirements` |
+| ProjectContext | `documentStage` remains the procurement-stage classifier — **no** `procurementStage` Field |
+| Rejected / REFERENCE | bid bond, eligibility/PQ micro-criteria, proposal format/copies, domain 13.x–17.x, implementation milestones (use `engagementPhases`) |
+| Sections | Still 20 — no 21st section |
+
+Applicability: call-off only for FRAMEWORK / ASSIGNMENT / SOW; named personnel only when PMO / FRAMEWORK / SYSTEM packs apply; admin Fields are supporting + TBC; they must not block unrelated sections. Historical REFERENCE → PROPOSED → BA confirm is unchanged. Do not mass-infer historical mappings with Qwen.
+**Status**: Active. Binding until a later evidence pass.
 

@@ -18,7 +18,8 @@ Source: `.private-context/knowledge/01-question-bank.txt` (62 numbered question 
 | → Agent-rule / heuristic lines (drive Rami's own reasoning, not stored project facts) | 6 |
 | → Lines that split into 2 independent canonical fields | 1 (produces +1 field) |
 | → Aggregate field not tied to one specific line (captures volunteered risk notes) | 1 (produces +1 field) |
-| **Final canonical information-requirement count** | **52** |
+| **Final canonical information-requirement count (original derivation)** | **52** |
+| **After 2026-08 evidence-driven expansion** | **59 Fields / 69 Questions** (see DECISIONS #43). This file remains the original 52-field derivation. |
 | "Minimum Starter Set" shortlist items | 12 (all map onto fields already listed below — no new fields) |
 
 Category legend used below:

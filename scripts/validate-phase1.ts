@@ -3,7 +3,7 @@
  * Phase 1 validation script.
  * Verifies:
  *   - Canonical schema has exactly 20 sections (12 mandatory, 8 conditional)
- *   - Canonical field list has exactly 52 entries
+ *   - Canonical field list matches CANONICAL_FIELD_COUNT (59 after 2026-08 expansion)
  *   - No duplicate sectionIds or fieldIds
  *   - All fieldId targetSections reference valid section IDs
  *   - Section state machine transitions are internally consistent
@@ -19,7 +19,13 @@ import {
   getMandatorySections,
   getConditionalSections,
 } from '../src/schema/rfpSchema';
-import { PROJECT_MEMORY_FIELDS, CANONICAL_FIELD_COUNT } from '../src/schema/projectMemoryFields';
+import {
+  PROJECT_MEMORY_FIELDS,
+  CANONICAL_FIELD_COUNT,
+  LEGACY_CANONICAL_FIELD_COUNT,
+  PROMOTED_FIELD_IDS,
+} from '../src/schema/projectMemoryFields';
+import { createEmptyProjectMemory } from '../src/types/projectMemory';
 import {
   ALLOWED_SECTION_TRANSITIONS,
   isSectionTransitionAllowed,
@@ -110,12 +116,25 @@ check('First section is coverPage at order 1', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 console.log('\n2. Canonical Information Requirements');
 
-check(`Total field count = 52 (CANONICAL_FIELD_COUNT)`, () => {
-  if (CANONICAL_FIELD_COUNT !== 52) throw new Error(`CANONICAL_FIELD_COUNT = ${CANONICAL_FIELD_COUNT}`);
+check(`Total field count = ${LEGACY_CANONICAL_FIELD_COUNT + PROMOTED_FIELD_IDS.length} (legacy 52 + 7 promoted)`, () => {
+  if (CANONICAL_FIELD_COUNT !== LEGACY_CANONICAL_FIELD_COUNT + PROMOTED_FIELD_IDS.length) {
+    throw new Error(`CANONICAL_FIELD_COUNT = ${CANONICAL_FIELD_COUNT}`);
+  }
+  if (CANONICAL_FIELD_COUNT !== 59) throw new Error(`Expected 59, got ${CANONICAL_FIELD_COUNT}`);
 });
 
-check('PROJECT_MEMORY_FIELDS.length = 52', () => {
-  if (PROJECT_MEMORY_FIELDS.length !== 52) throw new Error(`Length = ${PROJECT_MEMORY_FIELDS.length}`);
+check('PROJECT_MEMORY_FIELDS.length matches CANONICAL_FIELD_COUNT', () => {
+  if (PROJECT_MEMORY_FIELDS.length !== CANONICAL_FIELD_COUNT) {
+    throw new Error(`Length = ${PROJECT_MEMORY_FIELDS.length}`);
+  }
+});
+
+check('ProjectMemory keys match canonical field IDs', () => {
+  const keys = Object.keys(createEmptyProjectMemory()).sort();
+  const ids = PROJECT_MEMORY_FIELDS.map((f) => f.fieldId).sort();
+  if (keys.join() !== ids.join()) {
+    throw new Error(`Memory keys ≠ field IDs`);
+  }
 });
 
 check('No duplicate fieldIds', () => {

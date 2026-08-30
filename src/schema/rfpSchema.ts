@@ -134,7 +134,12 @@ export function isSectionApplicable(
       return ctx.hasSupportPeriod ?? (isSystem || isSupport || isConnectivity);
 
     case 'manpowerRequirements':
-      return ctx.hasNamedRoles ?? isLargeEngagement;
+      return (
+        (ctx.hasNamedRoles ?? false) ||
+        isLargeEngagement ||
+        packs.has('FRAMEWORK') ||
+        packs.has('PMO')
+      );
 
     default:
       return false;

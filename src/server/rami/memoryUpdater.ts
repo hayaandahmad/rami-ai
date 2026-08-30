@@ -13,11 +13,20 @@
 
 import { createMemoryField, updateMemoryField } from '@/types/provenance';
 import { isValidFieldId } from '@/server/ai/extractionSchema';
-import type { ProjectMemory, UsersValue } from '@/types/projectMemory';
+import type {
+  AwardModelValue,
+  NamedKeyPerson,
+  ProjectMemory,
+  UsersValue,
+} from '@/types/projectMemory';
 import type { ExtractedFact } from '@/types/conversation';
 import type { GapStatus } from '@/types/gapStatus';
 import { getFieldControlMeta } from '@/schema/fieldControlMeta';
-import { classifySpokenUnknown, type SpokenUnknownKind } from '@/server/rami/spokenTbc';
+import {
+  classifySpokenNotApplicable,
+  classifySpokenUnknown,
+  type SpokenUnknownKind,
+} from '@/server/rami/spokenTbc';
 
 export type FactUpdateKind = 'assert' | 'correction' | 'conflict';
 
@@ -230,6 +239,12 @@ export function applyExtractedFacts(
     }
 
     let normalizedValue: unknown = value;
+    if (classifySpokenNotApplicable(value)) {
+      markFieldNotApplicable(memory, fieldId, sourceRef);
+      applied.push(fieldId);
+      continue;
+    }
+
     if (fieldId === 'users') {
       const users = normalizeUsersValue(value);
       if (!users) {
@@ -237,6 +252,28 @@ export function applyExtractedFacts(
         continue;
       }
       normalizedValue = users;
+    }
+
+    if (fieldId === 'awardModel') {
+      const award = normalizeAwardModelValue(value);
+      if (!award) {
+        rejected.push(fieldId);
+        continue;
+      }
+      normalizedValue = award;
+    }
+
+    if (fieldId === 'namedKeyPersonnel') {
+      const people = normalizeNamedKeyPersonnel(value);
+      if (!people) {
+        rejected.push(fieldId);
+        continue;
+      }
+      normalizedValue = people;
+    }
+
+    if (fieldId === 'knowledgeTransferRequirements' && typeof value === 'string') {
+      normalizedValue = [value];
     }
 
     const existingField = memoryRecord[fieldId] as MemoryFieldBag | undefined;
@@ -377,4 +414,107 @@ export function markFieldUnknown(memory: ProjectMemory, fieldId: string, sourceR
   const memoryRecord = memory as unknown as Record<string, unknown>;
   const existing = memoryRecord[fieldId] as MemoryFieldBag | undefined;
   applyUnknownState(memoryRecord, fieldId, 'unknown', existing, sourceRef);
+}
+
+/** BA explicitly said this conditional requirement does not apply. */
+export function markFieldNotApplicable(
+  memory: ProjectMemory,
+  fieldId: string,
+  sourceRef?: string,
+): void {
+  if (!isValidFieldId(fieldId)) return;
+  const memoryRecord = memory as unknown as Record<string, unknown>;
+  const existing = memoryRecord[fieldId] as MemoryFieldBag | undefined;
+  const current = {
+    value: 'not applicable',
+    status: 'EXTRACTED' as const,
+    sourceType: 'ba-message' as const,
+    sourceRef,
+    updatedAt: new Date().toISOString(),
+  };
+  memoryRecord[fieldId] = {
+    fieldId,
+    current,
+    history: existing?.current ? [...(existing.history ?? []), existing.current] : [],
+    gapStatus: 'NOT_APPLICABLE' as GapStatus,
+    contradiction: undefined,
+  };
+}
+
+export function normalizeAwardModelValue(raw: unknown): AwardModelValue | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === 'string') {
+    const s = raw.trim();
+    if (!s) return null;
+    const WORD_COUNTS: Record<string, number> = {
+      one: 1,
+      two: 2,
+      three: 3,
+      four: 4,
+      five: 5,
+      six: 6,
+      seven: 7,
+      eight: 8,
+      nine: 9,
+      ten: 10,
+    };
+    const digitCount = /(\d+)\s*(suppliers?|bidders?|winners?)/i.exec(s);
+    const wordCount = /\b(one|two|three|four|five|six|seven|eight|nine|ten)\s+(suppliers?|bidders?|winners?)/i.exec(
+      s,
+    );
+    const supplierCount = digitCount
+      ? Number(digitCount[1])
+      : wordCount
+        ? WORD_COUNTS[wordCount[1].toLowerCase()]
+        : undefined;
+    let model = s;
+    if (/\branked|panel|top\s*\d/i.test(s)) model = 'ranked-panel';
+    else if (/\bservice-specific|per service/i.test(s)) model = 'service-specific';
+    else if (/\bmulti|\btwo\b|\bthree\b|several|more than one/i.test(s)) model = 'multi-supplier';
+    else if (/\bsingle|one supplier|one winner/i.test(s)) model = 'single-supplier';
+    return {
+      model,
+      supplierCount,
+    };
+  }
+  if (typeof raw === 'object' && !Array.isArray(raw)) {
+    const obj = raw as Record<string, unknown>;
+    const model = String(obj.model ?? obj.awardModel ?? '').trim();
+    if (!model) return null;
+    const sc = obj.supplierCount ?? obj.count;
+    return { model, supplierCount: sc as number | string | undefined };
+  }
+  return null;
+}
+
+export function normalizeNamedKeyPersonnel(raw: unknown): NamedKeyPerson[] | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw === 'string') {
+    const s = raw.trim();
+    if (!s) return null;
+    const roles = s.split(/[,;]|\band\b/i).map((p) => p.trim()).filter(Boolean);
+    if (!roles.length) return null;
+    const cv = /\bcv\b/i.test(s);
+    return roles.map((role) => ({ role, cvRequired: cv || undefined }));
+  }
+  if (Array.isArray(raw)) {
+    const out: NamedKeyPerson[] = [];
+    for (const item of raw) {
+      if (typeof item === 'string' && item.trim()) out.push({ role: item.trim() });
+      else if (item && typeof item === 'object') {
+        const o = item as Record<string, unknown>;
+        const role = String(o.role ?? o.name ?? '').trim();
+        if (!role) continue;
+        out.push({
+          role,
+          minExperience: o.minExperience != null ? String(o.minExperience) : undefined,
+          qualification: o.qualification != null ? String(o.qualification) : undefined,
+          cvRequired: typeof o.cvRequired === 'boolean' ? o.cvRequired : undefined,
+          notes: o.notes != null ? String(o.notes) : undefined,
+        });
+      }
+    }
+    return out.length ? out : null;
+  }
+  return null;
 }

@@ -73,7 +73,19 @@ export function classifySpokenUnknown(value: unknown): SpokenUnknownKind | null 
   if (typeof value === 'boolean' || typeof value === 'number') return null;
 
   if (typeof value === 'string') {
-    return classifyNormalizedPhrase(normalizeSpokenPhrase(value));
+    const normalized = normalizeSpokenPhrase(value);
+    const exact = classifyNormalizedPhrase(normalized);
+    if (exact) return exact;
+    // Whole-value sentences such as "Supplier count is not confirmed yet"
+    if (
+      /\b(not confirmed yet|not yet confirmed|still (unknown|tbc|to be confirmed))\b/.test(
+        normalized,
+      ) &&
+      !/\b(\d+|single-supplier|multi-supplier|ranked-panel)\b/.test(normalized)
+    ) {
+      return 'unknown';
+    }
+    return null;
   }
 
   if (Array.isArray(value)) {
@@ -89,4 +101,24 @@ export function classifySpokenUnknown(value: unknown): SpokenUnknownKind | null 
 
 export function isSpokenUnknownValue(value: unknown): boolean {
   return classifySpokenUnknown(value) !== null;
+}
+
+const NA_PHRASES = new Set([
+  'n/a',
+  'na',
+  'not applicable',
+  'not required',
+  'not needed',
+  'none required',
+  'none',
+  'no named personnel',
+  'named personnel are not required',
+  'no named key personnel',
+  'does not apply',
+]);
+
+/** Whole-value N/A — used for conditional fields the BA explicitly waives. */
+export function classifySpokenNotApplicable(value: unknown): boolean {
+  if (typeof value !== 'string') return false;
+  return NA_PHRASES.has(normalizeSpokenPhrase(value));
 }

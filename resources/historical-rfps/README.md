@@ -4,7 +4,9 @@ Location: `resources/historical-rfps/`
 
 ## What these files are
 
-Excel workbooks that map **RAMI’s current 62-question Question Bank** to answers extracted from **real historical MoDEE / government RFPs** (and pre-qualification documents), including **Status** and **Source (RFP)** page references where available.
+Excel workbooks that map **RAMI’s historical 62-question Question Bank** (groups 0–12) to answers extracted from **real historical MoDEE / government RFPs** (and pre-qualification documents), including **Status** and **Source (RFP)** page references where available.
+
+The live canonical Question Bank is now **69** questions (`18.1`–`18.7` added). Workbooks were **not** rewritten. Promoted Field mappings are applied deterministically at import.
 
 Optional **original RFP PDFs** live beside the Excel files when supplied.
 
@@ -150,6 +152,7 @@ See `derived/retrieval-eval-report.json`. Aggregate Hit@8 ≈ **0.93** for all t
 
 - Resource library: **7** datasets  
 - Structured import: **yes**  
+- Canonical model after evidence pass: **59 Fields / 69 Questions / 20 Sections**  
 - RAG foundation + retrieval eval: **yes** (offline)  
 - Controlled live REFERENCE/PROPOSED/CONFIRM: **yes**  
 - Generation-time RAG: **NOT IMPLEMENTED**

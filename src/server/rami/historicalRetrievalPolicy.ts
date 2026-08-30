@@ -59,23 +59,38 @@ const FIELD_ALIASES: Array<{ re: RegExp; fieldIds: string[]; sectionIds?: string
   },
   {
     re: /\b(governance|steering|progress report|pmo)\b/i,
-    fieldIds: ['engagementPhases'],
-    sectionIds: ['projectApproach'],
+    fieldIds: ['governanceCadence', 'engagementPhases'],
+    sectionIds: ['projectManagementGovernance'],
   },
   {
     re: /\b(knowledge transfer|training of trainers|handover)\b/i,
-    fieldIds: ['trainingApproach'],
-    sectionIds: ['trainingChange'],
+    fieldIds: ['knowledgeTransferRequirements'],
+    sectionIds: ['implementationRequirements'],
   },
   {
     re: /\b(submission|joneps|e-?procurement)\b/i,
-    fieldIds: ['proposalDeadline'],
-    sectionIds: ['administrative'],
+    fieldIds: ['submissionChannel', 'proposalDeadline'],
+    sectionIds: ['administrativeProcedures'],
   },
   {
     re: /\b(clarification|enquir)\b/i,
-    fieldIds: ['proposalDeadline'],
-    sectionIds: ['administrative'],
+    fieldIds: ['clarificationContact'],
+    sectionIds: ['administrativeProcedures'],
+  },
+  {
+    re: /\b(award model|how many suppliers|multi-supplier|ranked)\b/i,
+    fieldIds: ['awardModel'],
+    sectionIds: ['evaluationCriteria'],
+  },
+  {
+    re: /\b(call-?off|\bSOW\b|work order)\b/i,
+    fieldIds: ['callOffOrSowProcess'],
+    sectionIds: ['engagementDefinition'],
+  },
+  {
+    re: /\b(key personnel|named roles|CVs?)\b/i,
+    fieldIds: ['namedKeyPersonnel'],
+    sectionIds: ['manpowerRequirements'],
   },
 ];
 

@@ -60,6 +60,10 @@ export function getSectionFieldLinks(): SectionFieldLink[] {
     { sectionId: 'projectManagementGovernance', fieldId: 'engagementPhases' },
     { sectionId: 'projectManagementGovernance', fieldId: 'stakeholderRoles' },
     { sectionId: 'manpowerRequirements', fieldId: 'stakeholderRoles' },
+    { sectionId: 'manpowerRequirements', fieldId: 'namedKeyPersonnel' },
+    { sectionId: 'administrativeProcedures', fieldId: 'clarificationContact' },
+    { sectionId: 'administrativeProcedures', fieldId: 'submissionChannel' },
+    { sectionId: 'projectManagementGovernance', fieldId: 'governanceCadence' },
   ];
   for (const pair of extraPairs) {
     pairKeys.set(`${pair.sectionId}::${pair.fieldId}`, pair);
@@ -125,19 +129,19 @@ export const SECTION_COVERAGE_NOTES: Record<
     note: 'Glossary can be derived during generation; no dedicated field.',
   },
   administrativeProcedures: {
-    severity: 'IMPORTANT',
-    note: 'Only proposalDeadline (and shared tenderNumber) are collected. Submission format, late-bid rules, and clarification contact are historically boilerplate (SYSTEM_DEFAULT). Propose later: clarificationContact, submissionChannel.',
+    severity: 'OPTIONAL',
+    note: 'Now collects clarificationContact + submissionChannel (supporting, TBC allowed) plus proposalDeadline/tenderNumber. Late-bid/format remains boilerplate.',
   },
   projectManagementGovernance: {
-    severity: 'IMPORTANT',
-    note: 'No dedicated PMO fields. Shared engagementPhases / stakeholderRoles are insufficient for a full governance section. Propose later: governanceCadence.',
+    severity: 'OPTIONAL',
+    note: 'governanceCadence is the dedicated supporting Field when this section applies. engagementPhases remains shared.',
   },
   manpowerRequirements: {
-    severity: 'CRITICAL',
-    note: 'When this conditional section applies, no named-roles field exists. stakeholderRoles is shared supporting only. Propose later: namedRoles (role / experience / qualification).',
+    severity: 'OPTIONAL',
+    note: 'namedKeyPersonnel is the must-have Field when this section applies. N/A is valid when the BA says named staff are not required.',
   },
   implementationRequirements: {
-    severity: 'IMPORTANT',
-    note: 'Only phases/duration/UAT-adjacent fields map here. Implementation stages (design, training, KT) are not first-class Fields.',
+    severity: 'OPTIONAL',
+    note: 'knowledgeTransferRequirements is supporting when implementation applies. Phases/duration remain shared.',
   },
 };

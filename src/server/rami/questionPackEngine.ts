@@ -34,7 +34,14 @@ export function activatePacks(ctx: ProjectContext, memory: ProjectMemory): PackI
 
   // Explicit stage / granularity evidence always allowed
   add('PRE_QUALIFICATION', ctx.documentStage === 'PRE_QUALIFICATION');
-  add('FRAMEWORK', ctx.contractingGranularity === 'FRAMEWORK');
+  add(
+    'FRAMEWORK',
+    ctx.contractingGranularity === 'FRAMEWORK' ||
+      ctx.contractingGranularity === 'ASSIGNMENT' ||
+      ctx.documentStage === 'SOW_OR_CALL_OFF' ||
+      ctx.documentStage === 'FRAMEWORK_QUALIFICATION' ||
+      hasEvidence(memory, 'callOffOrSowProcess'),
+  );
   add(
     'PROCUREMENT',
     ctx.documentStage === 'FULL_RFP' ||
@@ -83,6 +90,7 @@ export function activatePacks(ctx: ProjectContext, memory: ProjectMemory): PackI
   add(
     'TRAINING_CHANGE',
     hasDomain('TRAINING') ||
+      hasEvidence(memory, 'knowledgeTransferRequirements') ||
       (hasDomain('SYSTEM_IMPLEMENTATION') && hasEvidence(memory, 'deliverableItems')),
   );
 

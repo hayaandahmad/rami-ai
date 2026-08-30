@@ -24,6 +24,7 @@ function memStr(memory: ProjectMemory, fieldId: keyof ProjectMemory): string {
   const v = field?.current?.value;
   if (typeof v === 'string') return v.toLowerCase();
   if (Array.isArray(v)) return v.map(String).join(' ').toLowerCase();
+  if (v && typeof v === 'object') return JSON.stringify(v).toLowerCase();
   return '';
 }
 
@@ -84,8 +85,8 @@ function inferGranularity(
 ): ContractingGranularity {
   const s = `${signal ?? ''} ${docType} ${engType} ${blob}`.toLowerCase();
   if (!s.trim()) return 'UNDETERMINED';
-  if (/\b(call-?off|sow|assignment|work order)\b/.test(s)) return 'ASSIGNMENT';
   if (/\bframework\b/.test(s)) return 'FRAMEWORK';
+  if (/\b(call-?off|sow|assignment|work order)\b/.test(s)) return 'ASSIGNMENT';
   if (/\b(one-?time|single project|fixed scope|one off)\b/.test(s)) return 'SINGLE_PROJECT';
   // Known concrete document types that are not frameworks
   if (
@@ -202,7 +203,10 @@ function collectSecondary(
   if (memory.slaTiers?.current?.value || memory.supportPeriodAndHours?.current?.value) {
     set.add('SLA_SUPPORT');
   }
-  if (/\b(train|change management|ocm)\b/i.test(memStr(memory, 'deliverableItems'))) {
+  if (
+    /\b(train|change management|ocm)\b/i.test(memStr(memory, 'deliverableItems')) ||
+    !!memory.knowledgeTransferRequirements?.current?.value
+  ) {
     set.add('TRAINING');
   }
   if (/\b(data platform|lakehouse|cdc)\b/i.test(memStr(memory, 'inScope'))) {
@@ -235,6 +239,10 @@ export function classifyProject(input: ClassifyInput): ProjectContext {
     memStr(input.memory, 'currentSituation'),
     memStr(input.memory, 'inScope'),
     memStr(input.memory, 'businessNeedRationale'),
+    memStr(input.memory, 'awardModel'),
+    memStr(input.memory, 'callOffOrSowProcess'),
+    memStr(input.memory, 'namedKeyPersonnel'),
+    memStr(input.memory, 'knowledgeTransferRequirements'),
     input.latestMessage ?? '',
   ].join(' ');
 
@@ -276,6 +284,12 @@ export function classifyProject(input: ClassifyInput): ProjectContext {
 
   // Framework docType without domain → keep GENERAL but granularity FRAMEWORK
   if (docType.toLowerCase().includes('framework') && contractingGranularity === 'UNDETERMINED') {
+    contractingGranularity = 'FRAMEWORK';
+  }
+  if (
+    contractingGranularity === 'UNDETERMINED' &&
+    memStr(input.memory, 'callOffOrSowProcess').trim()
+  ) {
     contractingGranularity = 'FRAMEWORK';
   }
 

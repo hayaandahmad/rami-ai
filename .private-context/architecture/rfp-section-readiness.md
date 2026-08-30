@@ -61,12 +61,12 @@ Live report: `npm run report:section-readiness`
 | Section | Severity | Notes |
 |---|---|---|
 | tableOfContents / abbreviations | OPTIONAL | Boilerplate / derived |
-| administrativeProcedures | IMPORTANT | Propose later: `clarificationContact`, `submissionChannel` |
-| projectManagementGovernance | IMPORTANT | Propose later: `governanceCadence` |
-| manpowerRequirements | CRITICAL when applicable | Propose later: `namedRoles` |
-| implementationRequirements | IMPORTANT | Stages/training/KT not first-class |
+| administrativeProcedures | OPTIONAL | Now has supporting `clarificationContact` + `submissionChannel` (TBC allowed) |
+| projectManagementGovernance | OPTIONAL | `governanceCadence` supporting when PMO applies |
+| manpowerRequirements | CRITICAL when applicable | `namedKeyPersonnel` is must-have; N/A valid if no named staff |
+| implementationRequirements | OPTIONAL | `knowledgeTransferRequirements` supporting when SYSTEM/training applies |
 
-Do not add these Fields until asked.
+Do not add a 21st section for tender administration.
 
 ## 5. Generation contract (implemented)
 

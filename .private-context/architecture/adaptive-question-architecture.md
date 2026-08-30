@@ -10,7 +10,7 @@ Phase 2.3 domain catalogs, RAG, generation, confirm UI, and DOCX are **out of sc
 
 | Store | Owns |
 |-------|------|
-| **ProjectMemory** | Canonical 52 field facts + provenance |
+| **ProjectMemory** | Canonical 59 field facts + provenance (52 + 7 promoted 2026-08) |
 | **ProjectContext** | `documentStage`, `contractingGranularity`, `primaryDomain`, `secondaryDomains`, `complexity`, `activePacks`, `collectionSufficient` |
 
 Do **not** duplicate classifiers into ProjectMemory. Keep `documentType` / `engagementType` as compatibility + classification signals only.
@@ -52,7 +52,7 @@ SLA_SUPPORT
 ASSESSMENT_TESTING
 ```
 
-Phase 2.2 tags the existing 52 fields. Phase 2.3 adds richer domain requirement catalogs — not implemented here.
+Phase 2.2 tagged the original 52 fields. The 2026-08 evidence pass added 7 Fields (`18.x` Questions). Phase 2.3 domain catalogs remain unimplemented.
 
 ---
 

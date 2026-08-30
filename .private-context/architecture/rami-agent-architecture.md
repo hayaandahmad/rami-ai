@@ -36,7 +36,7 @@ LLM extracts and phrases. TypeScript owns classification, packs, gaps, NextActio
 - Never choose packs, GapStatus, NextAction cluster, or collectionSufficient
 
 ### Deterministic TypeScript
-- ProjectMemory (52 facts) + ProjectContext (classifiers / packs / sufficiency)
+- ProjectMemory (59 facts) + ProjectContext (classifiers / packs / sufficiency)
 - GapStatus, materiality stop, ASK clustering, correction vs contradiction
 - Provenance: REFERENCE cannot go directly to CONFIRMED; TBC deprecated → maps to UNKNOWN in gaps
 - Section applicability (visibility ≠ required while UNDETERMINED)

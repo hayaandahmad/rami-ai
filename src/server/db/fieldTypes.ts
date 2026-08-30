@@ -9,6 +9,7 @@ const OVERRIDES: Partial<Record<string, FieldDataType>> = {
   slaTiers: 'object',
   pricingModelAndCostBreakdown: 'object',
   optionalItemsAndTaxes: 'object',
+  awardModel: 'object',
 };
 
 const ARRAY_FIELDS = new Set([
@@ -35,6 +36,8 @@ const ARRAY_FIELDS = new Set([
   'supportPenalties',
   'requiredAnnexes',
   'riskNotes',
+  'namedKeyPersonnel',
+  'knowledgeTransferRequirements',
 ]);
 
 export function getFieldDataType(fieldId: string): FieldDataType {

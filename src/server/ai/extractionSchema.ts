@@ -122,6 +122,14 @@ FIELD GUIDANCE:
 - beneficiaryEntity: the ministry or government entity name
 - engagementDuration: e.g. "12 months", "2 years"
 - evaluationWeights: e.g. "70/30 technical/financial"
+- awardModel: object { model: "single-supplier"|"multi-supplier"|"ranked-panel"|"service-specific", supplierCount?: number } or a short string like "three suppliers on a framework"
+- callOffOrSowProcess: how SOWs/call-offs/work orders are issued (frameworks only)
+- namedKeyPersonnel: array of { role, minExperience?, qualification?, cvRequired? } or a short list of roles
+- clarificationContact: name/email/channel for tender clarifications
+- submissionChannel: portal/email/address for proposal submission (not general comms)
+- governanceCadence: steering/PMO/progress-report cadence
+- knowledgeTransferRequirements: array of KT/handover/ToT obligations
+- If the BA says a conditional requirement is not required / not applicable, extract that field with value "not required"
 
 UPDATE KIND (per fact):
 - assert: normal new fact

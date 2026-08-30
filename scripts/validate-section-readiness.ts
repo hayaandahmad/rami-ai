@@ -178,11 +178,11 @@ run('one field maps to multiple sections', () => {
   assert.ok(sections.length >= 2);
 });
 
-run('mapping has unique pairs and stays within 52/20', () => {
+run('mapping has unique pairs and stays within 59/20', () => {
   const links = getSectionFieldLinks();
   const keys = links.map((l) => `${l.sectionId}::${l.fieldId}`);
   assert.equal(new Set(keys).size, keys.length);
-  assert.equal(PROJECT_MEMORY_FIELDS.length, 52);
+  assert.equal(PROJECT_MEMORY_FIELDS.length, 59);
   assert.equal(RFP_SECTIONS.length, 20);
   for (const link of links) {
     assert.ok(PROJECT_MEMORY_FIELDS.some((f) => f.fieldId === link.fieldId));

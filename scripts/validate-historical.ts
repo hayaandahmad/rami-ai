@@ -9,7 +9,7 @@ import { join } from 'path';
 import { loadLocalEnv } from '../src/server/db/loadEnv';
 import { closePool } from '../src/server/db/connection';
 import { isDatabaseConfigured } from '../src/server/db/config';
-import { QUESTION_SEEDS } from '../src/schema/questionBankSeed';
+import { HISTORICAL_WORKBOOK_QUESTION_COUNT } from '../src/schema/questionBankSeed';
 import {
   countHistoricalTables,
   countLiveProjectTables,
@@ -178,8 +178,8 @@ async function main() {
       assert.equal(cases.length, 7);
       for (const c of cases) {
         const qc = await evaluateQuestionCoverage(c.historicalRfpId);
-        assert.equal(qc.expectedCanonical, QUESTION_SEEDS.length);
-        assert.equal(qc.matchedCanonical, 62);
+        assert.equal(qc.expectedCanonical, HISTORICAL_WORKBOOK_QUESTION_COUNT);
+        assert.equal(qc.matchedCanonical, HISTORICAL_WORKBOOK_QUESTION_COUNT);
         assert.equal(qc.missingQuestionIds.length, 0);
         const fc = await evaluateFieldCoverage(c.historicalRfpId);
         assert.ok(fc.supportedFieldIds.length > 20);

@@ -42,6 +42,16 @@ npm run validate:controlled-rag
 
 Ask in chat: *“Show me examples for deliverables from previous RFPs”* → historical cards appear → **Use as suggestion** / **Accept** / **Reject**.
 
-## E. Exact next task
+## E. Canonical information model (2026-08)
+
+| Item | Count |
+|---|---:|
+| Canonical Fields | **59** (was 52; +7 evidence-promoted) |
+| Canonical Questions | **69** (was 62; +7 `18.x`) |
+| Canonical Sections | **20** (unchanged) |
+
+`procurementStage` is **not** a Field. It remains `ProjectContext.documentStage`.
+
+## F. Exact next task
 
 Optional generation-time RAG (explicit BA-approved only). Do not auto-inject historical text into section drafts. See `NEXT_STEPS.md`.

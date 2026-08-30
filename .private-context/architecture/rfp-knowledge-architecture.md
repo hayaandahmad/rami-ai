@@ -8,11 +8,11 @@ This document covers everything about *what Rami knows and how it knows it is tr
 
 ## 1. Structured Project Memory
 
-Structured project memory is the canonical, queryable store of facts about **the current engagement**, keyed by the 52 canonical fields in `analysis/question-information-mapping.md`. Conceptually:
+Structured project memory is the canonical, queryable store of facts about **the current engagement**, keyed by the 59 canonical fields in `src/schema/projectMemoryFields.ts` (52 original + 7 promoted 2026-08; see `analysis/question-information-mapping.md` for the original derivation). Conceptually:
 
 ```ts
 interface ProjectMemoryEntry {
-  fieldId: string;            // e.g. "hostingModel" — one of the 52 canonical fields
+  fieldId: string;            // e.g. "hostingModel" — one of the 59 canonical fields
   value: unknown;             // shape depends on field (string, string[], structured object)
   status: ProvenanceStatus;   // see §2
   sourceType: "ba-message" | "historical-retrieval" | "template-default" | "system";
