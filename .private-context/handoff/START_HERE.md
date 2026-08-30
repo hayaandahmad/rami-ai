@@ -13,7 +13,11 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Last **feature** milestone: **Final RFP completion + DOCX export** (see `git log -1`).
+Last **feature** milestone: **Final RFP completion + DOCX export**
+
+```text
+2546bfb40b1d1d1fc0ec8615d6e27d73e0525ee7
+```
 
 ## B. Product goal
 
