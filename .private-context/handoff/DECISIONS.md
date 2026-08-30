@@ -250,3 +250,9 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 **Decision**: For evaluation weights/rules, pricing/tax structure, and legal/JV/penalty terms that MoDEE has not confirmed, apply `TBC` through `applyExtractedFacts` (same path as chat extraction), then generate with `DRAFTABLE_WITH_TBC`. Do not invent percentages, currencies, governing law, bonds, or penalties for the demo.
 **Status**: Active.
 
+---
+
+## #38 — Historical RFP resources are reference-only
+**Decision**: Files under `resources/historical-rfps/` are immutable source artifacts (Excel Question Bank extractions + optional PDFs) for REFERENCE, EVALUATION, and future RAG_CANDIDATE use. They must never silently become current `ProjectFacts`, training data, or live project state. `source/` is immutable; `derived/` holds audits/normalized exports only. Historical retrieval may propose REFERENCE/PROPOSED content only after BA confirmation.
+**Status**: Active. Binding before any RAG/ingestion work.
+

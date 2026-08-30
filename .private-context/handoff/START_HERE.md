@@ -46,10 +46,25 @@ RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript o
 
 ## E. NOT implemented (post-demo)
 
-- RAG / pgvector / historical RFP retrieval
+- RAG / pgvector / historical RFP **ingestion** (library exists; not ingested)
 - Fine-tuning / LoRA / model replacement
 - Phase 2.3 domain catalogs
 - Auto-approving all sections (approval remains a BA action)
+
+## E2. Historical RFP Resource Library
+
+Organized reference datasets (not live facts):
+
+```text
+resources/historical-rfps/
+```
+
+- **7** Question Bank answer workbooks + **4** source PDFs (~10.3 MB)
+- Manifest: `resources/historical-rfps/manifest.json`
+- Audit: `resources/historical-rfps/derived/AUDIT_SUMMARY.md`
+- Semantics: REFERENCE / EVALUATION / RAG_CANDIDATE only — **never** current ProjectFacts, not training, not embeddings yet
+
+When working on evaluation or RAG design, start there — then `NEXT_STEPS.md`.
 
 ## F. Demo entry
 
@@ -85,4 +100,4 @@ http://localhost:3000/documents/rami-gen-core-demo/interview
 
 ## I. Exact next task (post-demo)
 
-RAG / retrieval over historical RFPs — only after manager demo. See `NEXT_STEPS.md`.
+Design historical ingestion + evaluation harness against `resources/historical-rfps/` (Excel → historical answers first). Do **not** install pgvector or generate embeddings until provenance IDs are agreed. See `NEXT_STEPS.md`.

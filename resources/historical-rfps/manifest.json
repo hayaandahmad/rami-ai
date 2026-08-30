@@ -1,0 +1,511 @@
+{
+  "schemaVersion": 1,
+  "library": "historical-rfps",
+  "description": "Historical MoDEE/government RFP Question Bank extractions and optional source PDFs. REFERENCE only — never current ProjectFacts.",
+  "semantics": {
+    "source": "Immutable supplied Excel/PDF artifacts under source/",
+    "derived": "Machine-generated audits/normalized datasets under derived/ only",
+    "forbidden": [
+      "CURRENT_PROJECT_DATA",
+      "silent ProjectFacts import",
+      "training corpus without explicit approval"
+    ]
+  },
+  "canonicalRamiTargets": {
+    "questionBankCount": 62,
+    "fieldCount": 52,
+    "sectionCount": 20
+  },
+  "totals": {
+    "datasetCount": 7,
+    "excelCount": 7,
+    "pdfCount": 4,
+    "sourceBytes": 10342985
+  },
+  "resources": [
+    {
+      "id": "rfp-22-egovt-2026-reengineering-ofa",
+      "name": "Open Framework Agreement for Reengineering Projects (22/eGovt/2026)",
+      "sourceType": "historical_rfp_question_bank_extraction",
+      "notCurrentProjectData": true,
+      "notTrainingData": true,
+      "notRagIngested": true,
+      "intendedUse": [
+        "REFERENCE",
+        "EVALUATION",
+        "RAG_CANDIDATE"
+      ],
+      "documentKinds": [
+        "framework_agreement",
+        "consulting",
+        "bpr"
+      ],
+      "excel": {
+        "path": "source/excel/Rami_Reengineering_Framework_22_eGovt_2026_Question_Bank_Answers.xlsx",
+        "bytes": 27784,
+        "sha256": "26b1a5e55e664af637f95070b03c1dda3b06a1521d875e636ecdf1b3ebfc3bfd",
+        "sheets": [
+          "Rami Q&A",
+          "Suggested Additions",
+          "Adaptive Depth",
+          "Final Rami Architecture"
+        ],
+        "qaSchema": "Section|Question ID|Exact Rami Question|Answer Based on RFP|Status|Source (RFP)",
+        "canonicalQuestionsMatched": 62,
+        "canonicalQuestionsExpected": 62,
+        "answeredCanonical": 62,
+        "statusCounts": {
+          "Answered": 46,
+          "Partially stated": 4,
+          "Not applicable": 11,
+          "TBC": 1
+        },
+        "rowsWithSourceReference": 62,
+        "fieldsStrongCount": 38,
+        "fieldsPartialCount": 14,
+        "suggestedAdditionIds": [
+          "13.1",
+          "13.10",
+          "13.2",
+          "13.3",
+          "13.4",
+          "13.5",
+          "13.6",
+          "13.7",
+          "13.8",
+          "13.9",
+          "16.1",
+          "16.10",
+          "16.11",
+          "16.2",
+          "16.3",
+          "16.4",
+          "16.5",
+          "16.6",
+          "16.7",
+          "16.8",
+          "16.9"
+        ],
+        "extractionStatus": "complete_question_bank_pass",
+        "sourceTraceability": "page_refs_present"
+      },
+      "pdf": {
+        "path": "source/pdf/framework-agreement-reengineering-rfp-22egovt2026.pdf",
+        "bytes": 2481000,
+        "sha256": "0f5300bbd3001577422a4d8988ba38ebcde175e66c71849be42b1fbe7c530811",
+        "originalFilenameNote": "Explicitly supplied with dataset"
+      },
+      "notes": [
+        "Includes Final Rami Architecture sheet (adaptive design notes)"
+      ]
+    },
+    {
+      "id": "pq-15-egovt-2026-sanad-ai",
+      "name": "Agentic Chatbot (SANAD AI) Pre-Qualification (15/eGovt/2026)",
+      "sourceType": "historical_rfp_question_bank_extraction",
+      "notCurrentProjectData": true,
+      "notTrainingData": true,
+      "notRagIngested": true,
+      "intendedUse": [
+        "REFERENCE",
+        "EVALUATION",
+        "RAG_CANDIDATE"
+      ],
+      "documentKinds": [
+        "pre_qualification",
+        "ai_system"
+      ],
+      "excel": {
+        "path": "source/excel/Rami_SANAD_AI_PQ_Question_Bank_Answers.xlsx",
+        "bytes": 22941,
+        "sha256": "7cf48a88db9928a2f95b04e7584738cf40ae67aa3270c59f13b916d47d198ae1",
+        "sheets": [
+          "Rami Q&A",
+          "Suggested Additions",
+          "Adaptive Depth"
+        ],
+        "qaSchema": "Section|Question ID|Exact Rami Question|Answer Based on RFP|Status|Source (RFP)",
+        "canonicalQuestionsMatched": 62,
+        "canonicalQuestionsExpected": 62,
+        "answeredCanonical": 62,
+        "statusCounts": {
+          "Answered": 36,
+          "Partially stated": 10,
+          "TBC": 16
+        },
+        "rowsWithSourceReference": 62,
+        "fieldsStrongCount": 29,
+        "fieldsPartialCount": 23,
+        "suggestedAdditionIds": [
+          "13.1",
+          "13.2",
+          "13.3",
+          "13.4",
+          "13.5",
+          "13.6",
+          "13.7",
+          "13.8",
+          "17.1",
+          "17.10",
+          "17.11",
+          "17.12",
+          "17.13",
+          "17.14",
+          "17.2",
+          "17.3",
+          "17.4",
+          "17.5",
+          "17.6",
+          "17.7",
+          "17.8",
+          "17.9"
+        ],
+        "extractionStatus": "complete_question_bank_pass",
+        "sourceTraceability": "page_refs_present"
+      },
+      "pdf": {
+        "path": "source/pdf/agentic-chatbot-sanad-ai-pq-v2.pdf",
+        "bytes": 1695297,
+        "sha256": "7941dbeb12b19f050f32750bd4aa4c351b334d5f36b2101eb9da3e4ba326e71d",
+        "originalFilenameNote": "Explicitly supplied with dataset"
+      },
+      "notes": [
+        "High TBC count — strong PQ/deferred-stage evaluation candidate"
+      ]
+    },
+    {
+      "id": "rfp-ssc-bpr",
+      "name": "SSC Business Process Reengineering",
+      "sourceType": "historical_rfp_question_bank_extraction",
+      "notCurrentProjectData": true,
+      "notTrainingData": true,
+      "notRagIngested": true,
+      "intendedUse": [
+        "REFERENCE",
+        "EVALUATION",
+        "RAG_CANDIDATE"
+      ],
+      "documentKinds": [
+        "consulting",
+        "bpr"
+      ],
+      "excel": {
+        "path": "source/excel/Rami_SSC_BPR_Question_Bank_Answers.xlsx",
+        "bytes": 22719,
+        "sha256": "4c1bd1e30d3b4f58e4004e48aa83161d379eded4ae99d5165715baac14f18ccd",
+        "sheets": [
+          "Rami Q&A",
+          "Suggested Additions",
+          "Adaptive Depth"
+        ],
+        "qaSchema": "Section|Question ID|Exact Rami Question|Answer Based on RFP|Status|Source (RFP)",
+        "canonicalQuestionsMatched": 62,
+        "canonicalQuestionsExpected": 62,
+        "answeredCanonical": 62,
+        "statusCounts": {
+          "Answered": 43,
+          "Partially stated": 6,
+          "Not applicable": 12,
+          "TBC": 1
+        },
+        "rowsWithSourceReference": 62,
+        "fieldsStrongCount": 35,
+        "fieldsPartialCount": 17,
+        "suggestedAdditionIds": [
+          "13.1",
+          "13.2",
+          "13.3",
+          "13.4",
+          "13.5",
+          "13.6",
+          "13.7",
+          "13.8",
+          "16.1",
+          "16.10",
+          "16.2",
+          "16.3",
+          "16.4",
+          "16.5",
+          "16.6",
+          "16.7",
+          "16.8",
+          "16.9"
+        ],
+        "extractionStatus": "complete_question_bank_pass",
+        "sourceTraceability": "page_refs_present"
+      },
+      "pdf": null,
+      "notes": [
+        "Source PDF not provided in this batch"
+      ]
+    },
+    {
+      "id": "rfp-nur-v2-lakehouse",
+      "name": "NUR V2 Lakehouse",
+      "sourceType": "historical_rfp_question_bank_extraction",
+      "notCurrentProjectData": true,
+      "notTrainingData": true,
+      "notRagIngested": true,
+      "intendedUse": [
+        "REFERENCE",
+        "EVALUATION",
+        "RAG_CANDIDATE"
+      ],
+      "documentKinds": [
+        "system_implementation",
+        "data_platform"
+      ],
+      "excel": {
+        "path": "source/excel/Rami_NUR_V2_Lakehouse_Question_Bank_Answers.xlsx",
+        "bytes": 24446,
+        "sha256": "38082e05687ca12c2233638788e0a878845a0e427cef07d39c1b8d86d2c11a8f",
+        "sheets": [
+          "Rami Q&A",
+          "Suggested Additions",
+          "Adaptive Depth"
+        ],
+        "qaSchema": "Section|Question ID|Exact Rami Question|Answer Based on RFP|Status|Source (RFP)",
+        "canonicalQuestionsMatched": 62,
+        "canonicalQuestionsExpected": 62,
+        "answeredCanonical": 62,
+        "statusCounts": {
+          "Answered": 54,
+          "TBC": 3,
+          "Partially stated": 4,
+          "Not applicable": 1
+        },
+        "rowsWithSourceReference": 62,
+        "fieldsStrongCount": 46,
+        "fieldsPartialCount": 6,
+        "suggestedAdditionIds": [
+          "13.1",
+          "13.2",
+          "13.3",
+          "13.4",
+          "13.5",
+          "13.6",
+          "13.7",
+          "13.8",
+          "15.1",
+          "15.10",
+          "15.2",
+          "15.3",
+          "15.4",
+          "15.5",
+          "15.6",
+          "15.7",
+          "15.8",
+          "15.9"
+        ],
+        "extractionStatus": "complete_question_bank_pass",
+        "sourceTraceability": "page_refs_present"
+      },
+      "pdf": null,
+      "notes": [
+        "Source PDF not provided in this batch"
+      ]
+    },
+    {
+      "id": "rfp-itas-vol2b",
+      "name": "ITAS Volume 2B — Integrated Tax Administration Solution",
+      "sourceType": "historical_rfp_question_bank_extraction",
+      "notCurrentProjectData": true,
+      "notTrainingData": true,
+      "notRagIngested": true,
+      "intendedUse": [
+        "REFERENCE",
+        "EVALUATION",
+        "RAG_CANDIDATE"
+      ],
+      "documentKinds": [
+        "system_implementation",
+        "tax"
+      ],
+      "excel": {
+        "path": "source/excel/Rami_ITAS_Vol2B_Question_Bank_Answers.xlsx",
+        "bytes": 22100,
+        "sha256": "9c97853d76cf0832993c70030e6d8c3ed962ecb647d39e952ac2b50d2e6098ae",
+        "sheets": [
+          "Rami Q&A",
+          "Suggested Additions"
+        ],
+        "qaSchema": "Section|Question ID|Exact Rami Question|Answer Based on RFP|Status|Source (RFP)",
+        "canonicalQuestionsMatched": 62,
+        "canonicalQuestionsExpected": 62,
+        "answeredCanonical": 62,
+        "statusCounts": {
+          "Answered": 48,
+          "TBC": 7,
+          "Partially stated": 7
+        },
+        "rowsWithSourceReference": 62,
+        "fieldsStrongCount": 42,
+        "fieldsPartialCount": 10,
+        "suggestedAdditionIds": [
+          "13.1",
+          "13.10",
+          "13.2",
+          "13.3",
+          "13.4",
+          "13.5",
+          "13.6",
+          "13.7",
+          "13.8",
+          "13.9",
+          "14.1",
+          "14.10",
+          "14.2",
+          "14.3",
+          "14.4",
+          "14.5",
+          "14.6",
+          "14.7",
+          "14.8",
+          "14.9"
+        ],
+        "extractionStatus": "complete_question_bank_pass",
+        "sourceTraceability": "page_refs_present"
+      },
+      "pdf": {
+        "path": "source/pdf/modee-stage3-rfp-vol2b-itas-vf.pdf",
+        "bytes": 3753494,
+        "sha256": "cf1b4b676bcdb7f4a3af899266ea7185d094bd62175f3b636b5751aaec4dd27b",
+        "originalFilenameNote": "Corresponding PDF found adjacent in Downloads; included as source artifact"
+      },
+      "notes": []
+    },
+    {
+      "id": "rfp-connectivity-ofa",
+      "name": "Internet & Connectivity Open Framework Agreement",
+      "sourceType": "historical_rfp_question_bank_extraction",
+      "notCurrentProjectData": true,
+      "notTrainingData": true,
+      "notRagIngested": true,
+      "intendedUse": [
+        "REFERENCE",
+        "EVALUATION",
+        "RAG_CANDIDATE"
+      ],
+      "documentKinds": [
+        "framework_agreement",
+        "connectivity"
+      ],
+      "excel": {
+        "path": "source/excel/Rami_Connectivity_OFA_Question_Bank_Answers.xlsx",
+        "bytes": 23077,
+        "sha256": "3ed98b569194df7af991146221346e3ef5a761fa5113e017fd3c9c0b3cc10441",
+        "sheets": [
+          "Rami Q&A",
+          "Suggested Additions",
+          "Adaptive Depth"
+        ],
+        "qaSchema": "Section|Question ID|Exact Rami Question|Answer Based on RFP|Status|Source (RFP)",
+        "canonicalQuestionsMatched": 62,
+        "canonicalQuestionsExpected": 62,
+        "answeredCanonical": 62,
+        "statusCounts": {
+          "Answered": 48,
+          "Partially stated": 8,
+          "TBC": 4,
+          "Not applicable": 2
+        },
+        "rowsWithSourceReference": 62,
+        "fieldsStrongCount": 42,
+        "fieldsPartialCount": 10,
+        "suggestedAdditionIds": [
+          "13.1",
+          "13.10",
+          "13.2",
+          "13.3",
+          "13.4",
+          "13.5",
+          "13.6",
+          "13.7",
+          "13.8",
+          "13.9",
+          "14.1",
+          "14.2",
+          "14.3",
+          "14.4",
+          "14.5",
+          "14.6",
+          "14.7",
+          "14.8"
+        ],
+        "extractionStatus": "complete_question_bank_pass",
+        "sourceTraceability": "page_refs_present"
+      },
+      "pdf": null,
+      "notes": [
+        "Source PDF not provided in this batch"
+      ]
+    },
+    {
+      "id": "rfp-17-egovt-2026-performance-assessment",
+      "name": "Open Framework Agreement for Performance Assessment (17/eGovt/2026)",
+      "sourceType": "historical_rfp_question_bank_extraction",
+      "notCurrentProjectData": true,
+      "notTrainingData": true,
+      "notRagIngested": true,
+      "intendedUse": [
+        "REFERENCE",
+        "EVALUATION",
+        "RAG_CANDIDATE"
+      ],
+      "documentKinds": [
+        "framework_agreement",
+        "performance_assessment"
+      ],
+      "excel": {
+        "path": "source/excel/Rami_RFP_17_eGovt_2026_Question_Bank_Answers.xlsx",
+        "bytes": 16577,
+        "sha256": "51175ebe8f6b9cdde9012722ef3b3cfe6446cf7d8d274ecfc8aa9586b0af1add",
+        "sheets": [
+          "Rami Q&A",
+          "Suggested Additions"
+        ],
+        "qaSchema": "Section|Question ID|Exact Rami Question|Answer Based on RFP|Status|Source (RFP)",
+        "canonicalQuestionsMatched": 62,
+        "canonicalQuestionsExpected": 62,
+        "answeredCanonical": 62,
+        "statusCounts": {
+          "Answered": 44,
+          "Partially stated": 5,
+          "TBC": 10,
+          "Not applicable": 3
+        },
+        "rowsWithSourceReference": 62,
+        "fieldsStrongCount": 38,
+        "fieldsPartialCount": 14,
+        "suggestedAdditionIds": [
+          "13.1",
+          "13.10",
+          "13.2",
+          "13.3",
+          "13.4",
+          "13.5",
+          "13.6",
+          "13.7",
+          "13.8",
+          "13.9"
+        ],
+        "extractionStatus": "complete_question_bank_pass",
+        "sourceTraceability": "page_refs_present"
+      },
+      "pdf": {
+        "path": "source/pdf/rfp-document-17egovt2026.pdf",
+        "bytes": 2253550,
+        "sha256": "fd480ecc38109a13672c5f8a3a25afac991f1ddf685a6343872fd013af0a1a47",
+        "originalFilenameNote": "Corresponding PDF found adjacent in Downloads; included as source artifact"
+      },
+      "notes": [
+        "High TBC count — strong PQ/deferred-stage evaluation candidate"
+      ]
+    }
+  ],
+  "audit": {
+    "rawPath": "derived/audit-raw.json",
+    "summaryPath": "derived/AUDIT_SUMMARY.md",
+    "generatedBy": "scripts/audit-historical-rfp-resources.py"
+  }
+}

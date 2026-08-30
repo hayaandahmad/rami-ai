@@ -1,39 +1,31 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-31 (final RFP draft + DOCX on second device)
+Last updated: 2026-08-31 (historical RFP resource library + audit)
 
 Authoritative HEAD: `origin/main` (`git log -1`).
 
 ## Runtime truth
 
 ### Demo project `rami-gen-core-demo`
-- **12 / 12** applicable sections generated
-- **1** APPROVED (`background`); others DRAFT
-- Evaluation / financial / legal drafted with **explicit TBC** after BA TBC facts via `applyExtractedFacts`
-- Deliverables: model once returned headings-only → facts-backed manual edit (v3) from `deliverableItems` / `deliverableFormats`
-- Consistency review: no duplicate H1 / empty / order issues; **12** TBC blocks
+- **12 / 12** applicable sections generated; **1** APPROVED (`background`)
+- DOCX export available; commercial/legal use explicit TBC
+- Unchanged by historical resource work (no ProjectFacts imports)
 
-### DOCX export
-- `src/server/rami/docxExport.ts` — `buildRfpDocxBuffer` / `safeDocxFilename`
-- `GET /api/rami/generation/document/docx?documentKey=`
-- UI: **Word** download in `RfpDocumentPanel`
-- Renders heading, paragraph, lists, table, tbc; page breaks between sections; header/footer page numbers
-- **No model calls** during export — persisted AssembledRfp only
-- Validator: `npm run validate:docx-export`
+### Historical RFP Resource Library
+- Path: `resources/historical-rfps/`
+- **7** Excel Question Bank extractions + **4** PDFs under `source/`
+- `manifest.json` + `derived/AUDIT_SUMMARY.md` (readiness audit complete)
+- **Not** ProjectFacts · **Not** RAG-ingested · **Not** training data
+- Canonical Q&A sheet schema consistent; 62/62 Question IDs matched per dataset
+- Confirmed information-model gaps: procurement admin, named personnel, call-off/SOW, clarification/submission, governance cadence (see audit)
 
-### Document experience (UI)
-- Unchanged architecture; timeout UX hardened (busy banner + clearer failure message; drafts not overwritten on failure)
-
-### Inference note
-- Local Ollama smoke/generation timed out on this device for Deliverables
-- Remaining sections generated via existing **ModalModelProvider** (start → generate → stop)
-- Default `.env.local` remains `RAMI_MODEL_PROVIDER=local`
+### Document / generation
+Unchanged architecture: readiness gates, `GeneratedSection`, Local/Modal providers, DOCX from AssembledRfp.
 
 ## Phase status
-- RFP Generation Core: ✅
-- Document experience / A4 UI: ✅
-- Remaining applicable sections + TBC path: ✅
-- DOCX: ✅
-- RAG / Phase 2.3 / training: ⏳ Post-demo
+- RFP Generation Core / Document UI / DOCX: ✅
+- Historical resource library + dataset audit: ✅
+- Historical DB ingestion / evaluation harness: ⏳ Next
+- pgvector / RAG retrieval / training: ⏳ Later
 
 ## Next
-Manager demo. Then RAG — do not start training/fine-tuning.
+Ingestion design + golden evaluation against the library — no embeddings until provenance model is fixed.
