@@ -8,6 +8,7 @@
 import { useState } from 'react';
 import type { SurfacedHistoricalReference } from '@/types/historicalProposal';
 import type { HistoricalReference } from '@/types/historicalRag';
+import { RFP_SECTIONS } from '@/schema/rfpSchema';
 
 interface Props {
   reference: SurfacedHistoricalReference;
@@ -58,6 +59,15 @@ export function HistoricalReferenceCard({
   const [modifyOpen, setModifyOpen] = useState(false);
   const [modifiedText, setModifiedText] = useState(reference.excerpt.slice(0, 400));
   const [proposalId, setProposalId] = useState<string | null>(null);
+  const mappedSections = RFP_SECTIONS.filter((s) => reference.sectionIds.includes(s.sectionId));
+  const sectionChoices = mappedSections.length > 0 ? mappedSections : RFP_SECTIONS.filter((s) =>
+    ['deliverables', 'scopeOfWork', 'background', 'acceptanceCriteria', 'projectManagementGovernance'].includes(
+      s.sectionId,
+    ),
+  );
+  const [draftSectionId, setDraftSectionId] = useState(
+    sectionChoices[0]?.sectionId ?? 'deliverables',
+  );
 
   const fieldId =
     defaultFieldId ||
@@ -145,6 +155,31 @@ export function HistoricalReferenceCard({
     }
   };
 
+  const approveDrafting = async () => {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/rami/historical/generation-reference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          documentKey,
+          sectionId: draftSectionId,
+          chunkId: reference.chunkId,
+        }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Drafting reference failed');
+      setMessage(
+        `Drafting reference saved for ${draftSectionId}. This does not add project facts; values will not be copied.`,
+      );
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Drafting reference failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const viewSource = async () => {
     setSourceOpen(true);
     try {
@@ -193,6 +228,33 @@ export function HistoricalReferenceCard({
         >
           Use as suggestion
         </button>
+        <label className="inline-flex items-center gap-1 text-caption text-text-muted">
+          Section
+          <select
+            className="rounded border border-[var(--color-border)] bg-white px-1 py-0.5 text-caption text-text-primary"
+            value={draftSectionId}
+            onChange={(e) => setDraftSectionId(e.target.value)}
+            disabled={busy}
+          >
+            {sectionChoices.map((s) => (
+              <option key={s.sectionId} value={s.sectionId}>
+                {s.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void approveDrafting()}
+          className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption hover:bg-[var(--color-surface)]"
+        >
+          Use as drafting reference
+        </button>
+        <span className="w-full text-[10px] text-text-muted">
+          Drafting reference = structure/wording for the selected section only. Does not add
+          ProjectFacts. Project-specific values will not be copied.
+        </span>
         <button
           type="button"
           disabled={busy}

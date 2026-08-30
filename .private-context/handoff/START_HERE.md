@@ -32,15 +32,24 @@ Demo: `http://localhost:3000/documents/rami-gen-core-demo/interview`
 | Live chat retrieval | **Yes** — policy-gated only |
 | REFERENCE → PROPOSED → BA confirm | **Yes** |
 | Auto ProjectFact from history | **No** |
-| Generation-time RAG | **NOT IMPLEMENTED** |
+| Generation-time RAG | **Yes — BA-approved, section-scoped drafting references only** |
+| Silent retrieval on Generate | **No** |
 | pgvector | **Not installed** (`REAL[]` interim) |
 
 ```bash
 npm run db:migrate
 npm run validate:controlled-rag
+npm run validate:generation-rag
 ```
 
-Ask in chat: *“Show me examples for deliverables from previous RFPs”* → historical cards appear → **Use as suggestion** / **Accept** / **Reject**.
+Ask in chat: *“Show me examples for deliverables from previous RFPs”* → historical cards appear.
+
+- **Use as suggestion** → PENDING proposal (not a ProjectFact)
+- **Accept** → CONFIRMED ProjectFact
+- **Use as drafting reference** → section-scoped generation guidance only (does **not** add ProjectFacts)
+- **Reject** / **Remove** drafting reference → no fact change
+
+Generation uses **already approved** drafting references. Clicking Generate does **not** retrieve.
 
 ## E. Canonical information model (2026-08)
 
@@ -54,4 +63,4 @@ Ask in chat: *“Show me examples for deliverables from previous RFPs”* → hi
 
 ## F. Exact next task
 
-Optional generation-time RAG (explicit BA-approved only). Do not auto-inject historical text into section drafts. See `NEXT_STEPS.md`.
+Optional pgvector for later scale. Do **not** start productionization, training, or another Field expansion. See `NEXT_STEPS.md`.

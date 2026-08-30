@@ -278,7 +278,7 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 ---
 
 ## #42 — Controlled live RAG: policy-gated REFERENCE + PROPOSED proposals
-**Decision**: Live chat may retrieve only when `evaluateHistoricalRetrievalPolicy` triggers (explicit example / past-RFP / guidance with field focus). Missing fields alone never trigger retrieval. Mode: **structured-first** when Field/Section/Question IDs known (eval showed stronger MRR); **hybrid** for free-text; vector-only is not default. Surfaced cards are labeled REFERENCE. PENDING proposals live in `historical_field_proposals` and **must not** write `project_facts`. BA Accept (optionally modified) writes `CONFIRMED` ProjectFact with `sourceType=historical-retrieval` and PROPOSED lineage in history. Reject stores REJECTED and blocks immediate re-propose of the same chunk+field. Extraction continues to use the BA message only. Generation-time RAG remains off. `procurementStage` is not a canonical Field and must not be inferred from retrieval alone.
+**Decision**: Live chat may retrieve only when `evaluateHistoricalRetrievalPolicy` triggers (explicit example / past-RFP / guidance with field focus). Missing fields alone never trigger retrieval. Mode: **structured-first** when Field/Section/Question IDs known (eval showed stronger MRR); **hybrid** for free-text; vector-only is not default. Surfaced cards are labeled REFERENCE. PENDING proposals live in `historical_field_proposals` and **must not** write `project_facts`. BA Accept (optionally modified) writes `CONFIRMED` ProjectFact with `sourceType=historical-retrieval` and PROPOSED lineage in history. Reject stores REJECTED and blocks immediate re-propose of the same chunk+field. Extraction continues to use the BA message only. Generation-time RAG is **not** this proposal flow — see **#44**. `procurementStage` is not a canonical Field and must not be inferred from retrieval alone.
 **Status**: Active. Binding.
 
 ---
@@ -295,4 +295,27 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 
 Applicability: call-off only for FRAMEWORK / ASSIGNMENT / SOW; named personnel only when PMO / FRAMEWORK / SYSTEM packs apply; admin Fields are supporting + TBC; they must not block unrelated sections. Historical REFERENCE → PROPOSED → BA confirm is unchanged. Do not mass-infer historical mappings with Qwen.
 **Status**: Active. Binding until a later evidence pass.
+
+---
+
+## #44 — Generation-time RAG is BA-approved, section-scoped drafting guidance only
+**Decision**: Historical content may assist section drafting **only** after an explicit BA action **Use as drafting reference**. Persist in `project_generation_references` (`ACTIVE` | `REVOKED`, usage scope `STRUCTURE_AND_LANGUAGE`). This is **not** ProjectFact acceptance and must never write `project_facts`.
+
+Hierarchy at generation time:
+1. Current **ProjectFacts** are authoritative.
+2. BA-approved historical references are optional examples (structure / language / level of detail).
+3. Missing / TBC stays TBC.
+
+Hard rules:
+- Do **not** retrieve on Generate, assemble, or DOCX. Use pre-approved ACTIVE refs for that project+section only.
+- Default scope is **one Section**. A Deliverables reference does not enter Financial / Legal / Evaluation unless separately approved.
+- Max **3** ACTIVE refs per section. High-risk sections use shorter excerpts.
+- Adding/removing a reference must **not** silently regenerate an APPROVED section.
+- Regeneration uses current ACTIVE refs; previous versions keep their historical-reference IDs.
+- Prompt + deterministic leakage sanitizer: historical numbers/names that are not independently in ProjectFacts must not appear as current truth.
+- Drafting lineage is UI metadata, not official RFP citation, and is not written into DOCX.
+- Local and Modal stay behind `RamiModelProvider` — no provider-specific RAG generators.
+- pgvector remains deferred. Canonical model remains 59 / 69 / 20.
+
+**Status**: Active. Binding.
 

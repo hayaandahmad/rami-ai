@@ -301,6 +301,29 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
                 </>
               )}
 
+              {doc.draftingReferences.filter((r) => r.sectionId === selected.sectionId).length >
+                0 && (
+                <div className="w-full text-caption text-text-muted">
+                  Active drafting references (do not add facts; do not auto-regenerate APPROVED
+                  content):
+                  {doc.draftingReferences
+                    .filter((r) => r.sectionId === selected.sectionId)
+                    .map((r) => (
+                      <span key={r.generationReferenceId} className="ml-2 inline-flex items-center gap-1">
+                        {r.historicalRfpTitle || r.chunkId.slice(0, 8)}
+                        <button
+                          type="button"
+                          className="underline"
+                          disabled={doc.busy}
+                          onClick={() => void doc.revokeDraftingReference(r.generationReferenceId)}
+                        >
+                          Remove
+                        </button>
+                      </span>
+                    ))}
+                </div>
+              )}
+
               {selected.documentStatus === 'APPROVED' && (
                 <ActionButton
                   disabled={doc.busy}
@@ -478,6 +501,30 @@ function ActionButton({
   );
 }
 
+function DraftingLineage({ section }: { section: GeneratedSection }) {
+  const used = section.draftingReferencesUsed ?? [];
+  const [open, setOpen] = useState(false);
+  if (used.length === 0) return null;
+  return (
+    <div className="mb-3 rounded border border-dashed border-[var(--color-border)] bg-[var(--color-neutral-50)] px-3 py-2 text-caption text-text-muted">
+      <button type="button" className="font-medium text-text-secondary" onClick={() => setOpen((v) => !v)}>
+        Drafting references used: {used.length}
+      </button>
+      {open && (
+        <ul className="mt-2 list-disc space-y-1 pl-4">
+          {used.map((r) => (
+            <li key={r.generationReferenceId}>
+              {r.historicalRfpTitle || r.historicalRfpId}
+              {r.sourceLocator ? ` · ${r.sourceLocator}` : ''}
+              <span className="text-text-muted"> — lineage only, not RFP citations</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function SectionPreview({ row }: { row: SectionUiRow }) {
   if (!row.applicable) {
     return (
@@ -496,6 +543,7 @@ function SectionPreview({ row }: { row: SectionUiRow }) {
         {row.documentStatus === 'DRAFT' && (
           <p className="rfp-draft-banner">Draft · version {row.generated.version}</p>
         )}
+        <DraftingLineage section={row.generated} />
         <GeneratedSectionBlocks section={row.generated} />
       </section>
     );
@@ -537,6 +585,7 @@ function FullDocumentView({ rows }: { rows: SectionUiRow[] }) {
                 {row.documentStatus === 'APPROVED' && (
                   <p className="rfp-approved-banner">Approved</p>
                 )}
+                <DraftingLineage section={row.generated as GeneratedSection} />
                 <GeneratedSectionBlocks section={row.generated as GeneratedSection} />
               </>
             )}

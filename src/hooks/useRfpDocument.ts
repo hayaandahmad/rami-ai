@@ -17,6 +17,15 @@ import type { SectionInformationReadiness, SectionReadinessResult } from '@/type
 
 export type DocumentStatus = 'NOT_GENERATED' | 'DRAFT' | 'APPROVED' | 'NOT_APPLICABLE';
 
+export interface DraftingReferenceRow {
+  generationReferenceId: string;
+  sectionId: string;
+  chunkId: string;
+  status: string;
+  historicalRfpTitle: string | null;
+  sourceLocator: string | null;
+}
+
 export interface DocumentMeta {
   documentTitle?: string;
   beneficiaryEntity?: string;
@@ -47,6 +56,7 @@ export function useRfpDocument(documentKey: string | undefined) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<string | null>(null);
+  const [draftingReferences, setDraftingReferences] = useState<DraftingReferenceRow[]>([]);
 
   const refresh = useCallback(async () => {
     if (!documentKey) return null;
@@ -63,6 +73,7 @@ export function useRfpDocument(documentKey: string | undefined) {
       setAssembled(data.assembled as AssembledRfp);
       setReadiness((data.readiness as SectionReadinessResult[]) ?? []);
       setDocumentMeta((data.documentMeta as DocumentMeta) ?? {});
+      setDraftingReferences((data.draftingReferences as DraftingReferenceRow[]) ?? []);
       return data.assembled as AssembledRfp;
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -172,6 +183,30 @@ export function useRfpDocument(documentKey: string | undefined) {
     [postJson],
   );
 
+  const revokeDraftingReference = useCallback(
+    async (generationReferenceId: string) => {
+      if (!documentKey) return;
+      setBusy(true);
+      setError(null);
+      try {
+        const res = await fetch('/api/rami/historical/generation-reference', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ documentKey, generationReferenceId }),
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Revoke failed');
+        await refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+        throw err;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [documentKey, refresh],
+  );
+
   const hasGeneratedContent = Boolean(
     assembled && assembled.generatedApplicableCount > 0,
   );
@@ -194,6 +229,8 @@ export function useRfpDocument(documentKey: string | undefined) {
     generate,
     approve,
     saveEdit,
+    draftingReferences,
+    revokeDraftingReference,
     hasGeneratedContent,
     readinessLabel: (r?: SectionInformationReadiness) => r ?? 'NOT_APPLICABLE',
     approvalLabel: (a?: SectionApprovalStatus | null) => a ?? null,

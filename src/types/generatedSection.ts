@@ -5,6 +5,10 @@
  */
 
 import type { SectionInformationReadiness } from './sectionReadiness';
+import type {
+  GenerationHistoricalReference,
+  GenerationReferenceLineage,
+} from './generationReference';
 
 /** Document workflow for generated prose — not SectionInformationReadiness. */
 export type SectionApprovalStatus = 'DRAFT' | 'APPROVED';
@@ -31,6 +35,12 @@ export interface GeneratedSection {
   sourceFieldIds: string[];
   /** Field IDs that must appear as explicit TBC markers. */
   tbcFieldIds: string[];
+  /** Chunk IDs of BA-approved drafting references used for this version. */
+  historicalReferenceIds?: string[];
+  /** Approval-row IDs used for this version. */
+  generationReferenceIds?: string[];
+  /** Compact drafting lineage (titles/locators — not full historical text). */
+  draftingReferencesUsed?: GenerationReferenceLineage[];
 }
 
 export interface GenerationFactSnapshot {
@@ -64,6 +74,11 @@ export interface SectionGenerationContext {
   sharedFacts: GenerationFactSnapshot[];
   tbcFields: GenerationTbcSnapshot[];
   notApplicableFields: string[];
+  /**
+   * BA-approved historical examples for this Section only.
+   * Never authoritative. Never mixed into answeredFacts.
+   */
+  approvedHistoricalReferences: GenerationHistoricalReference[];
   documentMeta: {
     documentTitle?: string;
     beneficiaryEntity?: string;
@@ -119,11 +134,16 @@ export class GenerationError extends Error {
 }
 
 export const ANTI_HALLUCINATION_RULES: readonly string[] = [
-  'Use only facts listed in answeredFacts / sharedFacts / documentMeta.',
+  'Use only facts listed in answeredFacts / sharedFacts / documentMeta as current project truth.',
   'Never invent dates, budgets, SLA values, technologies, integrations, people/users, quantities, percentages, evaluation weightings, delivery deadlines, support periods, certifications, procurement conditions, legal clauses, penalties, or staffing counts.',
   'When a field is listed in tbcFields, render an explicit professional TBC marker (block type "tbc"); do not invent a value.',
   'When a field is in notApplicableFields, omit it; do not invent placeholder prose.',
-  'Historical or reference RFP content is not current ProjectFacts — do not assert it.',
+  'approvedHistoricalReferences are examples only (provenance REFERENCE). They must never be treated as current ProjectFacts.',
+  'Never copy historical names, dates, budgets, durations, percentages, supplier counts, SLAs, penalties, legal citations, deadlines, or staff quantities unless the same value is independently present in current ProjectFacts.',
+  'If a historical example conflicts with a ProjectFact, the ProjectFact wins.',
+  'If two historical examples conflict, do not decide current truth from them.',
+  'If current information is missing, use TBC — do not fill the gap from history.',
+  'Historical references may influence organization, requirement style, professional wording, and level of detail only.',
   'RFP document language is English regardless of conversation language.',
   'Prefer short professional paragraphs and lists; do not invent tables of numbers.',
 ];

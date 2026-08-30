@@ -1,0 +1,27 @@
+{
+  "generatedAt": "2026-08-30T23:37:16.810Z",
+  "fieldCount": 59,
+  "questionCount": 69,
+  "sectionCount": 20,
+  "silentRetrieval": false,
+  "automaticFactPromotion": false,
+  "pgvector": "not installed",
+  "chunkId": "0ba4e37bd92364bf44cc7bd79e770be0c2888d36",
+  "generationReferenceId": "gr_1dc1889a-7c84-410d-9c08-f494bce60236",
+  "baselineHeadings": 1,
+  "assistedHeadings": 3,
+  "baselineMs": 43,
+  "assistedMs": 31,
+  "approvedRefs": 1,
+  "excerptChars": 850,
+  "ngramOverlap5": 0,
+  "historicalRfp": "Internet & Connectivity Open Framework Agreement",
+  "quality": {
+    "factualConsistency": true,
+    "unsupportedClaimsStripped": true,
+    "tbcPreserved": true,
+    "structuralCompleteness": true,
+    "sourceOverlapFlag": false
+  },
+  "retrievalStillAvailable": true
+}

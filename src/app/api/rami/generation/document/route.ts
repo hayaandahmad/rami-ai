@@ -2,6 +2,7 @@ import {
   assembleRfpDocument,
   listGeneratedSections,
 } from '@/server/rami/sectionGeneration';
+import { listDraftingReferences } from '@/server/rami/generationReferenceService';
 import { getAllSectionReadiness } from '@/server/rami/sectionReadiness';
 import { hydrateProject, PersistenceError } from '@/server/rami/projectPersistence';
 import { GenerationError } from '@/types/generatedSection';
@@ -42,6 +43,10 @@ export async function GET(req: Request) {
     const readiness = getAllSectionReadiness(session.memory, session.projectContext);
     const contents = await listGeneratedSections({ documentKey });
     const assembled = await assembleRfpDocument(documentKey);
+    const draftingReferences = await listDraftingReferences({
+      documentKey,
+      status: 'ACTIVE',
+    });
 
     const mem = session.memory;
     const str = (fieldId: keyof typeof mem) => {
@@ -69,6 +74,14 @@ export async function GET(req: Request) {
         createdAt: c.created_at,
       })),
       assembled,
+      draftingReferences: draftingReferences.map((r) => ({
+        generationReferenceId: r.generationReferenceId,
+        sectionId: r.sectionId,
+        chunkId: r.historicalChunkId,
+        status: r.status,
+        historicalRfpTitle: r.payload?.historicalRfpTitle ?? null,
+        sourceLocator: r.payload?.sourceLocator ?? null,
+      })),
     });
   } catch (err) {
     return errorResponse(err);

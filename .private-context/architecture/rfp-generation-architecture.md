@@ -1,6 +1,6 @@
 # RFP Section Generation Architecture
 
-Status: **Generation Core backend implemented.** A4/UI wiring is next.
+Status: **Generation Core + BA-approved generation-time references implemented.**
 
 Information readiness (can we draft?) is **not** this lifecycle. See `rfp-section-readiness.md`.
 
@@ -15,6 +15,8 @@ Generation is always **section-level**, never whole-document. A section is only 
 | Generate / regenerate / approve / assemble | `src/server/rami/sectionGeneration.ts` |
 | Persistence | `project_section_contents` via `ProjectSectionContentRepository` |
 | HTTP | `/api/rami/generation/section`, `/approve`, `/document` |
+| Drafting references | `project_generation_references` via `generationReferenceService.ts` |
+| Drafting-reference HTTP | `/api/rami/historical/generation-reference` |
 
 ### GeneratedBlock kinds
 `heading` | `paragraph` | `bullet_list` | `numbered_list` | `table` | `tbc`
@@ -32,7 +34,9 @@ Generation is always **section-level**, never whole-document. A section is only 
 `assembleRfpDocument` walks canonical 20-section order, respects applicability, attaches persisted content, flags `missingGeneration`. Does not invent absent prose.
 
 ### Anti-hallucination
-TypeScript gates + prompt rules + deterministic TBC block enforcement. No RAG. No historical RFPs as facts.
+TypeScript gates + prompt rules + deterministic TBC block enforcement + leakage sanitizer.
+Historical RFPs are **never** facts. BA-approved drafting references may guide structure/language only (`DECISIONS` #44).
+Generate / assemble / DOCX do **not** retrieve.
 
 ## 1. Section state machine (final)
 
@@ -53,14 +57,25 @@ SectionGenerationContext {
   sectionId, title, subsections
   applicable: true
   readiness: READY_TO_DRAFT | DRAFTABLE_WITH_TBC
-  answeredFacts, sharedFacts
+  answeredFacts, sharedFacts          // AUTHORITATIVE
   tbcFields, notApplicableFields
+  approvedHistoricalReferences[]     // OPTIONAL examples — never mixed into facts
   documentMeta (title/beneficiary/type/duration when answered)
   antiHallucinationRules
 }
 ```
 
-No full DB dump. No full chat history. No `historicalEvidence` / RAG in v1.
+Hierarchy in the prompt: CURRENT PROJECT FACTS → APPROVED HISTORICAL REFERENCES → UNRESOLVED/TBC.
+
+No full DB dump. No full chat history. No silent top-K RAG injection.
+
+### Generation-reference approval
+- Persist `ACTIVE` / `REVOKED` rows scoped to `project_id` + `section_id` + chunk
+- Usage scope: `STRUCTURE_AND_LANGUAGE`
+- Max 3 ACTIVE refs per section
+- Lineage IDs stored on each `GeneratedSection` version
+- Regeneration reads current ACTIVE refs; old versions keep old IDs
+- APPROVED content is not auto-regenerated when references change
 
 ## 3. Final assembly
 

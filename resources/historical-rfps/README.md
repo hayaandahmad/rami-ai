@@ -25,7 +25,7 @@ They are **not** live project state.
 | Historical / reference resources | Current `ProjectFacts` |
 | Source artifacts under `source/` | Model training data |
 | Structured PostgreSQL historical tables | Live chat prompt context |
-| Offline RAG chunks + embeddings | Auto-injected generation context |
+| Offline RAG chunks + embeddings | Auto-injected generation context (Generate never retrieves) |
 
 **Historical answer ≠ current project truth.**  
 Provenance class is always `REFERENCE`.
@@ -115,7 +115,7 @@ Returns `HistoricalReference` with score, chunk text, RFP identity, mappings, pr
 | PROPOSED | `historical_field_proposals` PENDING — does **not** write `project_facts` |
 | Accept | BA confirm → `CONFIRMED` ProjectFact + historical lineage |
 | Reject | No ProjectFact; blocks same chunk+field re-propose |
-| Generation RAG | **NOT IMPLEMENTED** |
+| Generation RAG | **BA-approved section drafting references only — no silent retrieve** |
 | procurementStage | Weak leave-one-out; **not** a canonical Field |
 
 ```bash
@@ -145,7 +145,7 @@ See `derived/retrieval-eval-report.json`. Aggregate Hit@8 ≈ **0.93** for all t
 2. Update manifest.  
 3. `npm run historical:import`  
 4. `npm run historical:chunks && npm run historical:embed`  
-5. `npm run validate:historical && npm run validate:rag && npm run validate:controlled-rag`  
+5. `npm run validate:historical && npm run validate:rag && npm run validate:controlled-rag && npm run validate:generation-rag`  
 6. Never import into `project_facts`.
 
 ## Status
@@ -155,4 +155,6 @@ See `derived/retrieval-eval-report.json`. Aggregate Hit@8 ≈ **0.93** for all t
 - Canonical model after evidence pass: **59 Fields / 69 Questions / 20 Sections**  
 - RAG foundation + retrieval eval: **yes** (offline)  
 - Controlled live REFERENCE/PROPOSED/CONFIRM: **yes**  
-- Generation-time RAG: **NOT IMPLEMENTED**
+- Generation-time RAG: **BA-approved, section-scoped drafting references** (`project_generation_references`)
+- Silent retrieval on Generate / assemble / DOCX: **no**
+- Eval fixture: `derived/generation-rag-eval.json`

@@ -102,17 +102,16 @@ Chat and `/api/rami/session` require a configured database. They will not silent
 - Seed: TypeScript from `RFP_SECTIONS`, `PROJECT_MEMORY_FIELDS`, question-bank map
 - Shared snapshot: `npm run db:dump-shared` / `db:restore-shared` / `db:verify-shared-restore` / `validate:shared-dump`
 
-## Future RAG (not implemented)
+## Historical / generation-reference tables (separate from ProjectFacts)
 
-Add later, **separate** from ProjectFacts:
+| Table | Purpose |
+|---|---|
+| `historical_rfp_documents` / `historical_question_answers` | Imported historical Q&A (REFERENCE) |
+| `historical_knowledge_chunks` / `historical_chunk_embeddings` | Offline RAG (`REAL[]`; pgvector deferred) |
+| `historical_field_proposals` | Use-as-suggestion → possible ProjectFact |
+| `project_generation_references` | Use-as-drafting-reference — **never** writes `project_facts` |
 
-```text
-knowledge_documents
-knowledge_chunks  (embedding vector via pgvector)
-knowledge_sources
-```
-
-Historical chunk ≠ current ProjectFact. Retrieval arrives as `REFERENCE` only.
+Historical chunk ≠ current ProjectFact. Generation loads only BA-approved ACTIVE drafting references for that Section.
 
 ## Future eval / training (not implemented)
 

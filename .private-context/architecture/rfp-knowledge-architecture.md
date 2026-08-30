@@ -1,6 +1,6 @@
 # RFP Knowledge Architecture — Structured Memory, Provenance, and Local RAG
 
-Status: **Final design for current architecture pass. Not implemented yet.**
+Status: **Implemented for structured memory + controlled RAG.** Generation-time use of history is BA-approved drafting references only (`DECISIONS` #44, `rfp-generation-architecture.md`). Do not treat this older design sketch as a license for silent RAG injection.
 
 This document covers everything about *what Rami knows and how it knows it is trustworthy*: structured project memory, provenance, and the local retrieval pipeline over historical RFPs. Section-by-section drafting logic lives in `rfp-generation-architecture.md`.
 

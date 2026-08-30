@@ -121,6 +121,8 @@ export async function POST(req: Request) {
         tbcFieldIds: result.context.tbcFields.map((f) => f.fieldId),
         notApplicableFieldIds: result.context.notApplicableFields,
         documentMetaKeys: Object.keys(result.context.documentMeta),
+        historicalReferenceIds: result.generated.historicalReferenceIds ?? [],
+        generationReferenceIds: result.generated.generationReferenceIds ?? [],
       },
       content: {
         contentId: result.content.content_id,

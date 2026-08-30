@@ -10,6 +10,7 @@ import type {
   GenerationTbcSnapshot,
   SectionGenerationContext,
 } from '@/types/generatedSection';
+import type { GenerationHistoricalReference } from '@/types/generationReference';
 import { ANTI_HALLUCINATION_RULES, GenerationError } from '@/types/generatedSection';
 import { getRfpSection } from '@/schema/rfpSchema';
 import { getFieldDef } from '@/schema/projectMemoryFields';
@@ -49,6 +50,8 @@ export function buildSectionGenerationContext(input: {
   sectionId: string;
   memory: ProjectMemory;
   projectContext?: ProjectContext;
+  /** Pre-loaded BA-approved refs only. Generation must not retrieve. */
+  approvedHistoricalReferences?: GenerationHistoricalReference[];
 }): SectionGenerationContext {
   const section = getRfpSection(input.sectionId);
   if (!section) {
@@ -157,6 +160,7 @@ export function buildSectionGenerationContext(input: {
     sharedFacts,
     tbcFields,
     notApplicableFields: [...readiness.notApplicableFields],
+    approvedHistoricalReferences: [...(input.approvedHistoricalReferences ?? [])],
     documentMeta,
     antiHallucinationRules: [...ANTI_HALLUCINATION_RULES],
   };

@@ -17,6 +17,13 @@ import {
 import { hydrateProject, persistRuntimeState } from '@/server/rami/projectPersistence';
 import { buildSectionGenerationContext } from '@/server/rami/sectionGenerationContext';
 import {
+  assertApprovedReferencesForSection,
+  loadApprovedGenerationReferences,
+  toLineage,
+} from '@/server/rami/generationReferenceService';
+import { sanitizeHistoricalLeakage } from '@/server/rami/generationReferenceLeakage';
+import { projectMemoryToFactRows } from '@/server/db/factMapper';
+import {
   buildGenerationMessages,
   GENERATED_SECTION_JSON_SCHEMA,
 } from '@/server/rami/generationPrompt';
@@ -235,16 +242,33 @@ export async function generateRfpSection(input: {
     );
   }
 
+  const factsBefore = JSON.stringify(projectMemoryToFactRows(session.memory));
+  const approvedRefs = await loadApprovedGenerationReferences(
+    project.project_id,
+    input.sectionId,
+  );
+  assertApprovedReferencesForSection(approvedRefs, input.sectionId);
+
   const ctx = buildSectionGenerationContext({
     projectId: project.project_id,
     documentKey: input.documentKey,
     sectionId: input.sectionId,
     memory: session.memory,
     projectContext: session.projectContext,
+    approvedHistoricalReferences: approvedRefs,
   });
 
   const provider = input.provider ?? getDefaultProvider();
-  const { blocks, modelUsed } = await draftBlocks(ctx, provider);
+  const drafted = await draftBlocks(ctx, provider);
+  const sanitized = sanitizeHistoricalLeakage(drafted.blocks, ctx);
+
+  const factsAfter = JSON.stringify(projectMemoryToFactRows(session.memory));
+  if (factsAfter !== factsBefore) {
+    throw new GenerationError(
+      'PROVIDER_FAILED',
+      'Generation mutated ProjectFacts — aborted.',
+    );
+  }
 
   const generated: GeneratedSection = {
     sectionId: ctx.sectionId,
@@ -253,13 +277,16 @@ export async function generateRfpSection(input: {
     approvalStatus: 'DRAFT',
     generatedAt: new Date().toISOString(),
     readinessAtGeneration: ctx.readiness,
-    modelUsed,
-    blocks,
+    modelUsed: drafted.modelUsed,
+    blocks: sanitized.blocks,
     sourceFieldIds: [
       ...ctx.answeredFacts.map((f) => f.fieldId),
       ...ctx.sharedFacts.map((f) => f.fieldId),
     ],
     tbcFieldIds: ctx.tbcFields.map((f) => f.fieldId),
+    historicalReferenceIds: approvedRefs.map((r) => r.chunkId),
+    generationReferenceIds: approvedRefs.map((r) => r.generationReferenceId),
+    draftingReferencesUsed: toLineage(approvedRefs),
   };
 
   const content = await withTransaction(async (client) => {
