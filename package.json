@@ -20,6 +20,7 @@
     "validate:section-readiness": "npx tsx scripts/validate-section-readiness.ts",
     "validate:rfp-generation": "npx tsx scripts/validate-rfp-generation.ts",
     "validate:document-experience": "npx tsx scripts/validate-document-experience.ts",
+    "validate:docx-export": "npx tsx scripts/validate-docx-export.ts",
     "report:section-readiness": "npx tsx scripts/report-section-readiness.ts",
     "seed:generation-demo": "npx tsx scripts/seed-generation-demo.ts",
     "db:migrate": "npx tsx scripts/db-migrate.ts",
@@ -33,6 +34,7 @@
     "validate:shared-dump": "npx tsx scripts/validate-shared-dump.ts"
   },
   "dependencies": {
+    "docx": "^9.7.1",
     "lucide-react": "^1.28.0",
     "next": "^15.5.0",
     "pg": "^8.23.0",
@@ -42,7 +44,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.0",
-    "@types/node": "^22.15.0",
+    "@types/node": "^22.20.1",
     "@types/pg": "^8.23.1",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",

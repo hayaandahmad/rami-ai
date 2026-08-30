@@ -15,6 +15,7 @@ import {
   Pencil,
   Ban,
   AlertTriangle,
+  Download,
 } from 'lucide-react';
 import { GeneratedSectionBlocks } from '@/components/rfp/GeneratedSectionBlocks';
 import {
@@ -166,6 +167,14 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
           >
             Full RFP
           </button>
+          <a
+            href={`/api/rami/generation/document/docx?documentKey=${encodeURIComponent(documentKey)}`}
+            className="inline-flex items-center gap-1 rounded border border-border bg-white px-2 py-1 text-caption font-medium text-text-secondary hover:bg-surface-subtle"
+            download
+          >
+            <Download className="h-3.5 w-3.5" aria-hidden />
+            Word
+          </a>
           <button
             type="button"
             aria-label="Refresh from PostgreSQL"
@@ -408,8 +417,12 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
 
           {doc.busy && (
             <div className="pointer-events-none absolute inset-0 flex items-end justify-end p-4">
-              <span className="inline-flex items-center gap-2 rounded-md bg-[var(--color-primary-800)] px-3 py-1.5 text-caption text-white shadow-lg">
-                <Loader2 className="h-3.5 w-3.5 animate-spin" /> Working…
+              <span className="inline-flex max-w-xs items-start gap-2 rounded-md bg-[var(--color-primary-800)] px-3 py-1.5 text-caption text-white shadow-lg">
+                <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin" />
+                <span>
+                  Working… generation can take several minutes. Do not resubmit —
+                  existing drafts stay intact if this fails.
+                </span>
               </span>
             </div>
           )}

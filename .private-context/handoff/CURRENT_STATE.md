@@ -1,38 +1,39 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-30 (RFP document experience UI on second device)
+Last updated: 2026-08-31 (final RFP draft + DOCX on second device)
 
-Authoritative HEAD: `origin/main` (`git log -1`).  
-Backend feature: `d8e7f67`. Document UI: this handoff commit.
+Authoritative HEAD: `origin/main` (`git log -1`).
 
 ## Runtime truth
 
+### Demo project `rami-gen-core-demo`
+- **12 / 12** applicable sections generated
+- **1** APPROVED (`background`); others DRAFT
+- Evaluation / financial / legal drafted with **explicit TBC** after BA TBC facts via `applyExtractedFacts`
+- Deliverables: model once returned headings-only → facts-backed manual edit (v3) from `deliverableItems` / `deliverableFormats`
+- Consistency review: no duplicate H1 / empty / order issues; **12** TBC blocks
+
+### DOCX export
+- `src/server/rami/docxExport.ts` — `buildRfpDocxBuffer` / `safeDocxFilename`
+- `GET /api/rami/generation/document/docx?documentKey=`
+- UI: **Word** download in `RfpDocumentPanel`
+- Renders heading, paragraph, lists, table, tbc; page breaks between sections; header/footer page numbers
+- **No model calls** during export — persisted AssembledRfp only
+- Validator: `npm run validate:docx-export`
+
 ### Document experience (UI)
-- `RfpDocumentPanel` replaces placeholder preview in `RamiChatWorkspace`
-- `GeneratedSectionBlocks` renders all block types from persisted `GeneratedSection`
-- Section nav shows **information readiness** and **document status** separately
-- Actions call generation APIs only (Generate / Regenerate / Approve / Edit)
-- Full RFP view uses `assembleRfpDocument` / `GET .../generation/document`
-- Opening a document with existing generated content auto-opens the document pane
+- Unchanged architecture; timeout UX hardened (busy banner + clearer failure message; drafts not overwritten on failure)
 
-### Demo project
-- `documentKey=rami-gen-core-demo`
-- Multiple generated applicable sections (cover, ToC, introduction, background, engagement, scope, admin, annexes; deliverables may still be missing if inference timed out)
-- Background APPROVED; others DRAFT
-- Remaining NOT_READY by design: evaluationCriteria, financialProposal, legalContractualTerms (require real BA facts / TBC — not invented)
-
-### Generation / persistence
-Unchanged architecture: readiness gates, `project_section_contents`, Local/Modal provider, PostgreSQL authority.
-
-### Manual edit
-- `POST /api/rami/generation/edit` → new DRAFT version
-- APPROVED requires `reopenApproved=true`
-- Does not modify ProjectFacts
+### Inference note
+- Local Ollama smoke/generation timed out on this device for Deliverables
+- Remaining sections generated via existing **ModalModelProvider** (start → generate → stop)
+- Default `.env.local` remains `RAMI_MODEL_PROVIDER=local`
 
 ## Phase status
 - RFP Generation Core: ✅
 - Document experience / A4 UI: ✅
-- DOCX: ⏳ Next
-- RAG / Phase 2.3 / training: ⏳ Later
+- Remaining applicable sections + TBC path: ✅
+- DOCX: ✅
+- RAG / Phase 2.3 / training: ⏳ Post-demo
 
 ## Next
-DOCX export from AssembledRfp / GeneratedSection. Optional: finish remaining draftable sections + approve for manager demo.
+Manager demo. Then RAG — do not start training/fine-tuning.

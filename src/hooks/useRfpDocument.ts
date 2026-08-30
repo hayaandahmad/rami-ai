@@ -125,7 +125,12 @@ export function useRfpDocument(documentKey: string | undefined) {
         setLastAction(url);
         return data;
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        const raw = err instanceof Error ? err.message : String(err);
+        const friendly =
+          /abort|timeout|failed to fetch|networkerror/i.test(raw)
+            ? `Generation timed out or the connection dropped. Existing persisted draft was not overwritten. (${raw})`
+            : raw;
+        setError(friendly);
         throw err;
       } finally {
         setBusy(false);

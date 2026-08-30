@@ -101,10 +101,21 @@ async function main() {
       assert.ok(bg?.generated);
       assert.ok(scope?.generated);
       assert.ok(assembled.generatedApplicableCount >= 2);
-      // Does not invent missing applicable sections
+      // Missing applicable sections stay null (never invented). When all are
+      // generated, missing is empty and complete may be true.
       const missing = assembled.sections.filter((s) => s.applicable && s.missingGeneration);
-      assert.ok(missing.length >= 1);
       for (const m of missing) assert.equal(m.generated, null);
+      const na = assembled.sections.filter((s) => !s.applicable);
+      for (const n of na) {
+        assert.equal(n.generated, null);
+        assert.equal(n.missingGeneration, false);
+      }
+      if (missing.length === 0) {
+        assert.equal(
+          assembled.generatedApplicableCount,
+          assembled.applicableSectionCount,
+        );
+      }
     });
 
     await run('manual edit persists new DRAFT version without changing facts path', async () => {

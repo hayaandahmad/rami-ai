@@ -238,3 +238,15 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 **Decision**: A4 preview and section actions use `GeneratedSection` / `AssembledRfp` from PostgreSQL via generation APIs. Do not invent PreviewSection / UiGeneratedSection models. Information readiness and document approval status are shown separately. Manual edits create a new DRAFT version (`POST /api/rami/generation/edit`) and never mutate ProjectFacts.
 **Status**: Active.
 
+---
+
+## #36 — DOCX is a render of persisted AssembledRfp only
+**Decision**: Word export builds from the same `AssembledRfp` + `GeneratedSection` blocks used by the browser preview. Export must not call Qwen, invent missing sections, or strip TBC markers. Filename is derived safely from document title / documentKey.
+**Status**: Active. Binding on DOCX export.
+
+---
+
+## #37 — Unknown commercial/legal demo values use TBC via real fact path
+**Decision**: For evaluation weights/rules, pricing/tax structure, and legal/JV/penalty terms that MoDEE has not confirmed, apply `TBC` through `applyExtractedFacts` (same path as chat extraction), then generate with `DRAFTABLE_WITH_TBC`. Do not invent percentages, currencies, governing law, bonds, or penalties for the demo.
+**Status**: Active.
+

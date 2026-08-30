@@ -13,66 +13,72 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Last **feature** milestone (RFP document experience UI):
-
-```text
-git log -1 --oneline
-# expect document-experience / A4 preview commit on main
-```
-
-Feature backend milestone still:
-
-```text
-d8e7f678b01b3ab5342f57c70098a61c85cc7f0b
-```
+Last **feature** milestone: **Final RFP completion + DOCX export** (see `git log -1`).
 
 ## B. Product goal
 
 RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript owns workflow, persistence, readiness, and generation gates.
 
-## C. Fully completed
+## C. Demo project status (`rami-gen-core-demo`)
 
-- All prior persistence / readiness / Modal / generation-core items
-- **A4 document experience** consuming persisted `GeneratedSection`
-- Generic block renderer (heading, paragraph, lists, table, tbc)
-- Section navigation with **information readiness** and **document status** separated
-- Generate / Regenerate / Approve / Edit UI wired to generation APIs
-- Full RFP assembled preview (canonical order; missing sections marked, not invented)
-- Manual edit backend (`POST /api/rami/generation/edit`) — new DRAFT version; APPROVED protected
-- Demo project `rami-gen-core-demo` with multiple generated sections
+| Metric | Value |
+|---|---|
+| Applicable sections | **12** |
+| Generated | **12** |
+| Approved | **1** (`background`) |
+| NOT_READY | **0** (commercial/legal drafted with explicit TBC) |
+| TBC blocks in assembled RFP | **12** |
+| DOCX | **Available** — `GET /api/rami/generation/document/docx?documentKey=` |
 
-## D. NOT implemented
+## D. Fully completed
 
-- DOCX export
-- RAG / pgvector / embeddings
-- Fine-tuning / LoRA / Qwen 14B
+- Persistence, Section Readiness, Modal integration, RFP Generation Core
+- A4 document experience + Full RFP preview
+- Remaining applicable sections generated (Modal used when local Ollama timed out)
+- Commercial/legal blockers completed via real `applyExtractedFacts` **TBC** path (not invented percentages/legal clauses)
+- Deliverables regenerated/edited from ProjectFacts when model returned headings-only
+- **DOCX export** from the same persisted `AssembledRfp` / `GeneratedSection` (no Qwen on export)
+- Download Word control in document toolbar
+
+## E. NOT implemented (post-demo)
+
+- RAG / pgvector / historical RFP retrieval
+- Fine-tuning / LoRA / model replacement
 - Phase 2.3 domain catalogs
-- Every applicable section generated+approved (evaluation/financial/legal still NOT_READY by design)
+- Auto-approving all sections (approval remains a BA action)
 
-## E. Demo entry
-
-Open:
+## F. Demo entry
 
 ```text
 http://localhost:3000/documents/rami-gen-core-demo/interview
 ```
 
-Document pane opens automatically when PostgreSQL already has generated content.
+### Manager demo flow
 
-## F. UI / backend contract
+1. Open interview URL — persisted BA conversation + project state
+2. Open RFP Document pane
+3. Navigate sections (readiness vs document status)
+4. Show a TBC marker (evaluation / financial / legal)
+5. Generate / Regenerate a DRAFT; show APPROVED protection on `background`
+6. Full RFP preview
+7. **Download Word** — open DOCX; structure matches browser assembly
+
+## G. API contract (document)
 
 | Action | Endpoint |
 |---|---|
 | Document + assembly + readiness | `GET /api/rami/generation/document?documentKey=` |
-| Section + readiness | `GET /api/rami/generation/section?documentKey=&sectionId=` |
 | Generate / regenerate | `POST /api/rami/generation/section` |
 | Approve | `POST /api/rami/generation/approve` |
-| Manual edit | `POST /api/rami/generation/edit` `{ documentKey, sectionId, blocks, reopenApproved? }` |
+| Manual edit | `POST /api/rami/generation/edit` |
+| **DOCX download** | `GET /api/rami/generation/document/docx?documentKey=` |
 
-Primary UI: `src/components/rfp/RfpDocumentPanel.tsx` + `GeneratedSectionBlocks.tsx`.
+## H. Known limitations
 
-## G. Exact next task
+- Local `qwen3:8b` on this device often times out on heavy sections; use Modal (`RAMI_MODEL_PROVIDER=modal` + Start GPU) for live generation demos, then stop GPU
+- Commercial/legal content is **TBC-drafted**, not procurement-final
+- Not every section is APPROVED (intentional)
 
-**DOCX export** from the same `AssembledRfp` / `GeneratedSection` model (no re-generation). Optionally fill remaining NOT_READY sections through legitimate BA facts + TBC, then approve key sections for the manager demo.
+## I. Exact next task (post-demo)
 
-See `NEXT_STEPS.md`.
+RAG / retrieval over historical RFPs — only after manager demo. See `NEXT_STEPS.md`.
