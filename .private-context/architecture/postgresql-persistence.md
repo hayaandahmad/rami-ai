@@ -1,7 +1,7 @@
 # PostgreSQL persistence architecture
 
-Status: **Implemented.** PostgreSQL is the authoritative store for current project state.  
-Do not implement RAG or training in this layer.
+Status: **Implemented and live-validated** (primary Windows laptop, `rami_ai` on port 5433). PostgreSQL is the authoritative store for current project state.  
+Do not implement RAG, training, or RFP generation in this layer.
 
 ## Runtime vs persistence
 
@@ -60,7 +60,8 @@ Missing `ProjectFacts` row = field still unresolved.
 4. npm run db:seed
 5. npm run db:check
 6. npm run db:backup     # writes .rami-db-backups/*.dump (gitignored)
-7. npm run db:restore -- path\to\file.dump
+7. npm run db:restore -- path\to\file.dump rami_ai_restore_test
+   (never restore onto the live database unless you pass --overwrite-live)
 ```
 
 Chat and `/api/rami/session` require a configured database. They will not silently treat the Map or localStorage as saved project truth.

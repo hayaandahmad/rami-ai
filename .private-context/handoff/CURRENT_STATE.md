@@ -1,5 +1,5 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-30 (PostgreSQL persistence foundation)
+Last updated: 2026-08-30 (PostgreSQL persistence live-validated)
 
 ## Second-machine reproduction
 To clone this repository onto another Windows laptop and run the **current** Rami (not Phase 3), start at:
@@ -24,7 +24,7 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 - **Phase 2.1**: ✅ Complete — bilingual polish, section applicability, progress semantics, question priority, users normalization
 - **Phase 2.2**: ✅ Complete — Adaptive Control Plane (ProjectContext, packs, GapStatus, NextAction, materiality stop). Working tree only until human asks to commit.
 - **Phase 2.3**: ⏳ Pending — Domain Requirement Catalog Expansion (do not start until asked)
-- **Persistence**: ✅ PostgreSQL is the authoritative store for projects, facts, and messages (Map/localStorage are caches)
+- **Persistence**: ✅ PostgreSQL is the authoritative store for projects, facts, and messages (Map/localStorage are caches). **Live-validated** on this machine (do not start RFP generation).
 - **Phase 3**: ⏳ Pending — historical RAG, embeddings, PDF ingestion (pgvector-compatible later)
 - **Phase 4**: ⏳ Pending — live section drafting in right pane
 - **Phase 5**: ⏳ Pending — final RFP assembly
@@ -91,6 +91,18 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 - **localStorage**: optional UI cache; PostgreSQL wins on load
 - **Google Sheets**: still unused for conversational state
 - Authority: `.private-context/architecture/postgresql-persistence.md`
+
+### Live validation (this machine, 2026-08-30)
+- PostgreSQL **18.6** at `127.0.0.1:5433`, database `rami_ai` (do not change the port)
+- Seed: Sections 20, Fields 52, Questions 62, QuestionFields 59; migrate/seed idempotent
+- Acceptance project: `document_key=rami-persist-accept-20260830`, name `RAMI Persistence Acceptance Test`, `project_id=96345d36-d17b-46cb-869d-188e305040bf`
+- Live chat write-through (local Ollama `qwen3:8b`): BA + RAMI messages, multiple `project_facts`, `project_runtime` classifiers (`FULL_RFP` / `SINGLE_PROJECT` / `ASSESSMENT`)
+- Full Next.js restart + `POST /api/rami/cache/clear` hydrate from PostgreSQL; did not re-ask beneficiary / duration / objectives
+- Correction: duration current `18 months`, history keeps `24 months`, `projects.duration_months=18`, survives cache-clear
+- Backup `.rami-db-backups/*.dump` (gitignored); restore only into `rami_ai_restore_test` (live restore refused without `--overwrite-live`)
+- Missing-project hydrate throws `HYDRATION_FAILED` (no blank invent); chat persist failures emit `error`, not `done`
+- **Spoken-TBC (not fixed):** BA “[To be confirmed]” persisted as EXTRACTED `"TBC"` / `ANSWERED` / `KNOWN`. First small fix required before Section Readiness — see `NEXT_STEPS.md`. Do not implement it now.
+- **Do not start Section Readiness / RFP generation / Phase 2.3 / RAG from this result**
 
 ---
 
@@ -163,8 +175,9 @@ Authority: `.private-context/architecture/adaptive-question-architecture.md`
 - **Phase 2.3 domain catalogs** (AI/CDC/telecom/ARIS expansion fields)
 - **RAG**: No embedding, PDF ingestion, vector retrieval (Phase 3)
 - **Real section drafting**: Right pane shows placeholder shell only (Phase 4)
-- **Live PostgreSQL** must be configured via `.env.local` (`npm run db:migrate` + `db:seed`)
+- **Live PostgreSQL** is configured and validated on the primary Windows laptop (port 5433 / `rami_ai`). Other machines still need `.env.local` + `db:migrate` + `db:seed`
 - **Section state transitions**: Sections always start NOT_STARTED (Phase 4)
+- **Spoken-TBC normalization**: first small fix required before Section Readiness (recorded in `NEXT_STEPS.md`; not implemented)
 - **BA confirmation flow**: EXTRACTED → CONFIRMED promotion (Phase 4)
 - **DOCX / final assembly** (Phase 5)
 

@@ -4,6 +4,7 @@ import { mkdirSync } from 'fs';
 import { join } from 'path';
 import { loadLocalEnv } from '../src/server/db/loadEnv';
 import { getBackupDir, getDatabaseUrl, isDatabaseConfigured } from '../src/server/db/config';
+import { resolvePgTool } from '../src/server/db/pgTools';
 
 async function main() {
   loadLocalEnv();
@@ -15,12 +16,13 @@ async function main() {
   mkdirSync(dir, { recursive: true });
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
   const file = join(dir, `rami-${stamp}.dump`);
-  const result = spawnSync('pg_dump', ['-Fc', '-f', file, getDatabaseUrl()], {
+  const pgDump = resolvePgTool('pg_dump');
+  const result = spawnSync(pgDump, ['-Fc', '-f', file, getDatabaseUrl()], {
     stdio: 'inherit',
-    shell: true,
+    shell: false,
   });
   if (result.status !== 0) {
-    console.error('pg_dump failed. Is PostgreSQL client tools on PATH?');
+    console.error(`pg_dump failed (${pgDump}). Set RAMI_PG_BIN or add PostgreSQL bin to PATH.`);
     process.exit(result.status ?? 1);
   }
   console.log(`Backup written: ${file}`);

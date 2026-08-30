@@ -44,6 +44,19 @@ run('canonical field count is 52', () => {
   assert.equal(PROJECT_MEMORY_FIELDS.length, 52);
 });
 
+run('every field can seed a NOT NULL section_id', () => {
+  for (const field of PROJECT_MEMORY_FIELDS) {
+    const sid =
+      field.targetSections[0] ??
+      QUESTION_SEEDS.find((q) => q.fieldIds.includes(field.fieldId))?.sectionId;
+    assert.ok(sid, `field ${field.fieldId} has no targetSections and no question-bank section`);
+    assert.ok(
+      RFP_SECTIONS.some((s) => s.sectionId === sid),
+      `field ${field.fieldId} section ${sid} is not a canonical section`,
+    );
+  }
+});
+
 run('canonical section count is 20', () => {
   assert.equal(RFP_SECTIONS.length, 20);
 });
@@ -238,7 +251,7 @@ if (failed > 0) process.exit(1);
 console.log('\n✅ Persistence unit checks passed.\n');
 
 if (isDatabaseConfigured()) {
-  console.log('RAMI_DB_* is set — run npm run db:check for live validation.');
+  console.log('RAMI_DB_* is set in this process — run npm run db:check for live validation.');
 } else {
-  console.log('LIVE POSTGRESQL VALIDATION PENDING (database env not configured).');
+  console.log('This script does not load .env.local (unit-only). Live PG is validated separately via db:migrate/seed/check and chat.');
 }

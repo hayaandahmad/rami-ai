@@ -12,16 +12,35 @@ export function isDatabaseConfigured(): boolean {
   return Boolean(env('RAMI_DB_HOST') && env('RAMI_DB_NAME') && env('RAMI_DB_USER'));
 }
 
-export function getDatabaseUrl(): string {
+export function getDatabaseName(): string {
   const url = env('RAMI_DB_URL');
-  if (url) return url;
+  if (url) {
+    try {
+      return decodeURIComponent(new URL(url).pathname.replace(/^\//, '')) || 'rami';
+    } catch {
+      return 'rami';
+    }
+  }
+  return env('RAMI_DB_NAME', 'rami');
+}
+
+export function getDatabaseUrl(): string {
+  return getDatabaseUrlForName(getDatabaseName());
+}
+
+export function getDatabaseUrlForName(databaseName: string): string {
+  const url = env('RAMI_DB_URL');
+  if (url) {
+    const u = new URL(url);
+    u.pathname = `/${databaseName}`;
+    return u.toString();
+  }
   const host = env('RAMI_DB_HOST', '127.0.0.1');
   const port = env('RAMI_DB_PORT', '5432');
-  const name = env('RAMI_DB_NAME', 'rami');
   const user = encodeURIComponent(env('RAMI_DB_USER', 'rami'));
   const password = encodeURIComponent(env('RAMI_DB_PASSWORD'));
   const auth = password ? `${user}:${password}` : user;
-  return `postgres://${auth}@${host}:${port}/${name}`;
+  return `postgres://${auth}@${host}:${port}/${encodeURIComponent(databaseName)}`;
 }
 
 export function getSslEnabled(): boolean {

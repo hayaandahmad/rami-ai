@@ -10,6 +10,17 @@ async function exec(sql: string, params: unknown[], client?: PoolClient) {
   return query(sql, params);
 }
 
+/** Fields table requires section_id. Cross-cutting fields (empty targetSections) use the question-bank section. */
+function resolveFieldSectionId(field: (typeof PROJECT_MEMORY_FIELDS)[number]): string {
+  const fromTarget = field.targetSections[0];
+  if (fromTarget) return fromTarget;
+  const fromQuestion = QUESTION_SEEDS.find((q) => q.fieldIds.includes(field.fieldId))?.sectionId;
+  if (fromQuestion) return fromQuestion;
+  throw new Error(
+    `Cannot seed field '${field.fieldId}': no targetSections and no question-bank section_id.`,
+  );
+}
+
 export async function seedStaticDefinitions(client?: PoolClient): Promise<{
   sections: number;
   fields: number;
@@ -30,7 +41,7 @@ export async function seedStaticDefinitions(client?: PoolClient): Promise<{
   }
 
   for (const field of PROJECT_MEMORY_FIELDS) {
-    const primarySection = field.targetSections[0];
+    const primarySection = resolveFieldSectionId(field);
     await exec(
       `INSERT INTO fields (field_id, field_key, name, data_type, section_id)
        VALUES ($1, $2, $3, $4, $5)
