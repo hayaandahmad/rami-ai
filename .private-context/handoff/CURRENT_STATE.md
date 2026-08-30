@@ -1,31 +1,33 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-31 (historical RFP resource library + audit)
+Last updated: 2026-08-31 (historical structured layer + golden eval)
 
 Authoritative HEAD: `origin/main` (`git log -1`).
 
 ## Runtime truth
 
-### Demo project `rami-gen-core-demo`
-- **12 / 12** applicable sections generated; **1** APPROVED (`background`)
-- DOCX export available; commercial/legal use explicit TBC
-- Unchanged by historical resource work (no ProjectFacts imports)
+### Live demo
+- `rami-gen-core-demo`: 12 generated sections, DOCX, TBC commercial/legal — unchanged by historical import
 
-### Historical RFP Resource Library
-- Path: `resources/historical-rfps/`
-- **7** Excel Question Bank extractions + **4** PDFs under `source/`
-- `manifest.json` + `derived/AUDIT_SUMMARY.md` (readiness audit complete)
-- **Not** ProjectFacts · **Not** RAG-ingested · **Not** training data
-- Canonical Q&A sheet schema consistent; 62/62 Question IDs matched per dataset
-- Confirmed information-model gaps: procurement admin, named personnel, call-off/SOW, clarification/submission, governance cadence (see audit)
+### Historical structured data
+- Migration `004_historical_rfp.sql`
+- Tables: `historical_rfp_documents`, `historical_question_answers`
+- Import: `npm run historical:import` (Excel via Python extract → idempotent upsert)
+- Counts: **7** docs · **434** canonical QA · **127** suggested additions
+- PDF-backed: 4 · PDF unavailable: 3 (Excel provenance retained; no fabricated pages)
+- Provenance class always `REFERENCE`
+- Query helpers: `historicalQuery.ts` (SQL only — not RAG)
+- Golden eval: `goldenEvaluation.ts` + `validate:historical`
+- Gap report: `resources/historical-rfps/derived/GAP_REPORT.md` (52 Fields **not** modified)
 
-### Document / generation
-Unchanged architecture: readiness gates, `GeneratedSection`, Local/Modal providers, DOCX from AssembledRfp.
+### Boundary
+Historical import does not mutate `projects` / `project_facts` / `messages` / `project_runtime` / `project_section_contents`.
 
 ## Phase status
-- RFP Generation Core / Document UI / DOCX: ✅
-- Historical resource library + dataset audit: ✅
-- Historical DB ingestion / evaluation harness: ⏳ Next
-- pgvector / RAG retrieval / training: ⏳ Later
+- Generation / document UI / DOCX: ✅
+- Historical resource library: ✅
+- Historical PostgreSQL + golden foundation: ✅
+- RAG / embeddings: ❌ not started
+- Field-model expansion: ⏳ decide from GAP_REPORT later
 
 ## Next
-Ingestion design + golden evaluation against the library — no embeddings until provenance model is fixed.
+Design RAG chunking/retrieval against historical tables — no embeddings until provenance+chunk schema agreed.

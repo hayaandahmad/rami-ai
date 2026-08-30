@@ -1,0 +1,832 @@
+{
+  "generatedAt": "2026-08-30T22:28:33.690Z",
+  "counts": {
+    "documents": 7,
+    "answers": 561,
+    "canonicalAnswers": 434,
+    "noncanonicalAnswers": 127
+  },
+  "documentsWithPdf": [
+    "pq-15-egovt-2026-sanad-ai",
+    "rfp-17-egovt-2026-performance-assessment",
+    "rfp-22-egovt-2026-reengineering-ofa",
+    "rfp-itas-vol2b"
+  ],
+  "documentsWithoutPdf": [
+    "rfp-connectivity-ofa",
+    "rfp-nur-v2-lakehouse",
+    "rfp-ssc-bpr"
+  ],
+  "coverage": [
+    {
+      "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+      "canonicalAnswers": 62,
+      "noncanonicalAnswers": 22,
+      "hasPdf": true,
+      "statusDistribution": {
+        "Answered": 36,
+        "Partially stated": 10,
+        "TBC": 16
+      },
+      "supportedFieldCount": 52
+    },
+    {
+      "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+      "canonicalAnswers": 62,
+      "noncanonicalAnswers": 10,
+      "hasPdf": true,
+      "statusDistribution": {
+        "Answered": 44,
+        "Partially stated": 5,
+        "TBC": 10,
+        "Not applicable": 3
+      },
+      "supportedFieldCount": 52
+    },
+    {
+      "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+      "canonicalAnswers": 62,
+      "noncanonicalAnswers": 21,
+      "hasPdf": true,
+      "statusDistribution": {
+        "Answered": 46,
+        "Partially stated": 4,
+        "TBC": 1,
+        "Not applicable": 11
+      },
+      "supportedFieldCount": 52
+    },
+    {
+      "historicalRfpId": "rfp-connectivity-ofa",
+      "canonicalAnswers": 62,
+      "noncanonicalAnswers": 18,
+      "hasPdf": false,
+      "statusDistribution": {
+        "Answered": 48,
+        "Partially stated": 8,
+        "TBC": 4,
+        "Not applicable": 2
+      },
+      "supportedFieldCount": 52
+    },
+    {
+      "historicalRfpId": "rfp-itas-vol2b",
+      "canonicalAnswers": 62,
+      "noncanonicalAnswers": 20,
+      "hasPdf": true,
+      "statusDistribution": {
+        "Answered": 48,
+        "TBC": 7,
+        "Partially stated": 7
+      },
+      "supportedFieldCount": 52
+    },
+    {
+      "historicalRfpId": "rfp-nur-v2-lakehouse",
+      "canonicalAnswers": 62,
+      "noncanonicalAnswers": 18,
+      "hasPdf": false,
+      "statusDistribution": {
+        "Answered": 54,
+        "TBC": 3,
+        "Partially stated": 4,
+        "Not applicable": 1
+      },
+      "supportedFieldCount": 52
+    },
+    {
+      "historicalRfpId": "rfp-ssc-bpr",
+      "canonicalAnswers": 62,
+      "noncanonicalAnswers": 18,
+      "hasPdf": false,
+      "statusDistribution": {
+        "Answered": 43,
+        "Partially stated": 6,
+        "TBC": 1,
+        "Not applicable": 12
+      },
+      "supportedFieldCount": 52
+    }
+  ],
+  "goldenCaseCount": 7,
+  "perRfp": [
+    {
+      "id": "pq-15-egovt-2026-sanad-ai",
+      "hasPdf": true,
+      "eligibility": {
+        "stageTbc": true,
+        "fieldCoverage": true,
+        "fullDocumentPdf": true,
+        "extractionGolden": true,
+        "questionCoverage": true,
+        "pageLevelProvenance": true
+      },
+      "questionCoverage": {
+        "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+        "expectedCanonical": 62,
+        "matchedCanonical": 62,
+        "missingQuestionIds": [],
+        "unexpectedCanonicalIds": [],
+        "statusDistribution": {
+          "Answered": 36,
+          "Partially stated": 10,
+          "TBC": 16
+        },
+        "tbcCount": 16,
+        "notApplicableCount": 0,
+        "partiallyStatedCount": 10,
+        "answeredCount": 36
+      },
+      "fieldSupported": 52,
+      "fieldUnsupported": 0
+    },
+    {
+      "id": "rfp-17-egovt-2026-performance-assessment",
+      "hasPdf": true,
+      "eligibility": {
+        "stageTbc": false,
+        "fieldCoverage": true,
+        "fullDocumentPdf": true,
+        "extractionGolden": true,
+        "questionCoverage": true,
+        "pageLevelProvenance": true
+      },
+      "questionCoverage": {
+        "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+        "expectedCanonical": 62,
+        "matchedCanonical": 62,
+        "missingQuestionIds": [],
+        "unexpectedCanonicalIds": [],
+        "statusDistribution": {
+          "Answered": 44,
+          "Partially stated": 5,
+          "TBC": 10,
+          "Not applicable": 3
+        },
+        "tbcCount": 10,
+        "notApplicableCount": 3,
+        "partiallyStatedCount": 5,
+        "answeredCount": 44
+      },
+      "fieldSupported": 52,
+      "fieldUnsupported": 0
+    },
+    {
+      "id": "rfp-22-egovt-2026-reengineering-ofa",
+      "hasPdf": true,
+      "eligibility": {
+        "stageTbc": false,
+        "fieldCoverage": true,
+        "fullDocumentPdf": true,
+        "extractionGolden": true,
+        "questionCoverage": true,
+        "pageLevelProvenance": true
+      },
+      "questionCoverage": {
+        "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+        "expectedCanonical": 62,
+        "matchedCanonical": 62,
+        "missingQuestionIds": [],
+        "unexpectedCanonicalIds": [],
+        "statusDistribution": {
+          "Answered": 46,
+          "Partially stated": 4,
+          "TBC": 1,
+          "Not applicable": 11
+        },
+        "tbcCount": 1,
+        "notApplicableCount": 11,
+        "partiallyStatedCount": 4,
+        "answeredCount": 46
+      },
+      "fieldSupported": 52,
+      "fieldUnsupported": 0
+    },
+    {
+      "id": "rfp-connectivity-ofa",
+      "hasPdf": false,
+      "eligibility": {
+        "stageTbc": false,
+        "fieldCoverage": true,
+        "fullDocumentPdf": false,
+        "extractionGolden": true,
+        "questionCoverage": true,
+        "pageLevelProvenance": false
+      },
+      "questionCoverage": {
+        "historicalRfpId": "rfp-connectivity-ofa",
+        "expectedCanonical": 62,
+        "matchedCanonical": 62,
+        "missingQuestionIds": [],
+        "unexpectedCanonicalIds": [],
+        "statusDistribution": {
+          "Answered": 48,
+          "Partially stated": 8,
+          "TBC": 4,
+          "Not applicable": 2
+        },
+        "tbcCount": 4,
+        "notApplicableCount": 2,
+        "partiallyStatedCount": 8,
+        "answeredCount": 48
+      },
+      "fieldSupported": 52,
+      "fieldUnsupported": 0
+    },
+    {
+      "id": "rfp-itas-vol2b",
+      "hasPdf": true,
+      "eligibility": {
+        "stageTbc": false,
+        "fieldCoverage": true,
+        "fullDocumentPdf": true,
+        "extractionGolden": true,
+        "questionCoverage": true,
+        "pageLevelProvenance": true
+      },
+      "questionCoverage": {
+        "historicalRfpId": "rfp-itas-vol2b",
+        "expectedCanonical": 62,
+        "matchedCanonical": 62,
+        "missingQuestionIds": [],
+        "unexpectedCanonicalIds": [],
+        "statusDistribution": {
+          "Answered": 48,
+          "TBC": 7,
+          "Partially stated": 7
+        },
+        "tbcCount": 7,
+        "notApplicableCount": 0,
+        "partiallyStatedCount": 7,
+        "answeredCount": 48
+      },
+      "fieldSupported": 52,
+      "fieldUnsupported": 0
+    },
+    {
+      "id": "rfp-nur-v2-lakehouse",
+      "hasPdf": false,
+      "eligibility": {
+        "stageTbc": false,
+        "fieldCoverage": true,
+        "fullDocumentPdf": false,
+        "extractionGolden": true,
+        "questionCoverage": true,
+        "pageLevelProvenance": false
+      },
+      "questionCoverage": {
+        "historicalRfpId": "rfp-nur-v2-lakehouse",
+        "expectedCanonical": 62,
+        "matchedCanonical": 62,
+        "missingQuestionIds": [],
+        "unexpectedCanonicalIds": [],
+        "statusDistribution": {
+          "Answered": 54,
+          "TBC": 3,
+          "Partially stated": 4,
+          "Not applicable": 1
+        },
+        "tbcCount": 3,
+        "notApplicableCount": 1,
+        "partiallyStatedCount": 4,
+        "answeredCount": 54
+      },
+      "fieldSupported": 52,
+      "fieldUnsupported": 0
+    },
+    {
+      "id": "rfp-ssc-bpr",
+      "hasPdf": false,
+      "eligibility": {
+        "stageTbc": false,
+        "fieldCoverage": true,
+        "fullDocumentPdf": false,
+        "extractionGolden": true,
+        "questionCoverage": true,
+        "pageLevelProvenance": false
+      },
+      "questionCoverage": {
+        "historicalRfpId": "rfp-ssc-bpr",
+        "expectedCanonical": 62,
+        "matchedCanonical": 62,
+        "missingQuestionIds": [],
+        "unexpectedCanonicalIds": [],
+        "statusDistribution": {
+          "Answered": 43,
+          "Partially stated": 6,
+          "TBC": 1,
+          "Not applicable": 12
+        },
+        "tbcCount": 1,
+        "notApplicableCount": 12,
+        "partiallyStatedCount": 6,
+        "answeredCount": 43
+      },
+      "fieldSupported": 52,
+      "fieldUnsupported": 0
+    }
+  ],
+  "informationModelGaps": [
+    {
+      "candidateFieldOrTopic": "procurementStage",
+      "severity": "CRITICAL",
+      "datasetCount": 1,
+      "datasets": [
+        "pq-15-egovt-2026-sanad-ai"
+      ],
+      "hitCount": 46,
+      "sampleSourceQuestions": [
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "0.1",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "0.2",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "0.6",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "0.7",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "1.2",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "1.3",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "1.5",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "10.1",
+          "sheet": "Rami Q&A"
+        }
+      ],
+      "partialExistingFields": [],
+      "relevantSections": [
+        "coverPage",
+        "administrativeProcedures"
+      ],
+      "promotionRecommendation": "CRITICAL",
+      "note": "Do not add to ProjectMemory until explicitly decided."
+    },
+    {
+      "candidateFieldOrTopic": "awardModelAndSupplierCount",
+      "severity": "CRITICAL",
+      "datasetCount": 7,
+      "datasets": [
+        "pq-15-egovt-2026-sanad-ai",
+        "rfp-17-egovt-2026-performance-assessment",
+        "rfp-22-egovt-2026-reengineering-ofa",
+        "rfp-connectivity-ofa",
+        "rfp-itas-vol2b",
+        "rfp-nur-v2-lakehouse",
+        "rfp-ssc-bpr"
+      ],
+      "hitCount": 22,
+      "sampleSourceQuestions": [
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "10.1",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "13.1",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "13.1",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "13.9",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "12.1",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "2.2",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "5.2",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "13.1",
+          "sheet": "Suggested Additions"
+        }
+      ],
+      "partialExistingFields": [],
+      "relevantSections": [
+        "administrativeProcedures",
+        "evaluationCriteria"
+      ],
+      "promotionRecommendation": "CRITICAL",
+      "note": "Do not add to ProjectMemory until explicitly decided."
+    },
+    {
+      "candidateFieldOrTopic": "callOffOrSowProcess",
+      "severity": "CRITICAL",
+      "datasetCount": 4,
+      "datasets": [
+        "rfp-17-egovt-2026-performance-assessment",
+        "rfp-22-egovt-2026-reengineering-ofa",
+        "rfp-connectivity-ofa",
+        "rfp-itas-vol2b"
+      ],
+      "hitCount": 66,
+      "sampleSourceQuestions": [
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "12.4",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "12.6",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "2.2",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "3.1",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "4.4",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "4.5",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "5.2",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "9.1",
+          "sheet": "Rami Q&A"
+        }
+      ],
+      "partialExistingFields": [
+        "engagementType",
+        "engagementPhases"
+      ],
+      "relevantSections": [
+        "engagementDefinition",
+        "administrativeProcedures"
+      ],
+      "promotionRecommendation": "CRITICAL",
+      "note": "Do not add to ProjectMemory until explicitly decided."
+    },
+    {
+      "candidateFieldOrTopic": "namedKeyPersonnelRequirements",
+      "severity": "CRITICAL",
+      "datasetCount": 7,
+      "datasets": [
+        "pq-15-egovt-2026-sanad-ai",
+        "rfp-17-egovt-2026-performance-assessment",
+        "rfp-22-egovt-2026-reengineering-ofa",
+        "rfp-connectivity-ofa",
+        "rfp-itas-vol2b",
+        "rfp-nur-v2-lakehouse",
+        "rfp-ssc-bpr"
+      ],
+      "hitCount": 16,
+      "sampleSourceQuestions": [
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "10.2",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "3.3",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "12.1",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "3.3",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "13.10",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "13.4",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "3.3",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "13.5",
+          "sheet": "Suggested Additions"
+        }
+      ],
+      "partialExistingFields": [
+        "stakeholderRoles"
+      ],
+      "relevantSections": [
+        "manpower",
+        "introduction"
+      ],
+      "promotionRecommendation": "CRITICAL",
+      "note": "Do not add to ProjectMemory until explicitly decided."
+    },
+    {
+      "candidateFieldOrTopic": "clarificationContact",
+      "severity": "IMPORTANT",
+      "datasetCount": 7,
+      "datasets": [
+        "pq-15-egovt-2026-sanad-ai",
+        "rfp-17-egovt-2026-performance-assessment",
+        "rfp-22-egovt-2026-reengineering-ofa",
+        "rfp-connectivity-ofa",
+        "rfp-itas-vol2b",
+        "rfp-nur-v2-lakehouse",
+        "rfp-ssc-bpr"
+      ],
+      "hitCount": 18,
+      "sampleSourceQuestions": [
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "12.3",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "17.10",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+          "sourceQuestionId": "13.5",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "12.3",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "12.6",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-connectivity-ofa",
+          "sourceQuestionId": "12.3",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-connectivity-ofa",
+          "sourceQuestionId": "12.6",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-connectivity-ofa",
+          "sourceQuestionId": "13.5",
+          "sheet": "Suggested Additions"
+        }
+      ],
+      "partialExistingFields": [],
+      "relevantSections": [
+        "administrativeProcedures"
+      ],
+      "promotionRecommendation": "IMPORTANT",
+      "note": "Do not add to ProjectMemory until explicitly decided."
+    },
+    {
+      "candidateFieldOrTopic": "submissionChannel",
+      "severity": "IMPORTANT",
+      "datasetCount": 3,
+      "datasets": [
+        "rfp-22-egovt-2026-reengineering-ofa",
+        "rfp-nur-v2-lakehouse",
+        "rfp-ssc-bpr"
+      ],
+      "hitCount": 8,
+      "sampleSourceQuestions": [
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "0.5",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-nur-v2-lakehouse",
+          "sourceQuestionId": "0.5",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-nur-v2-lakehouse",
+          "sourceQuestionId": "13.5",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-nur-v2-lakehouse",
+          "sourceQuestionId": "13.6",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-ssc-bpr",
+          "sourceQuestionId": "0.5",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-ssc-bpr",
+          "sourceQuestionId": "12.6",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-ssc-bpr",
+          "sourceQuestionId": "13.3",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-ssc-bpr",
+          "sourceQuestionId": "13.8",
+          "sheet": "Suggested Additions"
+        }
+      ],
+      "partialExistingFields": [],
+      "relevantSections": [
+        "administrativeProcedures"
+      ],
+      "promotionRecommendation": "IMPORTANT",
+      "note": "Do not add to ProjectMemory until explicitly decided."
+    },
+    {
+      "candidateFieldOrTopic": "governanceCadence",
+      "severity": "IMPORTANT",
+      "datasetCount": 6,
+      "datasets": [
+        "pq-15-egovt-2026-sanad-ai",
+        "rfp-22-egovt-2026-reengineering-ofa",
+        "rfp-connectivity-ofa",
+        "rfp-itas-vol2b",
+        "rfp-nur-v2-lakehouse",
+        "rfp-ssc-bpr"
+      ],
+      "hitCount": 44,
+      "sampleSourceQuestions": [
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "12.6",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "3.4",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "4.4",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "17.4",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "17.9",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "1.2",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "1.3",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+          "sourceQuestionId": "1.4",
+          "sheet": "Rami Q&A"
+        }
+      ],
+      "partialExistingFields": [],
+      "relevantSections": [
+        "scopeOfWork",
+        "implementationRequirements"
+      ],
+      "promotionRecommendation": "IMPORTANT",
+      "note": "Do not add to ProjectMemory until explicitly decided."
+    },
+    {
+      "candidateFieldOrTopic": "knowledgeTransferRequirements",
+      "severity": "IMPORTANT",
+      "datasetCount": 3,
+      "datasets": [
+        "pq-15-egovt-2026-sanad-ai",
+        "rfp-itas-vol2b",
+        "rfp-nur-v2-lakehouse"
+      ],
+      "hitCount": 17,
+      "sampleSourceQuestions": [
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "4.1",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "4.3",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "5.1",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "5.4",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+          "sourceQuestionId": "17.6",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-itas-vol2b",
+          "sourceQuestionId": "4.1",
+          "sheet": "Rami Q&A"
+        },
+        {
+          "historicalRfpId": "rfp-itas-vol2b",
+          "sourceQuestionId": "14.10",
+          "sheet": "Suggested Additions"
+        },
+        {
+          "historicalRfpId": "rfp-itas-vol2b",
+          "sourceQuestionId": "14.5",
+          "sheet": "Suggested Additions"
+        }
+      ],
+      "partialExistingFields": [
+        "deliverableItems"
+      ],
+      "relevantSections": [
+        "deliverables",
+        "supportMaintenance"
+      ],
+      "promotionRecommendation": "IMPORTANT",
+      "note": "Do not add to ProjectMemory until explicitly decided."
+    }
+  ],
+  "ragStatus": "NOT_IMPLEMENTED",
+  "embeddingsStatus": "NOT_IMPLEMENTED"
+}

@@ -1,24 +1,25 @@
 # Rami — Next Steps
 
-Last updated: 2026-08-31 (historical RFP library audited)
+Last updated: 2026-08-31 (historical structured layer complete)
 
 Entrypoint: `.private-context/handoff/START_HERE.md`
 
 ## Checkpoint now
 
-Demo RFP + DOCX ✅ · Historical resource library organized + audited ✅
+Demo RFP + DOCX ✅ · Historical library ✅ · Structured historical PG + golden eval ✅
 
-Library: `resources/historical-rfps/` (see README + `derived/AUDIT_SUMMARY.md`)
+```bash
+npm run historical:import && npm run validate:historical
+```
 
 ## Path remaining
 
-1. **Historical ingestion design** — `historical_rfp_documents` + `historical_question_answers` from Excel (provenance required)
-2. Golden evaluation harness (extraction / question coverage) using the 7 datasets
-3. PDF chunking + pgvector embeddings — only after (1)
-4. Retrieval as REFERENCE (never silent ProjectFacts)
-5. Optional Field/Question expansions from audit gaps (procurement, named roles, call-off) — decide explicitly
-6. Training / LoRA — much later
+1. **RAG design** — optional `historical_rfp_sections` / `knowledge_chunks` then pgvector (after provenance rules)
+2. Wire retrieval as REFERENCE only (never auto ProjectFacts)
+3. Optional Field/Question promotions from `derived/GAP_REPORT.md` — explicit decision
+4. Run extraction evaluation against golden cases (local/Modal when intentionally requested)
+5. Training / LoRA — later
 
-## Do not start yet
+## Do not start automatically
 
-Embeddings, pgvector install, RAG UI, fine-tuning, auto-import of historical answers into live projects.
+Embeddings, vector search, RAG prompt injection into live generation, silent Field-model expansion.

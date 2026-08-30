@@ -256,3 +256,9 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 **Decision**: Files under `resources/historical-rfps/` are immutable source artifacts (Excel Question Bank extractions + optional PDFs) for REFERENCE, EVALUATION, and future RAG_CANDIDATE use. They must never silently become current `ProjectFacts`, training data, or live project state. `source/` is immutable; `derived/` holds audits/normalized exports only. Historical retrieval may propose REFERENCE/PROPOSED content only after BA confirmation.
 **Status**: Active. Binding before any RAG/ingestion work.
 
+---
+
+## #39 — Historical structured data lives in dedicated PostgreSQL tables
+**Decision**: Import historical Question Bank answers into `historical_rfp_documents` + `historical_question_answers` only. Provenance class is always `REFERENCE`. Noncanonical Suggested Addition IDs are namespaced by `{historicalRfpId}::{sheet}::{sourceQuestionId}` to avoid cross-RFP collisions. Import is idempotent and must not mutate live project tables. Golden evaluation reads these tables; RAG/embeddings remain a later step and are not created by this import.
+**Status**: Active. Binding.
+

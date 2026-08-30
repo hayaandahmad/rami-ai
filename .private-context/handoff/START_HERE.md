@@ -13,91 +13,46 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Last **feature** milestone: **Final RFP completion + DOCX export**
-
-```text
-2546bfb40b1d1d1fc0ec8615d6e27d73e0525ee7
-```
-
 ## B. Product goal
 
 RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript owns workflow, persistence, readiness, and generation gates.
 
-## C. Demo project status (`rami-gen-core-demo`)
+## C. Demo project (`rami-gen-core-demo`)
 
-| Metric | Value |
+12/12 applicable sections generated · DOCX available · commercial/legal TBC-drafted · approval remains a BA action.
+
+Demo: `http://localhost:3000/documents/rami-gen-core-demo/interview`
+
+## D. Historical RFP Resource Library + structured layer
+
+Path: `resources/historical-rfps/`
+
+| Item | Status |
 |---|---|
-| Applicable sections | **12** |
-| Generated | **12** |
-| Approved | **1** (`background`) |
-| NOT_READY | **0** (commercial/legal drafted with explicit TBC) |
-| TBC blocks in assembled RFP | **12** |
-| DOCX | **Available** — `GET /api/rami/generation/document/docx?documentKey=` |
+| Datasets | **7** Excel + **4** PDFs |
+| Structured PostgreSQL import | **Yes** — `historical_rfp_documents` + `historical_question_answers` |
+| Canonical QA rows | **434** (7×62) |
+| Suggested Addition rows | **127** (noncanonical, collision-safe IDs) |
+| Separation from ProjectFacts | **Enforced** (import boundary validated) |
+| Golden evaluation foundation | **Yes** (coverage + extraction contract) |
+| RAG | **NOT IMPLEMENTED** |
+| Embeddings / pgvector | **NOT IMPLEMENTED** |
 
-## D. Fully completed
-
-- Persistence, Section Readiness, Modal integration, RFP Generation Core
-- A4 document experience + Full RFP preview
-- Remaining applicable sections generated (Modal used when local Ollama timed out)
-- Commercial/legal blockers completed via real `applyExtractedFacts` **TBC** path (not invented percentages/legal clauses)
-- Deliverables regenerated/edited from ProjectFacts when model returned headings-only
-- **DOCX export** from the same persisted `AssembledRfp` / `GeneratedSection` (no Qwen on export)
-- Download Word control in document toolbar
-
-## E. NOT implemented (post-demo)
-
-- RAG / pgvector / historical RFP **ingestion** (library exists; not ingested)
-- Fine-tuning / LoRA / model replacement
-- Phase 2.3 domain catalogs
-- Auto-approving all sections (approval remains a BA action)
-
-## E2. Historical RFP Resource Library
-
-Organized reference datasets (not live facts):
-
-```text
-resources/historical-rfps/
+```bash
+npm run db:migrate
+npm run historical:import
+npm run historical:check
+npm run validate:historical
 ```
 
-- **7** Question Bank answer workbooks + **4** source PDFs (~10.3 MB)
-- Manifest: `resources/historical-rfps/manifest.json`
-- Audit: `resources/historical-rfps/derived/AUDIT_SUMMARY.md`
-- Semantics: REFERENCE / EVALUATION / RAG_CANDIDATE only — **never** current ProjectFacts, not training, not embeddings yet
+See `resources/historical-rfps/README.md` and `derived/GAP_REPORT.md`.
 
-When working on evaluation or RAG design, start there — then `NEXT_STEPS.md`.
+## E. NOT implemented yet
 
-## F. Demo entry
+- RAG / pgvector / historical retrieval into generation
+- Fine-tuning / LoRA
+- Expanding the 52-field model from gap report (decide explicitly later)
 
-```text
-http://localhost:3000/documents/rami-gen-core-demo/interview
-```
+## F. Exact next task
 
-### Manager demo flow
-
-1. Open interview URL — persisted BA conversation + project state
-2. Open RFP Document pane
-3. Navigate sections (readiness vs document status)
-4. Show a TBC marker (evaluation / financial / legal)
-5. Generate / Regenerate a DRAFT; show APPROVED protection on `background`
-6. Full RFP preview
-7. **Download Word** — open DOCX; structure matches browser assembly
-
-## G. API contract (document)
-
-| Action | Endpoint |
-|---|---|
-| Document + assembly + readiness | `GET /api/rami/generation/document?documentKey=` |
-| Generate / regenerate | `POST /api/rami/generation/section` |
-| Approve | `POST /api/rami/generation/approve` |
-| Manual edit | `POST /api/rami/generation/edit` |
-| **DOCX download** | `GET /api/rami/generation/document/docx?documentKey=` |
-
-## H. Known limitations
-
-- Local `qwen3:8b` on this device often times out on heavy sections; use Modal (`RAMI_MODEL_PROVIDER=modal` + Start GPU) for live generation demos, then stop GPU
-- Commercial/legal content is **TBC-drafted**, not procurement-final
-- Not every section is APPROVED (intentional)
-
-## I. Exact next task (post-demo)
-
-Design historical ingestion + evaluation harness against `resources/historical-rfps/` (Excel → historical answers first). Do **not** install pgvector or generate embeddings until provenance IDs are agreed. See `NEXT_STEPS.md`.
+RAG / chunk design against the structured historical layer — still no silent ProjectFacts promotion. See `NEXT_STEPS.md`.
