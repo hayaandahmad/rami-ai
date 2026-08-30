@@ -20,11 +20,7 @@ d8e7f678b01b3ab5342f57c70098a61c85cc7f0b
 Implement RFP generation core backend with persistence and UI contract.
 ```
 
-Authoritative handoff HEAD (pull this):
-
-```text
-7386ec6d307cfbb813eecd4f58a26698c891df78
-```
+Pull latest `origin/main` (`git log -1` after pull is the authoritative handoff HEAD).
 
 `git log -1` on a clean `origin/main` is the current authoritative HEAD.
 
