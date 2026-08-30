@@ -11,8 +11,8 @@ Optional **original RFP PDFs** live beside the Excel files when supplied.
 ## Why RAMI keeps them
 
 - **REFERENCE** — examples of how real RFPs answer RAMI questions  
-- **EVALUATION** — golden sets for coverage / future extraction checks  
-- **RAG_CANDIDATE** — later retrieval of patterns (not implemented yet)
+- **EVALUATION** — golden sets for coverage / extraction / retrieval checks  
+- **RAG_CANDIDATE** — offline retrieval foundation (live agent injection **not** implemented)
 
 They are **not** live project state.
 
@@ -22,8 +22,8 @@ They are **not** live project state.
 |---|---|
 | Historical / reference resources | Current `ProjectFacts` |
 | Source artifacts under `source/` | Model training data |
-| Structured PostgreSQL historical tables after import | RAG embeddings |
-| Golden evaluation inputs | Auto-injected generation context |
+| Structured PostgreSQL historical tables | Live chat prompt context |
+| Offline RAG chunks + embeddings | Auto-injected generation context |
 
 **Historical answer ≠ current project truth.**  
 Provenance class is always `REFERENCE`.
@@ -36,7 +36,7 @@ resources/historical-rfps/
   manifest.json
   source/excel/   ← immutable workbooks
   source/pdf/     ← immutable PDFs when available
-  derived/        ← audits, import payload, coverage/gap reports
+  derived/        ← audits, coverage/gap reports, retrieval-eval-report.json
 ```
 
 ## Structured PostgreSQL layer
@@ -45,42 +45,96 @@ Migration: `004_historical_rfp.sql`
 
 | Table | Purpose |
 |---|---|
-| `historical_rfp_documents` | One row per historical RFP (manifest metadata, hashes, PDF flag, eval eligibility) |
-| `historical_question_answers` | Q&A rows (canonical + Suggested Additions) with REFERENCE provenance |
-
-Commands:
+| `historical_rfp_documents` | One row per historical RFP |
+| `historical_question_answers` | Q&A rows (canonical + Suggested Additions), REFERENCE |
 
 ```bash
-npm run db:migrate
-npm run historical:import    # extract Excel → upsert (idempotent)
+npm run historical:import
 npm run historical:check
-npm run historical:report    # coverage + GAP_REPORT.md
 npm run validate:historical
 ```
 
-Import never writes `projects`, `project_facts`, `messages`, `project_runtime`, or `project_section_contents`.
+## RAG foundation (offline)
 
-Noncanonical Suggested Addition IDs (`13.x`–`17.x`) use collision-safe keys:
+Migration: `005_historical_rag_chunks.sql`
 
-`{historicalRfpId}::{sheet}::{sourceQuestionId}`
+| Table | Purpose |
+|---|---|
+| `historical_knowledge_chunks` | Deterministic chunks + structured metadata |
+| `historical_chunk_embeddings` | Versioned vectors (`REAL[]` until pgvector) |
+| `historical_rag_runtime` | Capability flags (e.g. pgvector status) |
 
-## Golden evaluation
+### Chunk types
 
-- `GoldenRfpCase` + question/field coverage reports in `src/server/rami/goldenEvaluation.ts`
-- Extraction evaluation **contract** ready (no Qwen/Modal runs in this layer)
-- Query helpers (structured SQL only): `src/server/rami/historicalQuery.ts` — **not RAG**
+| Type | Source | Use |
+|---|---|---|
+| `QUESTION_ANSWER` | One historical Q&A row | Field/question examples |
+| `SECTION` | Canonical answers grouped by Question Bank section (split if long) | Writing patterns / section examples |
+| `MULTI_QA_TOPIC` | Suggested packs + procurement-gap themes | Cross-question topics |
+
+Metadata (Field/Question/Section IDs, provenance, locators) is stored in columns — **not** only inside `chunk_text`.
+
+### Embedding model
+
+| Item | Value |
+|---|---|
+| Model | `nomic-embed-text` (Ollama) |
+| Dims | 768 |
+| Version | `nomic-embed-text-v1.5-ollama-prefixed` |
+| License | Apache-2.0 |
+| Size | ~274 MB |
+| Why | Local embedding model; not chat LLM; no paid API |
+
+Prefixes: `search_document:` / `search_query:`. Input truncated for model context; full text remains in DB.
+
+### Commands
+
+```bash
+npm run historical:chunks              # rebuild deterministic chunks
+npm run historical:embed               # embed (explicit; not on install/build)
+npm run historical:retrieve -- "query" # smoke retrieval CLI
+npm run historical:evaluate-retrieval  # structured vs vector vs hybrid
+npm run validate:rag
+```
+
+### Retrieval
+
+`retrieveHistoricalReferences(query, options)` supports `structured` | `vector` | `hybrid`, Field/Section/Question filters, leave-one-RFP-out exclusion.
+
+Returns `HistoricalReference` with score, chunk text, RFP identity, mappings, provenance=`REFERENCE`.
+
+**Live chat / generation injection: NOT IMPLEMENTED.**  
+**Automatic ProjectFact promotion: NOT IMPLEMENTED.**
+
+### pgvector status
+
+Local PostgreSQL 18 does **not** have the `vector` extension available.
+
+**Developer install (Windows) when ready:**
+
+1. Obtain a pgvector build matching PostgreSQL 18 (same major version as the running server).
+2. Install extension files into the PostgreSQL `lib` / `share/extension` directories.
+3. As a superuser: `CREATE EXTENSION vector;`
+4. Then add a follow-up migration to move `REAL[]` → `vector(768)` and add an HNSW/IVFFlat index.
+
+Until then, RAMI uses `REAL[]` + app-side cosine similarity (still PostgreSQL — not a separate vector DB).
+
+### Eval snapshot (7 RFPs)
+
+See `derived/retrieval-eval-report.json`. Aggregate Hit@8 ≈ **0.93** for all three modes; structured leads MRR when IDs are known; hybrid is the default for mixed queries; vector-only ranks weakest. Gap topics mostly retrieve; leave-one-out `procurementStage` is weak.
 
 ## How to add another historical RFP
 
 1. Add Excel under `source/excel/` (and PDF under `source/pdf/` if available).  
-2. Update manifest builder / `manifest.json`.  
+2. Update manifest.  
 3. `npm run historical:import`  
-4. `npm run validate:historical`  
-5. Never import into `project_facts`.
+4. `npm run historical:chunks && npm run historical:embed`  
+5. `npm run validate:historical && npm run validate:rag`  
+6. Never import into `project_facts`.
 
 ## Status
 
 - Resource library: **7** datasets  
-- Structured import: **yes** (`7` docs, `434` canonical QA, `127` suggested)  
-- Golden evaluation foundation: **yes**  
-- RAG / embeddings / pgvector: **NOT IMPLEMENTED**
+- Structured import: **yes**  
+- RAG foundation + retrieval eval: **yes** (offline)  
+- Live Rami integration: **NOT IMPLEMENTED**

@@ -23,7 +23,7 @@ RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript o
 
 Demo: `http://localhost:3000/documents/rami-gen-core-demo/interview`
 
-## D. Historical RFP Resource Library + structured layer
+## D. Historical RFP Resource Library + structured layer + RAG foundation
 
 Path: `resources/historical-rfps/`
 
@@ -33,26 +33,32 @@ Path: `resources/historical-rfps/`
 | Structured PostgreSQL import | **Yes** — `historical_rfp_documents` + `historical_question_answers` |
 | Canonical QA rows | **434** (7×62) |
 | Suggested Addition rows | **127** (noncanonical, collision-safe IDs) |
-| Separation from ProjectFacts | **Enforced** (import boundary validated) |
-| Golden evaluation foundation | **Yes** (coverage + extraction contract) |
-| RAG | **NOT IMPLEMENTED** |
-| Embeddings / pgvector | **NOT IMPLEMENTED** |
+| Separation from ProjectFacts | **Enforced** |
+| Golden evaluation foundation | **Yes** |
+| RAG chunks + retrieval | **Yes** — offline foundation (not live chat) |
+| Embeddings | **Yes** — local `nomic-embed-text` (768-d) |
+| pgvector | **Not installed** — vectors stored as `REAL[]` + app-side cosine |
+| Live chat / generation injection | **NOT IMPLEMENTED** |
+| REFERENCE → ProjectFact promotion | **NOT IMPLEMENTED** |
 
 ```bash
 npm run db:migrate
 npm run historical:import
-npm run historical:check
-npm run validate:historical
+npm run historical:chunks
+npm run historical:embed
+npm run historical:evaluate-retrieval
+npm run validate:rag
 ```
 
-See `resources/historical-rfps/README.md` and `derived/GAP_REPORT.md`.
+See `resources/historical-rfps/README.md` and `derived/retrieval-eval-report.json`.
 
 ## E. NOT implemented yet
 
-- RAG / pgvector / historical retrieval into generation
-- Fine-tuning / LoRA
+- Injecting historical references into `/api/rami/chat` or section generation
+- PROPOSED → BA confirm → ProjectFact workflow
 - Expanding the 52-field model from gap report (decide explicitly later)
+- Native pgvector indexes (optional upgrade when extension is installed)
 
 ## F. Exact next task
 
-RAG / chunk design against the structured historical layer — still no silent ProjectFacts promotion. See `NEXT_STEPS.md`.
+Controlled RAMI integration: expose `HistoricalReference` as REFERENCE suggestions in UI/chat **without** writing ProjectFacts. See `NEXT_STEPS.md`.

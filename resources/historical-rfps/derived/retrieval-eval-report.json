@@ -1,0 +1,1000 @@
+{
+  "generatedAt": "2026-08-30T22:43:20.470Z",
+  "chunkCounts": {
+    "chunks": 732,
+    "embeddings": 732,
+    "byType": {
+      "MULTI_QA_TOPIC": 61,
+      "QUESTION_ANSWER": 561,
+      "SECTION": 110
+    }
+  },
+  "pgvectorInstalled": false,
+  "vectorStorage": "real_array_app_side_cosine",
+  "embeddingModel": "nomic-embed-text",
+  "embeddingDims": 768,
+  "liveUnchanged": true,
+  "modes": {
+    "structured": {
+      "aggregate": {
+        "cases": 15,
+        "hitRate": 0.9333333333333333,
+        "meanMrr": 0.8111111111111112,
+        "meanFieldMatchRate": 0.6583333333333333,
+        "provenanceOkRate": 1
+      },
+      "meanLatencyMs": 75,
+      "maxLatencyMs": 133
+    },
+    "vector": {
+      "aggregate": {
+        "cases": 15,
+        "hitRate": 0.9333333333333333,
+        "meanMrr": 0.5984126984126984,
+        "meanFieldMatchRate": 0.6166666666666667,
+        "provenanceOkRate": 1
+      },
+      "meanLatencyMs": 685,
+      "maxLatencyMs": 947
+    },
+    "hybrid": {
+      "aggregate": {
+        "cases": 15,
+        "hitRate": 0.9333333333333333,
+        "meanMrr": 0.7055555555555555,
+        "meanFieldMatchRate": 0.6666666666666666,
+        "provenanceOkRate": 1
+      },
+      "meanLatencyMs": 539,
+      "maxLatencyMs": 1013
+    }
+  },
+  "leaveOneOutCases": [
+    "semantic-framework-calloff",
+    "gap-pq-stage"
+  ],
+  "detailed": {
+    "structured": {
+      "mode": "structured",
+      "aggregate": {
+        "cases": 15,
+        "hitRate": 0.9333333333333333,
+        "meanMrr": 0.8111111111111112,
+        "meanFieldMatchRate": 0.6583333333333333,
+        "provenanceOkRate": 1
+      },
+      "meanLatencyMs": 75,
+      "maxLatencyMs": 133,
+      "metrics": [
+        {
+          "caseId": "field-scope",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "10e74206aa2bfef31f97230da88045b05b054111",
+            "1f20473957c558a2e26b4c343caca05e278f51ca",
+            "24cb535790dc4e53480503ecf0129697d802d8db",
+            "473b963aa9f5095d4a95562e50753ec0f1f90166",
+            "5bdfa4b79c4036c6cefd6071bd312b8192d0335e"
+          ]
+        },
+        {
+          "caseId": "field-deliverables",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "40addbe2130d283c80882ca9046eddf34083e384",
+            "83d30d922f73cd7b0fb7f0755d1f43bfd2997db5",
+            "93d5526c0172cdb14e251c8bc5b8e09d03d4c818",
+            "a14a5af9ccdd06b728c8759c9c36a3fc1e3d957e",
+            "a753b6df93e768458a4a468be1755cd608c41b46"
+          ]
+        },
+        {
+          "caseId": "field-evaluation",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "1e95db4af475a2c7db66e9f6b693cfff351397ab",
+            "66ffd63cf5fcea4b5ecd46827fcd92112dc87a75",
+            "7f3bd7a3fd051883f28c9bb011667409d365d414",
+            "aa08cb95eebe28891239cdc8bc9dd5c647976098",
+            "b47440b4114edeb6a80d4c316329cc5fdc16458a"
+          ]
+        },
+        {
+          "caseId": "question-4.1",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 1,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "10e74206aa2bfef31f97230da88045b05b054111",
+            "1f20473957c558a2e26b4c343caca05e278f51ca",
+            "24cb535790dc4e53480503ecf0129697d802d8db",
+            "2a29f166693609aa199fb9492c10780f9c7dce82",
+            "362a2231d0758ad0cb983ff8c717a24485799636"
+          ]
+        },
+        {
+          "caseId": "question-10.1",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 1,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "1e95db4af475a2c7db66e9f6b693cfff351397ab",
+            "2a0d0d2321330457d8b8fecfb45b4275986dee5b",
+            "37e088ddc6a8ad875d5f20c2ba34a9ec458a2572",
+            "4d07eeb24a2e8066904461bcf282def72d047c47",
+            "573fe8bf949fe48a218186416cb5de9d399d367a"
+          ]
+        },
+        {
+          "caseId": "section-legal",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "00743e99595d2fbfeecb5f08c38066c342c5bded",
+            "04f0b82fd46e3d73520c3299fd4b73f4af59d1e6",
+            "115924c9c5168c801aae5ceaf846b4f6c073c610",
+            "25c957d9d3e8a2d247508bb2f35f32c1f92479ae",
+            "2f125868838810148217e7beeb3352803d2325ca"
+          ]
+        },
+        {
+          "caseId": "section-support",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 0.875,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "0013a3234f8fd94fb7a054ce634e240190691d92",
+            "034f3c91b3ebb4a1d3628ea2256d0b64ed7c07e6",
+            "0792fac4136908243af8bb7c79745c85b3453c67",
+            "07bf898c7d9ce197bd0d825427451bccce7397b9",
+            "08bb0f67c003c333a925b1d86f6e963cb793d317"
+          ]
+        },
+        {
+          "caseId": "semantic-framework-calloff",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 0.375,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.25,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "954bd4ea43c7500133bb586d692d74e14a148de4",
+            "4d07eeb24a2e8066904461bcf282def72d047c47",
+            "682fbc746ca81aeb1c706937f051a101b83cb498",
+            "92a1d9c65582ddab9e991d0c160c7ab853d2cf2a",
+            "1807b869694a5a8f8f2fd834f1703953716403d7"
+          ]
+        },
+        {
+          "caseId": "gap-award-model",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.3333333333333333,
+          "fieldMatchRate": 0.5,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.5,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "3a7ca148667be1add15d4e5e8b9ba068f54f372c",
+            "4a5aa49b2ce0da6a83b5db8485981bceee22435d",
+            "4d07eeb24a2e8066904461bcf282def72d047c47",
+            "954bd4ea43c7500133bb586d692d74e14a148de4",
+            "9e6b66ca85446ffb0170990ffdbb66cd93d20e35"
+          ]
+        },
+        {
+          "caseId": "gap-named-personnel",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 0.5,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.5,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "f18a0f7cff6e2d805f3900ad1fbd8770a5cac974",
+            "23e5fe3b14f295051eb9679371cb43c1a30084d1",
+            "64bc5531d59ee7d1cf98e2e1c01317dfe6b8d1ac",
+            "74ab783cd07da8f5512c6fcd61ea83c2177333ff",
+            "b6677758694653492126a1004952ad7f744d5949"
+          ]
+        },
+        {
+          "caseId": "gap-submission",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.5,
+          "fieldMatchRate": 0.25,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.25,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "64bc5531d59ee7d1cf98e2e1c01317dfe6b8d1ac",
+            "e76551f9ba39dde6dc75436c8ecc2814375fe55e",
+            "1219b7c78e851eb7f47764f54c144b2a74dcd0ea",
+            "1a7a6a95566d4a8762c5b7304d5cca1bc6df384c",
+            "3a7ca148667be1add15d4e5e8b9ba068f54f372c"
+          ]
+        },
+        {
+          "caseId": "gap-clarification",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 0.375,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.375,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "e596296edee5deb6a0d8a4f83c9c8a9d46ba99a4",
+            "1219b7c78e851eb7f47764f54c144b2a74dcd0ea",
+            "1a7a6a95566d4a8762c5b7304d5cca1bc6df384c",
+            "682fbc746ca81aeb1c706937f051a101b83cb498",
+            "7e435e6fab4aab8a921ee6c91cfa39ba314d23bf"
+          ]
+        },
+        {
+          "caseId": "gap-governance",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 0.5,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.5,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "0ba4e37bd92364bf44cc7bd79e770be0c2888d36",
+            "2a29f166693609aa199fb9492c10780f9c7dce82",
+            "2db68a71717209f87fb2938a5394dc005590a4b8",
+            "50b78ba44ef56a1c87c4b109adb162acd4e86396",
+            "37f0ea01ff33167961a42e750129aa682afd861a"
+          ]
+        },
+        {
+          "caseId": "gap-kt",
+          "mode": "structured",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.3333333333333333,
+          "fieldMatchRate": 0.5,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.5,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "2946f9dd5d2057f4e0efa0633b78a9ae58006cdb",
+            "2a29f166693609aa199fb9492c10780f9c7dce82",
+            "362a2231d0758ad0cb983ff8c717a24485799636",
+            "5ebaed89436467b963461541c2e3bb52df85de00",
+            "7421ae67b021d8b62081a67e025b2a24de3b5bd3"
+          ]
+        },
+        {
+          "caseId": "gap-pq-stage",
+          "mode": "structured",
+          "hitAtK": false,
+          "recallAtK": 0,
+          "mrr": 0,
+          "fieldMatchRate": 0,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "31e04297c7a83b38912bee6772b096121c4dfe82",
+            "3212d87d8a793a614017e0da2124461ee09299bf",
+            "48fa13e5414ffcce4b294706d6bf32593d6b31d0",
+            "1a7a6a95566d4a8762c5b7304d5cca1bc6df384c",
+            "3c01d72d144d2793e63ddeaa80c7a28ea32fb614"
+          ]
+        }
+      ]
+    },
+    "vector": {
+      "mode": "vector",
+      "aggregate": {
+        "cases": 15,
+        "hitRate": 0.9333333333333333,
+        "meanMrr": 0.5984126984126984,
+        "meanFieldMatchRate": 0.6166666666666667,
+        "provenanceOkRate": 1
+      },
+      "meanLatencyMs": 685,
+      "maxLatencyMs": 947,
+      "metrics": [
+        {
+          "caseId": "field-scope",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "80a77ee8d7584da9393e15229893c1cbbc67b41c",
+            "bfbb44ece5cf5f7ce3c68831c2c205124b74daaf",
+            "a9b3932c9bcb42c86848ab59a3f0ad141ea0e02e",
+            "a4944945f66416cf0cab43c9adf8f491f10cd1e6",
+            "05cd08186c0def2672c2ef1a4943c97a160c055e"
+          ]
+        },
+        {
+          "caseId": "field-deliverables",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "4994a8d9d048fb5e3df6124c8ae80f31b26c2f4b",
+            "ac0b4699a8a89b2856468d06ca59f2f8e6c85af6",
+            "ba32cb1f6c2ae340073abb5b4fff28d077426469",
+            "9af31f02c6deb1ed1be7de4a81aed33ec20ab9d3",
+            "83d30d922f73cd7b0fb7f0755d1f43bfd2997db5"
+          ]
+        },
+        {
+          "caseId": "field-evaluation",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "b837003560a1618c48fe83ad297e0537f94bbed8",
+            "638206cf09884d4b0364604b5143ca2ecdc1516d",
+            "90b3d5ce4833b8c92ec0e4aba02cb5870e4f0aee",
+            "b6573df88264db2fd0432dd13ab832f6746528d9",
+            "6705a53efaee4c1a87edb6f9947a0f0c003dd5bf"
+          ]
+        },
+        {
+          "caseId": "question-4.1",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 1,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "a4944945f66416cf0cab43c9adf8f491f10cd1e6",
+            "80a77ee8d7584da9393e15229893c1cbbc67b41c",
+            "a9b3932c9bcb42c86848ab59a3f0ad141ea0e02e",
+            "5532b079395e161b1030f244b02d18efe5c01f7d",
+            "b3c8ad02bbb7b285cf552f1a370d10c43c95b3f7"
+          ]
+        },
+        {
+          "caseId": "question-10.1",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 1,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "638206cf09884d4b0364604b5143ca2ecdc1516d",
+            "b6573df88264db2fd0432dd13ab832f6746528d9",
+            "b837003560a1618c48fe83ad297e0537f94bbed8",
+            "6705a53efaee4c1a87edb6f9947a0f0c003dd5bf",
+            "90b3d5ce4833b8c92ec0e4aba02cb5870e4f0aee"
+          ]
+        },
+        {
+          "caseId": "section-legal",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "00743e99595d2fbfeecb5f08c38066c342c5bded",
+            "2f125868838810148217e7beeb3352803d2325ca",
+            "c0e637eab56d955f9fe4717c782cc5f1ffb99a13",
+            "638aff8047b707393f45cabaca00662e59d66a51",
+            "c86598d68b4a67767d7d12e3a112c3b8360dc963"
+          ]
+        },
+        {
+          "caseId": "section-support",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "3bc07226ed53e2cb0a746437f39a592d41906823",
+            "9fa037773658b9e9320f63ac26589c112d96581b",
+            "21028587bb10bf43c624aa8d58e12a52b49245b3",
+            "378aac1e46cedbb6430990691021e59d6bf49b5c",
+            "f27ac96966511564269f2b6aca69c7ca4bda3a82"
+          ]
+        },
+        {
+          "caseId": "semantic-framework-calloff",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.25,
+          "fieldMatchRate": 0.5,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "748e2ec3bb6e981acbd90270adf7c4aa18e58278",
+            "ce625576812b68e2fda8741bf5e285bc267dbb43",
+            "dd5209da361e4e360da8db82a47af3a43bc356c7",
+            "d3ada1de4c96e7ae39b9218a75b3fffd9e3c7bf4",
+            "ecedc8a60f05b0b33e9d764822d7877156076c84"
+          ]
+        },
+        {
+          "caseId": "gap-award-model",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.25,
+          "fieldMatchRate": 0.375,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.375,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "4a5aa49b2ce0da6a83b5db8485981bceee22435d",
+            "d82b1c95249a6bd7bf329f03c4239517675f8ed8",
+            "d5b108e9c45d818b52570465c8e9a674781ff1bb",
+            "9e6b66ca85446ffb0170990ffdbb66cd93d20e35",
+            "ef5fcef5dc607e11e035b4732ca5802e9c43e14f"
+          ]
+        },
+        {
+          "caseId": "gap-named-personnel",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.16666666666666666,
+          "fieldMatchRate": 0.125,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.125,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "b7671da0c6661a36d442acd87ceaf18c42afe187",
+            "7d6f2fa89792c8e4b0ac077dfd74cb8290eb94b4",
+            "ecf2e6fef5d3ae6ae46d435ba6e46036cafd7c4a",
+            "ece2da5c874942e0fdb6e3226bab63831b5b0efb",
+            "dcdf5dc750876ff06dd762a31c09cc9f8b8a5dab"
+          ]
+        },
+        {
+          "caseId": "gap-submission",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.3333333333333333,
+          "fieldMatchRate": 0.25,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.25,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "6f1d3a80e3d610e73244546788196e3d7d65e331",
+            "52c21570b6519ec3b75147045e4e3e6a3a2680a6",
+            "1219b7c78e851eb7f47764f54c144b2a74dcd0ea",
+            "e76551f9ba39dde6dc75436c8ecc2814375fe55e",
+            "0c7348bbb06f16431e3995f706d6f30f50e3d831"
+          ]
+        },
+        {
+          "caseId": "gap-clarification",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.14285714285714285,
+          "fieldMatchRate": 0.25,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.25,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "7e435e6fab4aab8a921ee6c91cfa39ba314d23bf",
+            "0dd61110709962104e7ef9a1d8354c78858437d1",
+            "ef52e94f7af284730287a599dacccc3d59090760",
+            "2344b988104b831997db4f1aa654991a95d596ac",
+            "c942cbe52d2a95196270c25887d77e27439f9948"
+          ]
+        },
+        {
+          "caseId": "gap-governance",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.5,
+          "fieldMatchRate": 0.375,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.375,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "58c74fa8e5634a316a323474b24968819e133869",
+            "50b78ba44ef56a1c87c4b109adb162acd4e86396",
+            "9cbdd27a72dc1298e0a30e02f0324f6e1556d15a",
+            "f0b98bb4e87fc1e9a4283a0ecdc0ecf0d32f5025",
+            "9e6b66ca85446ffb0170990ffdbb66cd93d20e35"
+          ]
+        },
+        {
+          "caseId": "gap-kt",
+          "mode": "vector",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.3333333333333333,
+          "fieldMatchRate": 0.375,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.375,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "706e17570a03e888685eb1d5bfffb0199cd1d6ec",
+            "1ef2d2a01cc022d998a9fb9adeb2e279ebb3aaa0",
+            "5ebaed89436467b963461541c2e3bb52df85de00",
+            "b4ef5621a6817dd30db4dac1ce4e4ed89a158cc1",
+            "0f94d3f5986de12a7ed4a4d5a3fbc733ef4327ad"
+          ]
+        },
+        {
+          "caseId": "gap-pq-stage",
+          "mode": "vector",
+          "hitAtK": false,
+          "recallAtK": 0,
+          "mrr": 0,
+          "fieldMatchRate": 0,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "e37ff0943bf928d1c0188a91b6b73694d2932fd0",
+            "f6dfc4e95e8f1c7cdcdc453f63120bb3ee729461",
+            "f1b206f629e5a516c630897478e28ca569d0117a",
+            "994453c89bd35d19f7905f4f62d60157cf748214",
+            "f6f19fc3e482921f4be326cff19d027d6f2e2b9c"
+          ]
+        }
+      ]
+    },
+    "hybrid": {
+      "mode": "hybrid",
+      "aggregate": {
+        "cases": 15,
+        "hitRate": 0.9333333333333333,
+        "meanMrr": 0.7055555555555555,
+        "meanFieldMatchRate": 0.6666666666666666,
+        "provenanceOkRate": 1
+      },
+      "meanLatencyMs": 539,
+      "maxLatencyMs": 1013,
+      "metrics": [
+        {
+          "caseId": "field-scope",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "63f48a9d9f2ae391a5a3e63f091c97c9e01239b8",
+            "f376e62cbe49ed74a2b6941ed31d498a466a7cf7",
+            "1f20473957c558a2e26b4c343caca05e278f51ca",
+            "473b963aa9f5095d4a95562e50753ec0f1f90166",
+            "5bdfa4b79c4036c6cefd6071bd312b8192d0335e"
+          ]
+        },
+        {
+          "caseId": "field-deliverables",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "83d30d922f73cd7b0fb7f0755d1f43bfd2997db5",
+            "ae9f5144579a720e9e66eea9f8a977649a30a0fa",
+            "a753b6df93e768458a4a468be1755cd608c41b46",
+            "93d5526c0172cdb14e251c8bc5b8e09d03d4c818",
+            "ea1c7834cbc29c1f3451f3ca0adc1a942ed59ea4"
+          ]
+        },
+        {
+          "caseId": "field-evaluation",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "7f3bd7a3fd051883f28c9bb011667409d365d414",
+            "1e95db4af475a2c7db66e9f6b693cfff351397ab",
+            "d25890252aa3bf128e2451e4e054a3b8e97ec260",
+            "66ffd63cf5fcea4b5ecd46827fcd92112dc87a75",
+            "f6dfc4e95e8f1c7cdcdc453f63120bb3ee729461"
+          ]
+        },
+        {
+          "caseId": "question-4.1",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 1,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "a4944945f66416cf0cab43c9adf8f491f10cd1e6",
+            "80a77ee8d7584da9393e15229893c1cbbc67b41c",
+            "a9b3932c9bcb42c86848ab59a3f0ad141ea0e02e",
+            "5532b079395e161b1030f244b02d18efe5c01f7d",
+            "b3c8ad02bbb7b285cf552f1a370d10c43c95b3f7"
+          ]
+        },
+        {
+          "caseId": "question-10.1",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 1,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "638206cf09884d4b0364604b5143ca2ecdc1516d",
+            "b6573df88264db2fd0432dd13ab832f6746528d9",
+            "b837003560a1618c48fe83ad297e0537f94bbed8",
+            "6705a53efaee4c1a87edb6f9947a0f0c003dd5bf",
+            "90b3d5ce4833b8c92ec0e4aba02cb5870e4f0aee"
+          ]
+        },
+        {
+          "caseId": "section-legal",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "00743e99595d2fbfeecb5f08c38066c342c5bded",
+            "2f125868838810148217e7beeb3352803d2325ca",
+            "c0e637eab56d955f9fe4717c782cc5f1ffb99a13",
+            "638aff8047b707393f45cabaca00662e59d66a51",
+            "c86598d68b4a67767d7d12e3a112c3b8360dc963"
+          ]
+        },
+        {
+          "caseId": "section-support",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 1,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 1,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "3bc07226ed53e2cb0a746437f39a592d41906823",
+            "9fa037773658b9e9320f63ac26589c112d96581b",
+            "21028587bb10bf43c624aa8d58e12a52b49245b3",
+            "378aac1e46cedbb6430990691021e59d6bf49b5c",
+            "f27ac96966511564269f2b6aca69c7ca4bda3a82"
+          ]
+        },
+        {
+          "caseId": "semantic-framework-calloff",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.25,
+          "fieldMatchRate": 0.5,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.125,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "748e2ec3bb6e981acbd90270adf7c4aa18e58278",
+            "ce625576812b68e2fda8741bf5e285bc267dbb43",
+            "dd5209da361e4e360da8db82a47af3a43bc356c7",
+            "92a1d9c65582ddab9e991d0c160c7ab853d2cf2a",
+            "ecedc8a60f05b0b33e9d764822d7877156076c84"
+          ]
+        },
+        {
+          "caseId": "gap-award-model",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.3333333333333333,
+          "fieldMatchRate": 0.375,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.375,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "4a5aa49b2ce0da6a83b5db8485981bceee22435d",
+            "d82b1c95249a6bd7bf329f03c4239517675f8ed8",
+            "9e6b66ca85446ffb0170990ffdbb66cd93d20e35",
+            "d5b108e9c45d818b52570465c8e9a674781ff1bb",
+            "ef5fcef5dc607e11e035b4732ca5802e9c43e14f"
+          ]
+        },
+        {
+          "caseId": "gap-named-personnel",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.5,
+          "fieldMatchRate": 0.375,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.375,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "b7671da0c6661a36d442acd87ceaf18c42afe187",
+            "f18a0f7cff6e2d805f3900ad1fbd8770a5cac974",
+            "23e5fe3b14f295051eb9679371cb43c1a30084d1",
+            "7d6f2fa89792c8e4b0ac077dfd74cb8290eb94b4",
+            "ecf2e6fef5d3ae6ae46d435ba6e46036cafd7c4a"
+          ]
+        },
+        {
+          "caseId": "gap-submission",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 1,
+          "fieldMatchRate": 0.25,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.25,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "e76551f9ba39dde6dc75436c8ecc2814375fe55e",
+            "52c21570b6519ec3b75147045e4e3e6a3a2680a6",
+            "1219b7c78e851eb7f47764f54c144b2a74dcd0ea",
+            "6f1d3a80e3d610e73244546788196e3d7d65e331",
+            "64bc5531d59ee7d1cf98e2e1c01317dfe6b8d1ac"
+          ]
+        },
+        {
+          "caseId": "gap-clarification",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.5,
+          "fieldMatchRate": 0.375,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.375,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "7e435e6fab4aab8a921ee6c91cfa39ba314d23bf",
+            "e596296edee5deb6a0d8a4f83c9c8a9d46ba99a4",
+            "0dd61110709962104e7ef9a1d8354c78858437d1",
+            "b7053608686e5f9f8f4da37a0516e0d7c3bdcf09",
+            "c942cbe52d2a95196270c25887d77e27439f9948"
+          ]
+        },
+        {
+          "caseId": "gap-governance",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.5,
+          "fieldMatchRate": 0.75,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.75,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "58c74fa8e5634a316a323474b24968819e133869",
+            "50b78ba44ef56a1c87c4b109adb162acd4e86396",
+            "0ba4e37bd92364bf44cc7bd79e770be0c2888d36",
+            "2db68a71717209f87fb2938a5394dc005590a4b8",
+            "acb8c5b20294ea9a51b1be8c9039d0385b106bbf"
+          ]
+        },
+        {
+          "caseId": "gap-kt",
+          "mode": "hybrid",
+          "hitAtK": true,
+          "recallAtK": 1,
+          "mrr": 0.5,
+          "fieldMatchRate": 0.375,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0.375,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "706e17570a03e888685eb1d5bfffb0199cd1d6ec",
+            "5ebaed89436467b963461541c2e3bb52df85de00",
+            "1ef2d2a01cc022d998a9fb9adeb2e279ebb3aaa0",
+            "b4ef5621a6817dd30db4dac1ce4e4ed89a158cc1",
+            "362a2231d0758ad0cb983ff8c717a24485799636"
+          ]
+        },
+        {
+          "caseId": "gap-pq-stage",
+          "mode": "hybrid",
+          "hitAtK": false,
+          "recallAtK": 0,
+          "mrr": 0,
+          "fieldMatchRate": 0,
+          "questionMatchRate": 0,
+          "sectionMatchRate": 0,
+          "topicMatchRate": 0,
+          "provenanceComplete": true,
+          "topChunkIds": [
+            "31e04297c7a83b38912bee6772b096121c4dfe82",
+            "3212d87d8a793a614017e0da2124461ee09299bf",
+            "1a7a6a95566d4a8762c5b7304d5cca1bc6df384c",
+            "f6dfc4e95e8f1c7cdcdc453f63120bb3ee729461",
+            "d25890252aa3bf128e2451e4e054a3b8e97ec260"
+          ]
+        }
+      ]
+    }
+  },
+  "gapEvidence": [
+    {
+      "caseId": "gap-award-model",
+      "hitAtK": true,
+      "mrr": 0.3333333333333333,
+      "topicMatchRate": 0.375
+    },
+    {
+      "caseId": "gap-named-personnel",
+      "hitAtK": true,
+      "mrr": 0.5,
+      "topicMatchRate": 0.375
+    },
+    {
+      "caseId": "gap-submission",
+      "hitAtK": true,
+      "mrr": 1,
+      "topicMatchRate": 0.25
+    },
+    {
+      "caseId": "gap-clarification",
+      "hitAtK": true,
+      "mrr": 0.5,
+      "topicMatchRate": 0.375
+    },
+    {
+      "caseId": "gap-governance",
+      "hitAtK": true,
+      "mrr": 0.5,
+      "topicMatchRate": 0.75
+    },
+    {
+      "caseId": "gap-kt",
+      "hitAtK": true,
+      "mrr": 0.5,
+      "topicMatchRate": 0.375
+    },
+    {
+      "caseId": "gap-pq-stage",
+      "hitAtK": false,
+      "mrr": 0,
+      "topicMatchRate": 0
+    }
+  ],
+  "recommendation": "Default to hybrid (metadata filters + vector). Structured-only wins MRR when Field/Section/Question IDs are known; vector-only is weakest ranking. Keep structural filters primary."
+}

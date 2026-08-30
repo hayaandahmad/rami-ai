@@ -76,7 +76,7 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 
 ## #11 — RAG deferred to Phase 3
 **Decision**: RAG does not exist yet. No embedding, PDF ingestion, vector index, or retrieval. Historical RFP files in Git are **reference**, never current ProjectFacts. Do **not** start RAG / pgvector as part of RFP Generation Core.
-**Status**: Active.
+**Status**: **Superseded by #40** (offline RAG foundation exists; live injection still forbidden).
 
 ---
 
@@ -260,5 +260,18 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 
 ## #39 — Historical structured data lives in dedicated PostgreSQL tables
 **Decision**: Import historical Question Bank answers into `historical_rfp_documents` + `historical_question_answers` only. Provenance class is always `REFERENCE`. Noncanonical Suggested Addition IDs are namespaced by `{historicalRfpId}::{sheet}::{sourceQuestionId}` to avoid cross-RFP collisions. Import is idempotent and must not mutate live project tables. Golden evaluation reads these tables; RAG/embeddings remain a later step and are not created by this import.
+**Status**: Active for import boundary. **RAG layer added separately in #40** (does not change import tables).
+
+---
+
+## #40 — Historical RAG is offline REFERENCE retrieval (not live agent)
+**Decision**: Build deterministic chunks (`QUESTION_ANSWER` / `SECTION` / `MULTI_QA_TOPIC`) into `historical_knowledge_chunks` and versioned embeddings into `historical_chunk_embeddings`. Default embedding model is local Ollama `nomic-embed-text` (768-d, Apache-2.0) behind `RamiEmbeddingProvider`. Retrieval modes: structured / vector / hybrid via `retrieveHistoricalReferences` → `HistoricalReference` with `provenanceClass=REFERENCE`. **Do not** inject into `/api/rami/chat` or section generation until a controlled integration task. **Do not** write retrieval into `project_facts`.
+**pgvector**: Not installed on local PostgreSQL 18. Interim storage is `REAL[]` + app-side cosine. When pgvector is available, migrate intentionally; do not swap to an unrelated vector DB.
 **Status**: Active. Binding.
+
+---
+
+## #41 — Chunk boundaries are deterministic (no LLM chunking)
+**Decision**: Chunk IDs/content are derived from historical Q&A rows with stable hashing. Qwen must not decide chunk boundaries for the baseline. SECTION/MULTI_QA_TOPIC groups split when soft-max length (~4500 chars) is exceeded. Embedding input may truncate for model context; stored `chunk_text` stays full for traceability.
+**Status**: Active.
 
