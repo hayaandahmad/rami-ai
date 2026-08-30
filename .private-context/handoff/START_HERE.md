@@ -65,9 +65,28 @@ Question ≠ Field. One Field may map to many Sections (`section_fields`). Histo
 ## F. PostgreSQL
 
 Live-validated. Server-only `.env.local` (`RAMI_DB_*`, never `NEXT_PUBLIC_`).  
-This laptop: `127.0.0.1:5433` / database `rami_ai`. Other machines set host/port/name from their install.  
-`npm run db:migrate && npm run db:seed && npm run db:check`  
-Restore only into a **separate** DB (e.g. `rami_ai_restore_test`).
+This laptop: `127.0.0.1:5433` / database `rami_ai`. Other machines set host/port from their install; **database name must be `rami_ai`** to use the shared snapshot.
+
+Git does **not** contain the live PostgreSQL server. Each machine runs its own server. Passwords stay in `.env.local`.
+
+Git **does** contain a portable **development** snapshot (not a production backup):
+
+```text
+dev/database/rami_ai_shared.dump
+```
+
+Custom format (`pg_dump -Fc --no-owner --no-privileges`). It is the `rami_ai` state at this handoff. Refresh later with `npm run db:dump-shared -- --write-repo-snapshot` then commit — only when both developers intend to replace it.
+
+Second machine (do **not** rebuild project data from scratch):
+
+```text
+npm run db:restore-shared -- --confirm-replace-local-rami-ai
+npm run db:check
+```
+
+Requires loopback host (`127.0.0.1` / `localhost` / `::1`). Refuses remote targets. Private backups remain `npm run db:backup` → `.rami-db-backups/` (gitignored).
+
+Empty-schema fallback (not the handoff path): `npm run db:migrate && npm run db:seed && npm run db:check`.
 
 ## G. Modal
 
@@ -84,7 +103,7 @@ Qwen must not decide readiness. See `rfp-section-readiness.md`.
 - Coverage gaps (manpower `namedRoles` when that section applies; admin/PMO fields) — documented, not added
 - Spoken-TBC is English whole-value matching only
 - `EXTRACTED` is not BA `CONFIRMED`
-- Other machines need their own `.env.local` + migrate/seed
+- Other machines need their own `.env.local` + shared snapshot restore (`db:restore-shared`)
 
 ## J. Exact next implementation task
 
@@ -123,7 +142,16 @@ Reproduce-and-run only (no feature work): `SECOND_MACHINE_HANDOFF.md`.
 10. Inspect actual code before modifying
 11. Continue from the exact checkpoint in `NEXT_STEPS.md`
 
-Setup: copy `.env.example` → `.env.local` (no `NEXT_PUBLIC_` DB vars). Local Ollama + `qwen3:8b` for default inference. `npm run db:migrate && npm run db:seed && npm run db:check`.
+Setup:
+
+1. Install PostgreSQL 18 locally (do not copy another machine's data directory)
+2. Copy `.env.example` → `.env.local` (no `NEXT_PUBLIC_` DB vars). Set `RAMI_DB_PASSWORD` locally. Set `RAMI_DB_NAME=rami_ai` and a loopback host. Port may differ (this laptop uses 5433).
+3. Local Ollama + `qwen3:8b` for default inference
+4. `npm run db:restore-shared -- --confirm-replace-local-rami-ai`
+5. `npm run db:check`
+6. Continue from `NEXT_STEPS.md` (RFP Generation Core)
+
+Do not recreate the acceptance project or other development rows by hand.
 
 ---
 
@@ -132,7 +160,7 @@ Setup: copy `.env.example` → `.env.local` (no `NEXT_PUBLIC_` DB vars). Local O
 1. Run tests (`tsc --noEmit`, lint, `validate:phase1`, `validate:phase2-adaptive`, `validate:modal-integration`, `validate:persistence`, `validate:users-norm`, `validate:section-readiness`; build if you touched app code)
 2. Update `START_HERE` / `CURRENT_STATE` / `DECISIONS` / `NEXT_STEPS` as needed
 3. Record what is done and what remains
-4. Commit (never `.env.local`, dumps, passwords, Modal secrets)
+4. Commit (never `.env.local`, passwords, Modal secrets, or `.rami-db-backups/` private dumps). The shared snapshot at `dev/database/rami_ai_shared.dump` may be refreshed only when you intentionally replace the shared development DB.
 5. Push `origin/main`
 6. Verify `origin/main == local main`
 7. Verify clean tree

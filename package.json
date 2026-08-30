@@ -23,7 +23,11 @@
     "db:seed": "npx tsx scripts/db-seed.ts",
     "db:check": "npx tsx scripts/db-check.ts",
     "db:backup": "npx tsx scripts/db-backup.ts",
-    "db:restore": "npx tsx scripts/db-restore.ts"
+    "db:restore": "npx tsx scripts/db-restore.ts",
+    "db:dump-shared": "npx tsx scripts/db-dump-shared.ts",
+    "db:restore-shared": "npx tsx scripts/db-restore-shared.ts",
+    "db:verify-shared-restore": "npx tsx scripts/db-verify-shared-restore.ts",
+    "validate:shared-dump": "npx tsx scripts/validate-shared-dump.ts"
   },
   "dependencies": {
     "lucide-react": "^1.28.0",

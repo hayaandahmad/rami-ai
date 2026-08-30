@@ -19,7 +19,8 @@ Start at `.private-context/handoff/START_HERE.md` only.
 - Seed (idempotent): Sections **20**, Fields **52**, Questions **62**, QuestionFields **59**, `section_fields` **68**.
 - Authority: PostgreSQL. Server `Map` = cache (`POST /api/rami/cache/clear`). `localStorage` = UI cache; PostgreSQL wins on `GET /api/rami/session`.
 - Qwen never gets DB credentials or SQL.
-- Restore: never overwrite live `rami_ai` without `--overwrite-live`; use `rami_ai_restore_test`.
+- Restore private dumps only into a **separate** DB (e.g. `rami_ai_restore_test`) unless `--overwrite-live`.
+- **Shared development snapshot** (handoff only, not production backup): `dev/database/rami_ai_shared.dump` (`pg_dump -Fc --no-owner --no-privileges`). Git has the dump, not the live server. Second machine: `npm run db:restore-shared -- --confirm-replace-local-rami-ai` (loopback + `RAMI_DB_NAME=rami_ai` required). Refresh: `npm run db:dump-shared -- --write-repo-snapshot`.
 
 ### ProjectMemory hydration
 - Facts live in `project_facts`. Hydrate: `hydrateProject` → `factRowsToProjectMemory`.
@@ -145,7 +146,8 @@ Start at `.private-context/handoff/START_HERE.md` only.
 - Live chat write-through (local Ollama `qwen3:8b`): BA + RAMI messages, multiple `project_facts`, `project_runtime` classifiers (`FULL_RFP` / `SINGLE_PROJECT` / `ASSESSMENT`)
 - Full Next.js restart + `POST /api/rami/cache/clear` hydrate from PostgreSQL; did not re-ask beneficiary / duration / objectives
 - Correction: duration current `18 months`, history keeps `24 months`, `projects.duration_months=18`, survives cache-clear
-- Backup `.rami-db-backups/*.dump` (gitignored); restore only into `rami_ai_restore_test` (live restore refused without `--overwrite-live`)
+- Backup `.rami-db-backups/*.dump` (gitignored, private); restore only into `rami_ai_restore_test` (live restore refused without `--overwrite-live`)
+- Shared development snapshot committed at `dev/database/rami_ai_shared.dump` (~28 KB, custom format). Restore-tested into `rami_ai_shared_restore_test` without touching live `rami_ai`. Contains development rows only (system user `rami@local`; projects `doc-001`, `doc-1788107501875`, `rami-persist-accept-20260830`). No passwords/API keys/tokens in the DB.
 - Missing-project hydrate throws `HYDRATION_FAILED` (no blank invent); chat persist failures emit `error`, not `done`
 - **Spoken-TBC (fixed)**: whole-value unknown/deferral → provenance `TBC` + GapStatus `UNKNOWN`/`DEFERRED`; literal `"TBC"` is not stored as an answer. English phrases only.
 - **Do not start RAG / Phase 2.3 / training from this result.** Next feature work is RFP Generation Core (see `NEXT_STEPS.md`).
@@ -228,7 +230,7 @@ Authority: `.private-context/architecture/adaptive-question-architecture.md`
 - **RAG / embeddings / pgvector / PDF ingestion**
 - **Fine-tuning / LoRA / Qwen 14B**
 - **BA confirmation flow**: EXTRACTED → CONFIRMED promotion UI
-- Other machines still need `.env.local` + `db:migrate` + `db:seed` (this laptop: port 5433 / `rami_ai`)
+- Other machines: `.env.local` + `npm run db:restore-shared -- --confirm-replace-local-rami-ai` (this laptop: port 5433 / `rami_ai`)
 
 ---
 

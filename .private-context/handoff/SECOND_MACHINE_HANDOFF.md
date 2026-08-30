@@ -1,6 +1,10 @@
 # Rami — Second-Machine Handoff
 
-**Audience:** a fresh Cursor instance on a second Windows laptop that has none of the original development conversation.
+**Superseded as the session entrypoint.** Read `.private-context/handoff/START_HERE.md` first. This file is reproduce-and-run history for an earlier demo setup; it is **not** the current development handoff. Shared DB restore is `npm run db:restore-shared -- --confirm-replace-local-rami-ai`.
+
+---
+
+**Audience (historical):** a fresh Cursor instance on a second Windows laptop that has none of the original development conversation.
 
 **Purpose:** reproduce and run the **current approved Rami Agent** for a ministry demo. This is **not** a development task.
 

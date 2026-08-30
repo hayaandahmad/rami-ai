@@ -169,8 +169,11 @@ infra/modal-poc/.usage/
 infra/modal-poc/.session-state.json
 infra/modal-poc/**/__pycache__/
 
-# PostgreSQL dumps and local backup output (never commit project data)
+# PostgreSQL dumps and local backup output (never commit private project dumps)
 .rami-db-backups/
 *.dump
 *.pgdump
 *.sql.gz
+# Exception: portable shared DEVELOPMENT snapshot for second-machine handoff only.
+# Not a production backup. Private dumps stay gitignored above.
+!dev/database/rami_ai_shared.dump

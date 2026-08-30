@@ -10,7 +10,9 @@ Last feature milestone: `cd69fb5` (Section Readiness).
 
 ## Checkpoint now
 
-PostgreSQL live-validated. Section Readiness implemented. **No RFP prose generation yet.**
+PostgreSQL live-validated. Shared development snapshot is in Git (`dev/database/rami_ai_shared.dump`). Section Readiness implemented. **No RFP prose generation yet.**
+
+Second-machine bootstrap: install PostgreSQL → `.env.local` (`RAMI_DB_NAME=rami_ai`, loopback, local password) → `npm run db:restore-shared -- --confirm-replace-local-rami-ai` → `npm run db:check` → continue RFP Generation Core.
 
 ---
 
@@ -108,7 +110,7 @@ Do not bind work to files that do not exist yet.
 
 ## Known limitations
 
-1. Other machines need PostgreSQL + `.env.local` + migrate/seed
+1. Other machines: local PostgreSQL + `.env.local` + `npm run db:restore-shared -- --confirm-replace-local-rami-ai` (do not rebuild project data from scratch)
 2. Field coverage gaps: `namedRoles` (CRITICAL when manpower applies); admin `clarificationContact` / `submissionChannel` (IMPORTANT); PMO `governanceCadence` (IMPORTANT)
 3. No BA CONFIRMED promotion UI
 4. Spoken-TBC is English whole-value matching only
