@@ -1,39 +1,28 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-31 (RAG retrieval foundation)
+Last updated: 2026-08-31 (controlled RAG integration)
 
 Authoritative HEAD: `origin/main` (`git log -1`).
 
 ## Runtime truth
 
 ### Live demo
-- `rami-gen-core-demo`: 12 generated sections, DOCX, TBC commercial/legal — unchanged by historical RAG
+- `rami-gen-core-demo` unchanged by historical proposals unless BA acts on that project
 
-### Historical structured data
-- Migration `004_historical_rfp.sql`
-- Tables: `historical_rfp_documents`, `historical_question_answers`
-- Counts: **7** docs · **434** canonical QA · **127** suggested additions
-- Provenance class always `REFERENCE`
+### Controlled RAG (live chat)
+- Policy: `historicalRetrievalPolicy.ts` — no retrieval on ordinary turns
+- Routing: structured-first when Field/Section IDs known; hybrid for free-text; vector-only not default
+- Chat SSE: `historical_references` + `retrievalDebug`
+- UI: `HistoricalReferenceCard` (REFERENCE label, Use as suggestion / Accept / Reject / View source)
+- Proposals table: `historical_field_proposals` (PENDING | ACCEPTED | REJECTED)
+- PENDING never writes `project_facts`
+- Accept → ProjectFact `CONFIRMED` + `sourceType=historical-retrieval` + PROPOSED lineage in history
+- Reject → no fact; blocks re-propose of same chunk+field
+- Readiness: PROPOSED/REFERENCE provenance counts as unresolved
+- Extraction uses BA message only (historical text not auto-extracted)
+- Generation RAG: **not wired**
 
-### Historical RAG foundation (offline)
-- Migration `005_historical_rag_chunks.sql`
-- Tables: `historical_knowledge_chunks`, `historical_chunk_embeddings`, `historical_rag_runtime`
-- Chunks: **732** (`QUESTION_ANSWER` 561 · `SECTION` 110 · `MULTI_QA_TOPIC` 61)
-- Embeddings: **732** × 768-d via Ollama `nomic-embed-text` (version `nomic-embed-text-v1.5-ollama-prefixed`)
-- Storage: `REAL[]` + app-side cosine (**pgvector not installed** on local PG 18)
-- Service: `retrieveHistoricalReferences` → `HistoricalReference` (REFERENCE only)
-- Eval: `npm run historical:evaluate-retrieval` → `derived/retrieval-eval-report.json`
-- Live chat / generation: **not wired**
-
-### Boundary
-Chunk/embed/evaluate do not mutate `projects` / `project_facts` / `messages` / `project_runtime` / `project_section_contents`.
-
-## Phase status
-- Generation / document UI / DOCX: ✅
-- Historical resource library: ✅
-- Historical PostgreSQL + golden foundation: ✅
-- RAG chunking + hybrid retrieval + eval: ✅ (offline)
-- Live RAG integration: ❌
-- Field-model expansion: ⏳ decide from gap evidence later
+### Offline RAG foundation
+- 732 chunks · nomic-embed-text 768-d · REAL[] storage · pgvector not installed
 
 ## Next
-Controlled integration of `HistoricalReference` into Rami (REFERENCE suggestions only). No automatic ProjectFact writes.
+Generation-time historical assist (explicit only) — or Field-model decisions from gap evidence.

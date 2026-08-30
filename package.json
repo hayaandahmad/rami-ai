@@ -30,6 +30,7 @@
     "historical:retrieve": "npx tsx scripts/historical-retrieve.ts",
     "historical:evaluate-retrieval": "npx tsx scripts/historical-evaluate-retrieval.ts",
     "validate:rag": "npx tsx scripts/validate-rag.ts",
+    "validate:controlled-rag": "npx tsx scripts/validate-controlled-rag.ts",
     "report:section-readiness": "npx tsx scripts/report-section-readiness.ts",
     "seed:generation-demo": "npx tsx scripts/seed-generation-demo.ts",
     "db:migrate": "npx tsx scripts/db-migrate.ts",

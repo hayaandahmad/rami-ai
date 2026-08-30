@@ -161,6 +161,16 @@ export async function listChunks(opts?: {
   return r.rows.map(mapChunkRow);
 }
 
+export async function getChunkById(
+  chunkId: string,
+): Promise<HistoricalKnowledgeChunk | null> {
+  const r = await query<ChunkRow>(
+    `SELECT * FROM historical_knowledge_chunks WHERE chunk_id = $1`,
+    [chunkId],
+  );
+  return r.rows[0] ? mapChunkRow(r.rows[0]) : null;
+}
+
 export async function countChunks(): Promise<{
   chunks: number;
   embeddings: number;

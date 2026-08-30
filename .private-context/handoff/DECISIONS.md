@@ -265,13 +265,19 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 ---
 
 ## #40 — Historical RAG is offline REFERENCE retrieval (not live agent)
-**Decision**: Build deterministic chunks (`QUESTION_ANSWER` / `SECTION` / `MULTI_QA_TOPIC`) into `historical_knowledge_chunks` and versioned embeddings into `historical_chunk_embeddings`. Default embedding model is local Ollama `nomic-embed-text` (768-d, Apache-2.0) behind `RamiEmbeddingProvider`. Retrieval modes: structured / vector / hybrid via `retrieveHistoricalReferences` → `HistoricalReference` with `provenanceClass=REFERENCE`. **Do not** inject into `/api/rami/chat` or section generation until a controlled integration task. **Do not** write retrieval into `project_facts`.
-**pgvector**: Not installed on local PostgreSQL 18. Interim storage is `REAL[]` + app-side cosine. When pgvector is available, migrate intentionally; do not swap to an unrelated vector DB.
-**Status**: Active. Binding.
+**Decision**: Build deterministic chunks (`QUESTION_ANSWER` / `SECTION` / `MULTI_QA_TOPIC`) into `historical_knowledge_chunks` and versioned embeddings into `historical_chunk_embeddings`. Default embedding model is local Ollama `nomic-embed-text` (768-d, Apache-2.0) behind `RamiEmbeddingProvider`. Retrieval modes: structured / vector / hybrid via `retrieveHistoricalReferences` → `HistoricalReference` with `provenanceClass=REFERENCE`.
+**pgvector**: Not installed on local PostgreSQL 18. Interim storage is `REAL[]` + app-side cosine.
+**Status**: Active for offline foundation. **Live surfacing governed by #42.**
 
 ---
 
 ## #41 — Chunk boundaries are deterministic (no LLM chunking)
 **Decision**: Chunk IDs/content are derived from historical Q&A rows with stable hashing. Qwen must not decide chunk boundaries for the baseline. SECTION/MULTI_QA_TOPIC groups split when soft-max length (~4500 chars) is exceeded. Embedding input may truncate for model context; stored `chunk_text` stays full for traceability.
 **Status**: Active.
+
+---
+
+## #42 — Controlled live RAG: policy-gated REFERENCE + PROPOSED proposals
+**Decision**: Live chat may retrieve only when `evaluateHistoricalRetrievalPolicy` triggers (explicit example / past-RFP / guidance with field focus). Missing fields alone never trigger retrieval. Mode: **structured-first** when Field/Section/Question IDs known (eval showed stronger MRR); **hybrid** for free-text; vector-only is not default. Surfaced cards are labeled REFERENCE. PENDING proposals live in `historical_field_proposals` and **must not** write `project_facts`. BA Accept (optionally modified) writes `CONFIRMED` ProjectFact with `sourceType=historical-retrieval` and PROPOSED lineage in history. Reject stores REJECTED and blocks immediate re-propose of the same chunk+field. Extraction continues to use the BA message only. Generation-time RAG remains off. `procurementStage` is not a canonical Field and must not be inferred from retrieval alone.
+**Status**: Active. Binding.
 

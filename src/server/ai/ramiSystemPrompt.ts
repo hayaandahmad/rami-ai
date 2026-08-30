@@ -97,12 +97,25 @@ export function buildNextActionBlock(nextAction: NextAction): string {
     }
     case 'CLARIFY_CONTRADICTION':
       return `NEXT ACTION = CLARIFY_CONTRADICTION\nTarget (${nextAction.targetKind}): ${nextAction.targetId}\nAsk which value should govern. Do not invent a reconciliation.`;
+    case 'OFFER_HISTORICAL_REFERENCE': {
+      const fields = nextAction.fieldIds.map(fieldLabel);
+      return (
+        `NEXT ACTION = OFFER_HISTORICAL_REFERENCE\n` +
+        `Historical REFERENCE examples are available in the UI for: ${fields.join(', ') || 'the requested topic'} (${nextAction.referenceCount} references, mode=${nextAction.retrievalMode}).\n` +
+        `Briefly tell the BA that these are HISTORICAL examples from past RFPs — NOT current project requirements.\n` +
+        `Do NOT paste long historical text. Do NOT treat them as confirmed facts. Invite the BA to Use as suggestion, dismiss, or keep answering normally.`
+      );
+    }
+    case 'SEARCH_HISTORICAL_RFPS':
+      return `NEXT ACTION = SEARCH_HISTORICAL_RFPS\nField: ${fieldLabel(nextAction.fieldId)}\nMention that historical examples can be shown if useful. Do not invent examples.`;
+    case 'PROPOSE_VALUE':
+      return `NEXT ACTION = PROPOSE_VALUE\nField: ${fieldLabel(nextAction.fieldId)}\nOffer as a PROPOSED suggestion only — require BA confirmation.`;
     case 'STOP_COLLECTION':
       return `NEXT ACTION = STOP_COLLECTION\nReason: ${nextAction.reason}\nStop interviewing. Briefly summarize that core information is sufficient for now and note any deferred/unknown items. Do not ask another discovery question.`;
     case 'OPEN_ENDED':
       return `NEXT ACTION = OPEN_ENDED\nInvite the BA to share more about the project type, need, or scope. Stay conservative — do not jump into procurement detail.`;
     default:
-      return `NEXT ACTION = ${nextAction.type}\nContinue helpfully without inventing facts.`;
+      return `NEXT ACTION = ${(nextAction as { type: string }).type}\nContinue helpfully without inventing facts.`;
   }
 }
 

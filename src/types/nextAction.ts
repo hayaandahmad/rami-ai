@@ -26,7 +26,16 @@ export type NextAction =
       reason: string;
     }
   | { type: 'OPEN_ENDED' }
-  /** Phase 3 placeholders — do not implement in 2.2. */
+  /**
+   * Offer historical REFERENCE examples (not project truth).
+   * Triggered only by retrieval policy — never replaces ASK by default.
+   */
+  | {
+      type: 'OFFER_HISTORICAL_REFERENCE';
+      fieldIds: string[];
+      referenceCount: number;
+      retrievalMode: 'structured' | 'hybrid';
+    }
   | { type: 'SEARCH_HISTORICAL_RFPS'; fieldId: string }
   | { type: 'PROPOSE_VALUE'; fieldId: string; proposedValue: unknown }
   /** Phase 4 placeholder. */

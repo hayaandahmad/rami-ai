@@ -23,42 +23,25 @@ RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript o
 
 Demo: `http://localhost:3000/documents/rami-gen-core-demo/interview`
 
-## D. Historical RFP Resource Library + structured layer + RAG foundation
-
-Path: `resources/historical-rfps/`
+## D. Historical knowledge + controlled RAG
 
 | Item | Status |
 |---|---|
-| Datasets | **7** Excel + **4** PDFs |
-| Structured PostgreSQL import | **Yes** — `historical_rfp_documents` + `historical_question_answers` |
-| Canonical QA rows | **434** (7×62) |
-| Suggested Addition rows | **127** (noncanonical, collision-safe IDs) |
-| Separation from ProjectFacts | **Enforced** |
-| Golden evaluation foundation | **Yes** |
-| RAG chunks + retrieval | **Yes** — offline foundation (not live chat) |
-| Embeddings | **Yes** — local `nomic-embed-text` (768-d) |
-| pgvector | **Not installed** — vectors stored as `REAL[]` + app-side cosine |
-| Live chat / generation injection | **NOT IMPLEMENTED** |
-| REFERENCE → ProjectFact promotion | **NOT IMPLEMENTED** |
+| Historical datasets | **7** Excel + **4** PDFs |
+| Structured import + chunks + embeddings | **Yes** |
+| Live chat retrieval | **Yes** — policy-gated only |
+| REFERENCE → PROPOSED → BA confirm | **Yes** |
+| Auto ProjectFact from history | **No** |
+| Generation-time RAG | **NOT IMPLEMENTED** |
+| pgvector | **Not installed** (`REAL[]` interim) |
 
 ```bash
 npm run db:migrate
-npm run historical:import
-npm run historical:chunks
-npm run historical:embed
-npm run historical:evaluate-retrieval
-npm run validate:rag
+npm run validate:controlled-rag
 ```
 
-See `resources/historical-rfps/README.md` and `derived/retrieval-eval-report.json`.
+Ask in chat: *“Show me examples for deliverables from previous RFPs”* → historical cards appear → **Use as suggestion** / **Accept** / **Reject**.
 
-## E. NOT implemented yet
+## E. Exact next task
 
-- Injecting historical references into `/api/rami/chat` or section generation
-- PROPOSED → BA confirm → ProjectFact workflow
-- Expanding the 52-field model from gap report (decide explicitly later)
-- Native pgvector indexes (optional upgrade when extension is installed)
-
-## F. Exact next task
-
-Controlled RAMI integration: expose `HistoricalReference` as REFERENCE suggestions in UI/chat **without** writing ProjectFacts. See `NEXT_STEPS.md`.
+Optional generation-time RAG (explicit BA-approved only). Do not auto-inject historical text into section drafts. See `NEXT_STEPS.md`.

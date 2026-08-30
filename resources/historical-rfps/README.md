@@ -103,8 +103,22 @@ npm run validate:rag
 
 Returns `HistoricalReference` with score, chunk text, RFP identity, mappings, provenance=`REFERENCE`.
 
-**Live chat / generation injection: NOT IMPLEMENTED.**  
-**Automatic ProjectFact promotion: NOT IMPLEMENTED.**
+### Controlled live integration
+
+| Rule | Behavior |
+|---|---|
+| Trigger | Explicit example / past-RFP / guidance+field focus only — **not** every chat turn |
+| Mode | Structured-first when Field/Section IDs known; hybrid for free-text |
+| UI | Historical reference cards labeled **REFERENCE — not this project** |
+| PROPOSED | `historical_field_proposals` PENDING — does **not** write `project_facts` |
+| Accept | BA confirm → `CONFIRMED` ProjectFact + historical lineage |
+| Reject | No ProjectFact; blocks same chunk+field re-propose |
+| Generation RAG | **NOT IMPLEMENTED** |
+| procurementStage | Weak leave-one-out; **not** a canonical Field |
+
+```bash
+npm run validate:controlled-rag
+```
 
 ### pgvector status
 
@@ -121,7 +135,7 @@ Until then, RAMI uses `REAL[]` + app-side cosine similarity (still PostgreSQL �
 
 ### Eval snapshot (7 RFPs)
 
-See `derived/retrieval-eval-report.json`. Aggregate Hit@8 ≈ **0.93** for all three modes; structured leads MRR when IDs are known; hybrid is the default for mixed queries; vector-only ranks weakest. Gap topics mostly retrieve; leave-one-out `procurementStage` is weak.
+See `derived/retrieval-eval-report.json`. Aggregate Hit@8 ≈ **0.93** for all three modes; structured leads MRR when IDs are known; hybrid is used for free-text live requests; vector-only ranks weakest. Gap topics mostly retrieve; leave-one-out `procurementStage` is weak.
 
 ## How to add another historical RFP
 
@@ -129,7 +143,7 @@ See `derived/retrieval-eval-report.json`. Aggregate Hit@8 ≈ **0.93** for all t
 2. Update manifest.  
 3. `npm run historical:import`  
 4. `npm run historical:chunks && npm run historical:embed`  
-5. `npm run validate:historical && npm run validate:rag`  
+5. `npm run validate:historical && npm run validate:rag && npm run validate:controlled-rag`  
 6. Never import into `project_facts`.
 
 ## Status
@@ -137,4 +151,5 @@ See `derived/retrieval-eval-report.json`. Aggregate Hit@8 ≈ **0.93** for all t
 - Resource library: **7** datasets  
 - Structured import: **yes**  
 - RAG foundation + retrieval eval: **yes** (offline)  
-- Live Rami integration: **NOT IMPLEMENTED**
+- Controlled live REFERENCE/PROPOSED/CONFIRM: **yes**  
+- Generation-time RAG: **NOT IMPLEMENTED**

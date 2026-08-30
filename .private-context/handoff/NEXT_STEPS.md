@@ -1,27 +1,25 @@
 # Rami — Next Steps
 
-Last updated: 2026-08-31 (RAG retrieval foundation complete)
+Last updated: 2026-08-31 (controlled RAG integration complete)
 
 Entrypoint: `.private-context/handoff/START_HERE.md`
 
 ## Checkpoint now
 
-Demo RFP + DOCX ✅ · Historical library ✅ · Structured historical PG ✅ · RAG chunks/embeddings/hybrid retrieval + eval ✅ (offline)
+Demo RFP ✅ · Historical library ✅ · Offline RAG ✅ · Controlled chat REFERENCE/PROPOSED/CONFIRM ✅
 
 ```bash
-npm run historical:chunks && npm run historical:embed && npm run historical:evaluate-retrieval && npm run validate:rag
+npm run validate:controlled-rag && npm run validate:rag
 ```
 
 ## Exact next step
 
-**Controlled RAMI integration (REFERENCE only)**
+**Generation-time RAG (optional, explicit only)**
 
-1. Surface `HistoricalReference` results as optional citations / suggestions in BA UI (not auto-injected into generation prompts until UX + eval gates agreed).
-2. Design `REFERENCE → PROPOSED → BA confirm → ProjectFact` as a separate workflow.
-3. Do **not** write retrieval results into `project_facts` automatically.
-4. Optional later: install pgvector for PG 18 and migrate `REAL[]` → `vector(768)` with HNSW.
-5. Optional Field promotions from gap evidence (explicit decision; `procurementStage` leave-one-out is weak).
+- Do not inject historical chunks into every section generation prompt.
+- If added: only BA-approved / explicitly requested references; current ProjectFacts remain generation truth.
+- Optional later: pgvector install for PG 18; Field promotions from gap report (not `procurementStage` yet).
 
 ## Do not start automatically
 
-Silent ProjectFact promotion · expanding the 52-field model without decision · fine-tuning / LoRA · paid embedding APIs.
+Silent ProjectFact promotion · auto-fill Fields from RAG · Fine-tuning / LoRA · paid embedding APIs.

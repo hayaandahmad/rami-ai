@@ -45,6 +45,10 @@ function classifyFieldCompleteness(memory: ProjectMemory, fieldId: string): Comp
   if (bag.gapStatus === 'NOT_APPLICABLE') return 'not_applicable';
   if (bag.gapStatus === 'DEFERRED' || bag.gapStatus === 'UNKNOWN') return 'tbc';
   if (bag.current.status === 'TBC') return 'tbc';
+  // Historical suggestions must never satisfy readiness as answered
+  if (bag.current.status === 'PROPOSED' || bag.current.status === 'REFERENCE') {
+    return 'tbc';
+  }
   if (classifySpokenUnknown(bag.current.value) !== null) return 'tbc';
 
   const value = bag.current.value;

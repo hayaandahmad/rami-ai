@@ -96,7 +96,13 @@ export interface GapAnalysis {
 }
 
 /** SSE event types sent from the API to the client. */
-export type StreamEventType = 'thinking' | 'facts' | 'text' | 'done' | 'error';
+export type StreamEventType =
+  | 'thinking'
+  | 'facts'
+  | 'text'
+  | 'done'
+  | 'error'
+  | 'historical_references';
 
 export interface StreamEvent {
   type: StreamEventType;
@@ -122,6 +128,18 @@ export interface StreamEvent {
   collectionSufficient?: boolean;
   /** Serialized next action for client debugging / UI. */
   nextActionType?: string;
+  /** Controlled RAG: historical references for UI (never ProjectFacts). */
+  historicalReferences?: import('./historicalProposal').SurfacedHistoricalReference[];
+  retrievalDebug?: {
+    triggered: boolean;
+    mode?: string;
+    trigger?: string;
+    reason?: string;
+    query?: string;
+    fieldIds?: string[];
+    sectionIds?: string[];
+    topK?: number;
+  };
   /** For 'error' */
   message?: string;
 }

@@ -51,6 +51,9 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
     rfpIntent,
     errorMessage,
     applicabilityContext,
+    historicalReferences,
+    pendingProposals,
+    refreshProposals,
     sendMessage,
     retryLastMessage,
     clearError,
@@ -219,6 +222,10 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
                 errorMessage={errorMessage}
                 onRetry={retryLastMessage}
                 onClearError={clearError}
+                historicalReferences={historicalReferences}
+                documentKey={documentId || sessionId}
+                pendingProposals={pendingProposals}
+                onProposalChanged={() => void refreshProposals()}
               />
               <ChatComposer
                 value={composerValue}

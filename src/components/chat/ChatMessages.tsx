@@ -9,9 +9,11 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowDown } from 'lucide-react';
 import type { ConversationMessage } from '@/types/conversation';
 import type { ChatStatus } from '@/hooks/useRamiChat';
+import type { SurfacedHistoricalReference, HistoricalFieldProposal } from '@/types/historicalProposal';
 import { RamiMessage } from './RamiMessage';
 import { UserMessage } from './UserMessage';
 import { ThinkingIndicator } from './ThinkingIndicator';
+import { HistoricalReferenceCard } from './HistoricalReferenceCard';
 
 interface ChatMessagesProps {
   messages: ConversationMessage[];
@@ -19,9 +21,13 @@ interface ChatMessagesProps {
   errorMessage: string | null;
   onRetry: () => void;
   onClearError: () => void;
+  historicalReferences?: SurfacedHistoricalReference[];
+  documentKey?: string;
+  pendingProposals?: HistoricalFieldProposal[];
+  onProposalChanged?: () => void;
 }
 
-const SCROLL_THRESHOLD = 80; // px from bottom to consider "at bottom"
+const SCROLL_THRESHOLD = 80;
 
 export function ChatMessages({
   messages,
@@ -29,13 +35,17 @@ export function ChatMessages({
   errorMessage,
   onRetry,
   onClearError,
+  historicalReferences = [],
+  documentKey,
+  pendingProposals = [],
+  onProposalChanged,
 }: ChatMessagesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [dismissed, setDismissed] = useState<Set<string>>(new Set());
   const userScrolledUpRef = useRef(false);
 
-  // Track whether user has scrolled up
   const handleScroll = () => {
     const el = containerRef.current;
     if (!el) return;
@@ -44,12 +54,11 @@ export function ChatMessages({
     setShowScrollButton(distanceFromBottom > SCROLL_THRESHOLD + 20);
   };
 
-  // Auto-scroll when new content arrives, unless user has scrolled up
   useEffect(() => {
     if (!userScrolledUpRef.current) {
       bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [messages, status]);
+  }, [messages, status, historicalReferences.length]);
 
   const scrollToBottom = () => {
     userScrolledUpRef.current = false;
@@ -60,6 +69,7 @@ export function ChatMessages({
   const isThinking = status === 'thinking';
   const lastMessage = messages[messages.length - 1];
   const isStreamingLast = lastMessage?.role === 'assistant' && lastMessage?.isStreaming;
+  const visibleRefs = historicalReferences.filter((r) => !dismissed.has(r.chunkId));
 
   return (
     <div className="relative flex-1 overflow-hidden">
@@ -69,7 +79,6 @@ export function ChatMessages({
         onScroll={handleScroll}
       >
         <div className="mx-auto max-w-2xl px-4 py-6 xl:px-0">
-          {/* Empty state */}
           {messages.length === 0 && !isThinking && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <p className="text-body text-text-muted">
@@ -78,7 +87,6 @@ export function ChatMessages({
             </div>
           )}
 
-          {/* Messages */}
           <div className="flex flex-col gap-6">
             {messages.map((msg) => (
               <div key={msg.id}>
@@ -90,10 +98,40 @@ export function ChatMessages({
               </div>
             ))}
 
-            {/* Thinking indicator — shown when thinking but no streaming yet */}
+            {documentKey && visibleRefs.length > 0 && !isThinking && (
+              <div className="flex flex-col gap-3">
+                <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">
+                  Historical references (not current project facts)
+                </p>
+                {visibleRefs.map((ref) => (
+                  <HistoricalReferenceCard
+                    key={ref.chunkId}
+                    reference={ref}
+                    documentKey={documentKey}
+                    defaultFieldId={ref.mappedFieldIds[0]}
+                    onProposed={() => onProposalChanged?.()}
+                    onDismiss={(id) => setDismissed((prev) => new Set(prev).add(id))}
+                  />
+                ))}
+              </div>
+            )}
+
+            {pendingProposals.length > 0 && (
+              <div className="rounded-md border border-dashed border-[var(--color-border)] px-3 py-2 text-caption text-text-muted">
+                <span className="font-semibold text-text-primary">
+                  PROPOSED (pending BA decision):{' '}
+                </span>
+                {pendingProposals
+                  .map(
+                    (p) =>
+                      `${p.fieldId} ← ${p.sourceReferences[0]?.historicalRfpTitle || p.sourceChunkIds[0]}`,
+                  )
+                  .join('; ')}
+              </div>
+            )}
+
             <ThinkingIndicator visible={isThinking && !isStreamingLast} />
 
-            {/* Error state */}
             {errorMessage && status === 'error' && (
               <div className="flex items-start gap-3">
                 <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[var(--color-error-100)] ring-1 ring-[var(--color-error-700)]/20">
@@ -101,7 +139,9 @@ export function ChatMessages({
                 </div>
                 <div className="flex-1">
                   <p className="text-small text-[var(--color-error-700)]">
-                    {errorMessage.includes('Ollama') || errorMessage.includes('fetch') || errorMessage.includes('ECONNREFUSED')
+                    {errorMessage.includes('Ollama') ||
+                    errorMessage.includes('fetch') ||
+                    errorMessage.includes('ECONNREFUSED')
                       ? "Rami's local AI service is currently unavailable. Make sure Ollama is running."
                       : errorMessage}
                   </p>
@@ -130,7 +170,6 @@ export function ChatMessages({
         </div>
       </div>
 
-      {/* Jump to latest button */}
       {showScrollButton && (
         <button
           type="button"

@@ -20,6 +20,10 @@ import type {
   RfpIntent,
   ExtractedFact,
 } from '@/types/conversation';
+import type {
+  SurfacedHistoricalReference,
+  HistoricalFieldProposal,
+} from '@/types/historicalProposal';
 
 const STORAGE_KEY_PREFIX = 'rami-chat-v1:';
 const MAX_STORED_MESSAGES = 50;
@@ -95,6 +99,28 @@ export function useRamiChat({
   const streamingIdRef = useRef<string | null>(null);
   // Latest updated field IDs from last response
   const [lastUpdatedFields, setLastUpdatedFields] = useState<string[]>([]);
+  const [historicalReferences, setHistoricalReferences] = useState<
+    SurfacedHistoricalReference[]
+  >([]);
+  const [pendingProposals, setPendingProposals] = useState<HistoricalFieldProposal[]>([]);
+  const [lastRetrievalDebug, setLastRetrievalDebug] = useState<
+    StreamEvent['retrievalDebug'] | null
+  >(null);
+
+  const refreshProposals = useCallback(async () => {
+    const key = documentId || sessionId;
+    if (!key) return;
+    try {
+      const res = await fetch(
+        `/api/rami/historical/proposals?documentKey=${encodeURIComponent(key)}&status=PENDING`,
+        { cache: 'no-store' },
+      );
+      const data = await res.json();
+      if (data.ok) setPendingProposals(data.proposals ?? []);
+    } catch {
+      /* ignore */
+    }
+  }, [documentId, sessionId]);
 
   // PostgreSQL is authority. Hydrate on mount; localStorage is only a UI cache.
   useEffect(() => {
@@ -136,6 +162,7 @@ export function useRamiChat({
           completionPercent: data.completionPercent ?? prev.completionPercent,
           collectionSufficient: data.collectionSufficient ?? prev.collectionSufficient,
         }));
+        if (!cancelled) void refreshProposals();
       } catch {
         if (!cancelled) {
           setErrorMessage('Could not load this project from PostgreSQL.');
@@ -145,7 +172,7 @@ export function useRamiChat({
     return () => {
       cancelled = true;
     };
-  }, [sessionId, documentId, onIntentChange]);
+  }, [sessionId, documentId, onIntentChange, refreshProposals]);
 
   // Optional UI cache only — never authoritative
   useEffect(() => {
@@ -176,6 +203,7 @@ export function useRamiChat({
         createdAt: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, userMsg]);
+      setHistoricalReferences([]);
 
       // Add placeholder assistant message
       const assistantId = `msg-${Date.now()}-a`;
@@ -255,6 +283,15 @@ export function useRamiChat({
                   }));
                   break;
 
+                case 'historical_references':
+                  if (event.historicalReferences) {
+                    setHistoricalReferences(event.historicalReferences);
+                  }
+                  if (event.retrievalDebug) {
+                    setLastRetrievalDebug(event.retrievalDebug);
+                  }
+                  break;
+
                 case 'text':
                   if (event.chunk) {
                     setStatus('streaming');
@@ -279,6 +316,12 @@ export function useRamiChat({
                     setLastUpdatedFields(event.updatedFieldIds);
                   }
                   if (event.language) responseLang = event.language;
+                  if (event.historicalReferences?.length) {
+                    setHistoricalReferences(event.historicalReferences);
+                  }
+                  if (event.retrievalDebug) {
+                    setLastRetrievalDebug(event.retrievalDebug);
+                  }
                   if (event.applicableSectionCount !== undefined) {
                     setApplicabilityContext((prev) => ({
                       ...prev,
@@ -289,19 +332,26 @@ export function useRamiChat({
                         event.completionPercent !== undefined
                           ? event.completionPercent
                           : prev.completionPercent,
-                      collectionSufficient: event.collectionSufficient ?? prev.collectionSufficient,
+                      collectionSufficient:
+                        event.collectionSufficient ?? prev.collectionSufficient,
                     }));
                   }
                   // Tag the assistant message with server-confirmed language
                   setMessages((prev) =>
                     prev.map((m) =>
                       m.id === assistantId
-                        ? { ...m, isStreaming: false, content: accumulatedText, language: responseLang }
+                        ? {
+                            ...m,
+                            isStreaming: false,
+                            content: accumulatedText,
+                            language: responseLang,
+                          }
                         : m,
                     ),
                   );
                   setStatus('idle');
                   streamingIdRef.current = null;
+                  void refreshProposals();
                   break;
 
                 case 'error':
@@ -329,7 +379,7 @@ export function useRamiChat({
         setMessages((prev) => prev.filter((m) => m.id !== assistantId));
       }
     },
-    [sessionId, documentId, status, onIntentChange, onFactsExtracted],
+    [sessionId, documentId, status, onIntentChange, onFactsExtracted, refreshProposals],
   );
 
   const retryLastMessage = useCallback(() => {
@@ -355,6 +405,10 @@ export function useRamiChat({
     errorMessage,
     lastUpdatedFields,
     applicabilityContext,
+    historicalReferences,
+    pendingProposals,
+    lastRetrievalDebug,
+    refreshProposals,
     sendMessage,
     retryLastMessage,
     clearError,

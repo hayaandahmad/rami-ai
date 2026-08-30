@@ -33,9 +33,13 @@ import {
 import { detectIntent } from '@/server/rami/intentDetector';
 import { classifyProject } from '@/server/rami/projectClassifier';
 import { withActivePacks } from '@/server/rami/questionPackEngine';
+import { evaluateHistoricalRetrievalPolicy } from '@/server/rami/historicalRetrievalPolicy';
+import { retrieveHistoricalReferences } from '@/server/rami/historicalRetrieval';
+import { toSurfacedReference } from '@/types/historicalProposal';
 import { PROJECT_MEMORY_FIELDS } from '@/schema/projectMemoryFields';
 import { RFP_SECTIONS, isSectionApplicable } from '@/schema/rfpSchema';
 import type { ExtractionResult, StreamEvent } from '@/types/conversation';
+import type { NextAction } from '@/types/nextAction';
 import { getEngineState, isModalReadyForChat } from '@/server/ai/modalEngineControl';
 
 function sseEvent(data: StreamEvent): string {
@@ -240,6 +244,68 @@ export async function POST(req: NextRequest) {
           collectionSufficient: gaps.collectionSufficient,
         };
 
+        // Controlled historical retrieval — never on ordinary turns; never writes ProjectFacts
+        const focusFieldIds =
+          gaps.nextAction.type === 'ASK_REQUIREMENTS'
+            ? [gaps.nextAction.primaryFieldId, ...gaps.nextAction.relatedFieldIds]
+            : [];
+        const retrievalPolicy = evaluateHistoricalRetrievalPolicy({
+          userMessage: message,
+          gaps,
+          focusFieldIds,
+        });
+        let phrasingAction: NextAction = gaps.nextAction;
+        let surfacedRefs: ReturnType<typeof toSurfacedReference>[] = [];
+        const retrievalDebug: NonNullable<StreamEvent['retrievalDebug']> = {
+          triggered: false,
+          trigger: retrievalPolicy.trigger,
+          reason: retrievalPolicy.reason,
+        };
+
+        if (retrievalPolicy.shouldRetrieve && retrievalPolicy.mode !== 'none') {
+          try {
+            const refs = await retrieveHistoricalReferences(retrievalPolicy.query, {
+              mode: retrievalPolicy.mode,
+              topK: retrievalPolicy.topK,
+              fieldIds:
+                retrievalPolicy.mode === 'structured' && retrievalPolicy.fieldIds.length
+                  ? retrievalPolicy.fieldIds
+                  : undefined,
+              sectionIds:
+                retrievalPolicy.mode === 'structured' && retrievalPolicy.sectionIds.length
+                  ? retrievalPolicy.sectionIds
+                  : undefined,
+              questionIds: retrievalPolicy.questionIds.length
+                ? retrievalPolicy.questionIds
+                : undefined,
+            });
+            surfacedRefs = refs.map(toSurfacedReference);
+            retrievalDebug.triggered = true;
+            retrievalDebug.mode = retrievalPolicy.mode;
+            retrievalDebug.query = retrievalPolicy.query;
+            retrievalDebug.fieldIds = retrievalPolicy.fieldIds;
+            retrievalDebug.sectionIds = retrievalPolicy.sectionIds;
+            retrievalDebug.topK = retrievalPolicy.topK;
+            phrasingAction = {
+              type: 'OFFER_HISTORICAL_REFERENCE',
+              fieldIds: retrievalPolicy.fieldIds,
+              referenceCount: surfacedRefs.length,
+              retrievalMode: retrievalPolicy.mode,
+            };
+            if (surfacedRefs.length > 0) {
+              encode({
+                type: 'historical_references',
+                historicalReferences: surfacedRefs,
+                retrievalDebug,
+                nextActionType: phrasingAction.type,
+              });
+            }
+          } catch (ragErr) {
+            console.error('[Rami chat] Historical retrieval error (non-fatal):', ragErr);
+            retrievalDebug.reason = `retrieval_failed: ${ragErr instanceof Error ? ragErr.message : 'unknown'}`;
+          }
+        }
+
         const ctx = buildApplicabilityContext(session.memory, session.projectContext);
         const applicableSectionCount = RFP_SECTIONS.filter((s) =>
           isSectionApplicable(s, ctx),
@@ -260,7 +326,7 @@ export async function POST(req: NextRequest) {
           applicableSectionCount,
           completionPercent: gaps.completionPercent,
           collectionSufficient: gaps.collectionSufficient,
-          nextActionType: gaps.nextAction.type,
+          nextActionType: phrasingAction.type,
         });
 
         const docTitle = session.memory.documentTitle?.current?.value as string | undefined;
@@ -277,16 +343,27 @@ export async function POST(req: NextRequest) {
           totalRequired: gaps.totalRequired,
           nextFieldLabel: gaps.nextPriorityLabel,
           language: conversationLanguage,
-          nextAction: gaps.nextAction,
+          nextAction: phrasingAction,
           documentStage: session.projectContext.documentStage,
           primaryDomain: session.projectContext.primaryDomain,
           collectionSufficient: gaps.collectionSufficient,
         });
 
+        // History for phrasing only — extraction already used BA message alone.
+        // Strip any prior HISTORICAL REFERENCE blocks so model does not restate as facts.
         const recentHistory = session.conversation.messages
           .slice(-8)
           .filter((m) => m.role !== 'system')
-          .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content }));
+          .map((m) => ({
+            role: m.role as 'user' | 'assistant',
+            content:
+              m.role === 'assistant'
+                ? m.content.replace(
+                    /\[HISTORICAL REFERENCE[\s\S]*?\[\/HISTORICAL REFERENCE\]/gi,
+                    '[historical reference omitted]',
+                  )
+                : m.content,
+          }));
 
         const systemPrompt = buildSystemPrompt(conversationLanguage);
         const chatMessages = [
@@ -374,7 +451,9 @@ export async function POST(req: NextRequest) {
           applicableSectionCount,
           completionPercent: gaps.completionPercent,
           collectionSufficient: gaps.collectionSufficient,
-          nextActionType: gaps.nextAction.type,
+          nextActionType: phrasingAction.type,
+          historicalReferences: surfacedRefs.length ? surfacedRefs : undefined,
+          retrievalDebug,
         });
       } catch (err) {
         console.error('[Rami chat] Unhandled error:', err);
