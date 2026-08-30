@@ -232,3 +232,9 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 **Decision**: `generateRfpSection` / `buildSectionGenerationContext` are section-agnostic. Section-specific shape comes from canonical `RFP_SECTIONS` subsections + mapped facts. Do not create per-section generator modules.
 **Status**: Active.
 
+---
+
+## #35 — Document UI consumes GeneratedSection; no parallel preview model
+**Decision**: A4 preview and section actions use `GeneratedSection` / `AssembledRfp` from PostgreSQL via generation APIs. Do not invent PreviewSection / UiGeneratedSection models. Information readiness and document approval status are shown separately. Manual edits create a new DRAFT version (`POST /api/rami/generation/edit`) and never mutate ProjectFacts.
+**Status**: Active.
+

@@ -19,6 +19,7 @@
     "validate:persistence": "npx tsx scripts/validate-persistence.ts",
     "validate:section-readiness": "npx tsx scripts/validate-section-readiness.ts",
     "validate:rfp-generation": "npx tsx scripts/validate-rfp-generation.ts",
+    "validate:document-experience": "npx tsx scripts/validate-document-experience.ts",
     "report:section-readiness": "npx tsx scripts/report-section-readiness.ts",
     "seed:generation-demo": "npx tsx scripts/seed-generation-demo.ts",
     "db:migrate": "npx tsx scripts/db-migrate.ts",

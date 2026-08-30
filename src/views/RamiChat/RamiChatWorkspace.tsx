@@ -11,13 +11,13 @@
 
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Sparkles, PanelRight, PanelRightClose } from 'lucide-react';
 import { useRamiChat } from '@/hooks/useRamiChat';
 import { ChatMessages } from '@/components/chat/ChatMessages';
 import { ChatComposer } from '@/components/chat/ChatComposer';
 import { SectionProgress } from '@/components/rfp/SectionProgress';
-import { DocumentPreviewShell } from '@/components/rfp/DocumentPreviewShell';
+import { RfpDocumentPanel } from '@/components/rfp/RfpDocumentPanel';
 import type { SectionLifecycleState } from '@/types/sectionState';
 import type { RfpIntent } from '@/types/conversation';
 
@@ -30,6 +30,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
   const [composerValue, setComposerValue] = useState('');
   const [rightPaneVisible, setRightPaneVisible] = useState(false);
   const [mobileTab, setMobileTab] = useState<'chat' | 'document'>('chat');
+  const [forceDocumentPane, setForceDocumentPane] = useState(false);
 
   // Section states live on the server; client tracks a lightweight display state
   const [sectionStates] = useState<Record<string, SectionLifecycleState>>({});
@@ -63,8 +64,30 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
     setComposerValue('');
   }, [composerValue, sendMessage]);
 
-  const isInitialState = messages.length === 0 && !isGenerating;
-  const showSplit = rfpIntent === 'CREATE_RFP' && rightPaneVisible;
+  const showSplit =
+    (rfpIntent === 'CREATE_RFP' || forceDocumentPane) && rightPaneVisible;
+  const isInitialState = messages.length === 0 && !isGenerating && !showSplit;
+
+  // When opening a project that already has generated RFP content, show the document pane.
+  useEffect(() => {
+    const key = documentId || sessionId;
+    if (!key) return;
+    let cancelled = false;
+    void fetch(`/api/rami/generation/document?documentKey=${encodeURIComponent(key)}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data?.ok) return;
+        const generated = Number(data.assembled?.generatedApplicableCount ?? 0);
+        if (generated > 0) {
+          setForceDocumentPane(true);
+          setRightPaneVisible(true);
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [documentId, sessionId]);
 
   // Build applicability context from server-synced values
   const sectionApplicabilityCtx = {
@@ -186,7 +209,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
             <div
               className={`flex flex-col transition-all duration-300 ease-out ${
                 showSplit
-                  ? mobileTab === 'chat' ? 'flex w-full md:w-3/5' : 'hidden md:flex md:w-3/5'
+                  ? mobileTab === 'chat' ? 'flex w-full md:w-1/2' : 'hidden md:flex md:w-1/2'
                   : 'flex w-full'
               }`}
             >
@@ -214,7 +237,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
             {showSplit && (
               <div
                 className={`flex flex-col overflow-hidden transition-all duration-300 ease-out ${
-                  mobileTab === 'document' ? 'flex w-full md:w-2/5' : 'hidden md:flex md:w-2/5'
+                  mobileTab === 'document' ? 'flex w-full md:w-1/2' : 'hidden md:flex md:w-1/2'
                 }`}
               >
                 <div className="shrink-0 p-3">
@@ -227,10 +250,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
                 </div>
 
                 <div className="flex-1 overflow-hidden">
-                  <DocumentPreviewShell
-                    sectionStates={sectionStates}
-                    applicabilityContext={sectionApplicabilityCtx}
-                  />
+                  <RfpDocumentPanel documentKey={documentId || sessionId} />
                 </div>
               </div>
             )}

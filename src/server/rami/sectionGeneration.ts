@@ -340,6 +340,71 @@ export async function approveRfpSection(input: {
   return row;
 }
 
+/**
+ * Persist a manual edit of GeneratedSection blocks.
+ * Does not modify ProjectFacts. Creates a new DRAFT version (history kept).
+ * APPROVED content requires reopenApproved=true.
+ */
+export async function editRfpSection(input: {
+  documentKey: string;
+  sectionId: string;
+  blocks: GeneratedBlock[];
+  reopenApproved?: boolean;
+}): Promise<ProjectSectionContentRow> {
+  const project = await resolveProject(input.documentKey);
+  const session = await hydrateProject(input.documentKey);
+  const existing = await getCurrentSectionContent(project.project_id, input.sectionId);
+  if (!existing) {
+    throw new GenerationError(
+      'CONTENT_NOT_FOUND',
+      `No generated content for section ${input.sectionId}. Generate first.`,
+    );
+  }
+  if (existing.approval_status === 'APPROVED' && !input.reopenApproved) {
+    throw new GenerationError(
+      'APPROVED_CONTENT_PROTECTED',
+      `Section ${input.sectionId} is APPROVED. Pass reopenApproved=true to edit into a new DRAFT version.`,
+    );
+  }
+
+  const blocks = input.blocks.filter(isBlock);
+  if (blocks.length === 0) {
+    throw new GenerationError('INVALID_MODEL_OUTPUT', 'Edited content has no usable blocks.');
+  }
+
+  const base = existing.content_json;
+  const edited: GeneratedSection = {
+    ...base,
+    version: 0,
+    approvalStatus: 'DRAFT',
+    generatedAt: new Date().toISOString(),
+    modelUsed: `${base.modelUsed || 'unknown'}+manual-edit`,
+    blocks,
+  };
+
+  const content = await withTransaction(async (client) => {
+    return insertSectionContentVersion(
+      {
+        projectId: project.project_id,
+        sectionId: input.sectionId,
+        content: edited,
+      },
+      client,
+    );
+  });
+
+  const prior =
+    session.sectionStates[input.sectionId] ?? createSectionStateRecord(input.sectionId);
+  session.sectionStates[input.sectionId] = advanceLifecycleTowardReview(
+    prior.state === 'APPROVED'
+      ? advanceSectionState(prior, 'REOPENED', { reopenReason: 'manual' })
+      : prior,
+    edited.sourceFieldIds,
+  );
+  await persistRuntimeState(session);
+  return content;
+}
+
 export async function getGeneratedSection(input: {
   documentKey: string;
   sectionId: string;

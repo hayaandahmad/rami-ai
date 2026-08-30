@@ -42,9 +42,23 @@ export async function GET(req: Request) {
     const readiness = getAllSectionReadiness(session.memory, session.projectContext);
     const contents = await listGeneratedSections({ documentKey });
     const assembled = await assembleRfpDocument(documentKey);
+
+    const mem = session.memory;
+    const str = (fieldId: keyof typeof mem) => {
+      const v = mem[fieldId]?.current?.value;
+      return typeof v === 'string' && v.trim() ? v.trim() : undefined;
+    };
+
     return Response.json({
       ok: true,
       documentKey,
+      documentMeta: {
+        documentTitle: str('documentTitle'),
+        beneficiaryEntity: str('beneficiaryEntity'),
+        documentType: str('documentType'),
+        engagementType: str('engagementType'),
+        engagementDuration: str('engagementDuration'),
+      },
       readiness,
       sections: contents.map((c) => ({
         contentId: c.content_id,

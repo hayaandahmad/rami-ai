@@ -1066,3 +1066,201 @@
   overflow: auto;
 }
 
+/* ── RFP A4 document experience ─────────────────────────────────────────── */
+.rfp-a4-page {
+  max-width: 595px;
+  min-height: 842px;
+  padding: 48px 52px 64px;
+  background: #fff;
+  color: #1a1a1a;
+  box-shadow:
+    0 4px 24px rgba(15, 23, 42, 0.08),
+    0 1px 4px rgba(15, 23, 42, 0.04);
+  border-radius: 2px;
+  font-family: "Georgia", "Times New Roman", Times, serif;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+.rfp-cover {
+  border-bottom: 1px solid #d4d4d8;
+  padding-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
+}
+
+.rfp-cover-kicker {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0 0 0.5rem;
+}
+
+.rfp-cover-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.5rem;
+  color: #0f172a;
+}
+
+.rfp-cover-meta {
+  margin: 0.15rem 0;
+  color: #475569;
+  font-family: var(--font-sans);
+  font-size: 11px;
+}
+
+.rfp-h1 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  color: #0f172a;
+}
+
+.rfp-h2 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 1.1rem 0 0.45rem;
+  color: #1e293b;
+}
+
+.rfp-h3 {
+  font-size: 0.88rem;
+  font-weight: 700;
+  margin: 0.9rem 0 0.35rem;
+  color: #334155;
+}
+
+.rfp-p {
+  margin: 0 0 0.65rem;
+  color: #1e293b;
+}
+
+.rfp-muted {
+  color: #64748b;
+  font-style: italic;
+  font-family: var(--font-sans);
+}
+
+.rfp-ul,
+.rfp-ol {
+  margin: 0 0 0.75rem;
+  padding-left: 1.25rem;
+}
+
+.rfp-ul li,
+.rfp-ol li {
+  margin-bottom: 0.25rem;
+}
+
+.rfp-table-wrap {
+  margin: 0.75rem 0 1rem;
+  overflow-x: auto;
+}
+
+.rfp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 11px;
+}
+
+.rfp-table th,
+.rfp-table td {
+  border: 1px solid #cbd5e1;
+  padding: 0.35rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.rfp-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+}
+
+.rfp-tbc {
+  margin: 0.75rem 0;
+  padding: 0.55rem 0.7rem;
+  border: 1px dashed #b45309;
+  background: #fffbeb;
+  border-radius: 4px;
+  font-family: var(--font-sans);
+}
+
+.rfp-tbc-label {
+  color: #92400e;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.rfp-approved-banner,
+.rfp-draft-banner {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin: 0 0 0.75rem;
+}
+
+.rfp-approved-banner {
+  color: #15803d;
+}
+
+.rfp-draft-banner {
+  color: #a16207;
+}
+
+.rfp-missing {
+  font-family: var(--font-sans);
+  font-size: 11px;
+  color: #b45309;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  padding: 0.5rem 0.65rem;
+  border-radius: 4px;
+  margin: 0.35rem 0 0.75rem;
+}
+
+.rfp-section-slot + .rfp-section-slot {
+  border-top: 1px solid #e2e8f0;
+  padding-top: 1.25rem;
+}
+
+.rfp-chip {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 0.1rem 0.35rem;
+  border-radius: 3px;
+  border: 1px solid transparent;
+}
+
+.rfp-chip-ok {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+
+.rfp-chip-warn {
+  background: #fffbeb;
+  color: #a16207;
+  border-color: #fde68a;
+}
+
+.rfp-chip-alert {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+
+.rfp-chip-muted {
+  background: #f8fafc;
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+
