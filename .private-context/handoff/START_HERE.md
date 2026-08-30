@@ -16,8 +16,8 @@ git rev-parse origin/main
 Last **feature** milestone (RFP Generation Core backend):
 
 ```text
-git log -1 --oneline
-# expect: feat: implement RFP generation core backend
+d8e7f678b01b3ab5342f57c70098a61c85cc7f0b
+feat: implement RFP generation core backend
 ```
 
 `git log -1` on a clean `origin/main` is the current authoritative HEAD.
