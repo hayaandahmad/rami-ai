@@ -1,12 +1,38 @@
 # RFP Section Generation Architecture
 
-Status: **Design authority for lifecycle (DRAFTING → APPROVED). Prose generation is not implemented yet.**
+Status: **Generation Core backend implemented.** A4/UI wiring is next.
 
-Information readiness (can we draft?) is **not** this lifecycle. See `rfp-section-readiness.md`. That file is the **v1 generation contract**.
+Information readiness (can we draft?) is **not** this lifecycle. See `rfp-section-readiness.md`.
 
-**RFP Generation Core (next):** implement the readiness-doc contract first. Do **not** include `historicalEvidence` / RAG in the first pipeline. Regeneration must not silently destroy approved content. Full risk list: `.private-context/handoff/NEXT_STEPS.md`.
+Generation is always **section-level**, never whole-document. A section is only drafted when information readiness is `READY_TO_DRAFT` or `DRAFTABLE_WITH_TBC`.
 
-Generation is always **section-level**, never whole-document. A section is only ever drafted once information readiness is `READY_TO_DRAFT` or `DRAFTABLE_WITH_TBC`.
+## Implemented contract (code authority)
+
+| Type / service | Location |
+|---|---|
+| `GeneratedSection` / `GeneratedBlock` / `SectionGenerationContext` / `AssembledRfp` | `src/types/generatedSection.ts` |
+| Context builder | `src/server/rami/sectionGenerationContext.ts` |
+| Generate / regenerate / approve / assemble | `src/server/rami/sectionGeneration.ts` |
+| Persistence | `project_section_contents` via `ProjectSectionContentRepository` |
+| HTTP | `/api/rami/generation/section`, `/approve`, `/document` |
+
+### GeneratedBlock kinds
+`heading` | `paragraph` | `bullet_list` | `numbered_list` | `table` | `tbc`
+
+### Approval vs readiness
+- Readiness = information sufficiency (`SectionInformationReadiness`)
+- Approval = document workflow on generated content (`DRAFT` | `APPROVED`)
+- Lifecycle (`SectionLifecycleState`) still tracked in `project_section_states`
+
+### Regeneration rule
+- New version becomes `is_current`; previous current is superseded (history kept)
+- If current is `APPROVED`, refuse unless `reopenApproved=true` (new `DRAFT` version)
+
+### Assembly
+`assembleRfpDocument` walks canonical 20-section order, respects applicability, attaches persisted content, flags `missingGeneration`. Does not invent absent prose.
+
+### Anti-hallucination
+TypeScript gates + prompt rules + deterministic TBC block enforcement. No RAG. No historical RFPs as facts.
 
 ## 1. Section state machine (final)
 
@@ -18,53 +44,30 @@ NOT_STARTED → COLLECTING → READY_TO_DRAFT → DRAFTING → REVIEW → APPROV
                                               (from APPROVED) REOPENED → COLLECTING
 ```
 
-| State | Meaning | Entry condition |
-|---|---|---|
-| `NOT_STARTED` | Section not yet engaged in conversation | Initial state for every applicable section |
-| `COLLECTING` | Rami is actively gathering/confirming fields for this section | First relevant BA message or first Rami question for this section |
-| `READY_TO_DRAFT` | All `Required` fields (per current applicability) are `CONFIRMED` or BA-acknowledged `TBC`; all `Conditional` fields are either resolved or explicitly skipped by the BA | Deterministic gate passes (see `rami-agent-architecture.md` §2) |
-| `DRAFTING` | LLM is generating section prose/tables from the frozen generation context (§2 below) | Triggered from `READY_TO_DRAFT`, automatically or on BA request |
-| `REVIEW` | Draft is presented in the live preview; BA is reading/reacting | Draft generation completes |
-| `REVISING` | BA requested changes; Rami is applying them (may involve new questions if the revision needs new information) | BA feedback in `REVIEW` |
-| `APPROVED` | BA explicitly approved this section's current draft | Explicit BA approval action in `REVIEW` |
-| `REOPENED` | An upstream fact that this section depended on changed after approval, or the BA explicitly reopens it | Upstream field change detected, or explicit BA action on an `APPROVED` section |
+(See `src/types/sectionState.ts` for enforced transitions.)
 
-### Explicit transition rules
-
-- **`TBC` fields do not block `READY_TO_DRAFT`.** A section can enter drafting with some fields still `TBC`; the draft must visibly flag each `TBC` gap inline (e.g. a highlighted placeholder) rather than silently omitting it or inventing a value.
-- **`REVIEW → REVISING`** happens on any BA feedback that isn't a clean approval. `REVISING → DRAFTING` (implicitly, a re-draft) once the revision's required new information (if any) is resolved; `REVISING` can loop back through `COLLECTING`-like sub-questions without leaving the section's overall `REVISING` state from the BA's point of view.
-- **`REVIEW → APPROVED`** requires an explicit BA approval action — never inferred from silence or from moving on to the next section in conversation.
-- **`APPROVED → REOPENED`** happens in exactly two cases: (1) a project-memory field this section's draft depended on changes value after approval (detected deterministically by comparing the section's recorded field-dependency snapshot to current project memory), or (2) the BA explicitly asks to revisit an approved section. Both cases require the BA to see *why* it reopened (which field changed, or that it was a manual reopen) before continuing.
-- **`REOPENED → COLLECTING`**, not directly back to `DRAFTING` — any changed/added information first goes through the normal collection/confirmation gate again, even if only one field changed, so the completeness gate is never bypassed.
-- A section's `history[]` of prior drafts is retained across `REVISING` and `REOPENED` cycles for auditability (mirrors the project-memory `history[]` pattern in `rfp-knowledge-architecture.md`).
-
-## 2. Generation context composition (what the LLM sees when drafting a section)
-
-When a section enters `DRAFTING`, the deterministic layer assembles a frozen context — the LLM never queries project memory or the retrieval index live during generation:
+## 2. Generation context (implemented)
 
 ```text
 SectionGenerationContext {
-  sectionId, title, canonical subsections (from canonical-rfp-schema.md)
-  currentProjectFacts: { fieldId → value }   // only CONFIRMED and accepted-TBC fields relevant to this section
-  proposals: { fieldId → { value, sourceRef } }   // any still-PROPOSED items shown as pending, not asserted as fact
-  tbcGaps: fieldId[]                         // must be rendered as visible placeholders, never invented
-  historicalEvidence: RankedChunk[]          // top-k retrieval results relevant to this section, always with attribution
-  templateDefaults: object                   // reusable skeletons from GeneralTemplate.docx findings (tables, boilerplate clauses)
-  priorDraftVersion?: string                 // present only on REVISING/REOPENED re-drafts
-  revisionInstruction?: string               // present only on REVISING
+  sectionId, title, subsections
+  applicable: true
+  readiness: READY_TO_DRAFT | DRAFTABLE_WITH_TBC
+  answeredFacts, sharedFacts
+  tbcFields, notApplicableFields
+  documentMeta (title/beneficiary/type/duration when answered)
+  antiHallucinationRules
 }
 ```
 
-- **CONFIRMED facts are asserted as fact in the draft.**
-- **PROPOSED/REFERENCE evidence is never asserted as fact** — if surfaced in a draft at all (e.g. a suggested SLA table), it must be visually/textually marked as a suggestion pending BA confirmation, consistent with the provenance hard rule in `rfp-knowledge-architecture.md`.
-- **TBC gaps are rendered as explicit placeholders** (e.g. `[TO BE CONFIRMED: response time targets]`), never silently dropped or invented.
+No full DB dump. No full chat history. No `historicalEvidence` / RAG in v1.
 
 ## 3. Final assembly
 
-Final document assembly (Phase 5) concatenates all `APPROVED` sections in canonical order, applies the `chapterGroup`/`volumeHint` rollup from `canonical-rfp-schema.md` §4 if configured for the engagement, and is the only point at which DOCX export is considered. Assembly requires every `Mandatory` section (per current applicability) to be `APPROVED` — `Conditional` sections that were explicitly marked not-applicable are skipped, not treated as missing.
+Backend assembly exists. Full approved-RFP completeness requires every applicable section generated **and** APPROVED. UI + remaining section drafting remain.
 
-## 4. What this document intentionally does not cover
+## 4. Related documents
 
-- Field-level provenance rules → `rfp-knowledge-architecture.md`.
-- The conversational UX around collection/review → `product/conversational-rfp-workflow.md`.
-- Model/runtime used for drafting → `local-ai-deployment.md`.
+- Readiness: `rfp-section-readiness.md`
+- Persistence: `postgresql-persistence.md`
+- Handoff: `.private-context/handoff/START_HERE.md`

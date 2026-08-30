@@ -13,18 +13,18 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Last **feature** milestone (Section Readiness; no prose generation):
+Last **feature** milestone (RFP Generation Core backend):
 
 ```text
-cd69fb55e0acd611abb26fa1550dc79e11008406
-feat: add deterministic RFP section readiness foundation
+git log -1 --oneline
+# expect: feat: implement RFP generation core backend
 ```
 
-This handoff documentation sits on `main` after that commit. `git log -1` on a clean `origin/main` is the current authoritative HEAD.
+`git log -1` on a clean `origin/main` is the current authoritative HEAD.
 
 ## B. Product goal
 
-RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript owns workflow, persistence, readiness, and (next) generation gates.
+RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript owns workflow, persistence, readiness, and generation gates.
 
 ## C. Fully completed
 
@@ -37,26 +37,26 @@ RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript o
 - 20 canonical RFP sections, 52 Fields, 62 Questions, 59 QuestionFields, 68 `section_fields`
 - Spoken-TBC normalization (English whole-value)
 - Deterministic Section Readiness (`getSectionReadiness`)
+- **RFP Generation Core (backend)** — contract, context builder, readiness gates, persistence, regenerate, approve, assemble APIs
 
 ## D. NOT implemented
 
-- Actual RFP **prose** generation (`generateRfpSection` does not exist)
-- Persistent generated-section **content** (no GeneratedSection table/payload)
-- A4 preview still a **placeholder shell** (`DocumentPreviewShell`)
-- Generate / Regenerate / Edit / Approve UI
-- Full RFP assembly
+- A4 preview still a **placeholder shell** (`DocumentPreviewShell`) — does not yet render `GeneratedSection` blocks
+- Generate / Regenerate / Edit / Approve **UI** (APIs exist)
 - DOCX export
 - RAG / pgvector / embeddings
 - Fine-tuning / LoRA / Qwen 14B
 - Phase 2.3 domain catalogs
+- Full RFP with every applicable section generated/approved (pipeline is generalized; not all sections drafted)
 
 ## E. Architecture (one screen)
 
 | Layer | Owner |
 |---|---|
-| Chat wording + extraction JSON | Qwen3 8B via `RamiModelProvider` (`local` or `modal`) |
-| Gaps, packs, readiness, provenance | Deterministic TypeScript |
-| Project truth | PostgreSQL |
+| Chat wording + extraction JSON + section prose | Qwen3 8B via `RamiModelProvider` (`local` or `modal`) |
+| Gaps, packs, readiness, provenance, generation gates | Deterministic TypeScript |
+| Project truth | PostgreSQL (`project_facts`) |
+| Generated document prose | PostgreSQL (`project_section_contents`) |
 | Runtime facts | `ProjectMemory` (52 fields) |
 | Control plane | `ProjectContext` (classifiers persisted; `activePacks` recomputed) |
 
@@ -65,28 +65,23 @@ Question ≠ Field. One Field may map to many Sections (`section_fields`). Histo
 ## F. PostgreSQL
 
 Live-validated. Server-only `.env.local` (`RAMI_DB_*`, never `NEXT_PUBLIC_`).  
-This laptop: `127.0.0.1:5433` / database `rami_ai`. Other machines set host/port from their install; **database name must be `rami_ai`** to use the shared snapshot.
+Database name must be `rami_ai`. Port may differ by machine (this handoff machine used `127.0.0.1:5432`).
 
-Git does **not** contain the live PostgreSQL server. Each machine runs its own server. Passwords stay in `.env.local`.
-
-Git **does** contain a portable **development** snapshot (not a production backup):
+Git **does** contain a portable **development** snapshot:
 
 ```text
 dev/database/rami_ai_shared.dump
 ```
 
-Custom format (`pg_dump -Fc --no-owner --no-privileges`). It is the `rami_ai` state at this handoff. Refresh later with `npm run db:dump-shared -- --write-repo-snapshot` then commit — only when both developers intend to replace it.
+Includes migration `003_project_section_contents.sql`, demo project `rami-gen-core-demo`, and generated Background + Scope drafts.
 
-Second machine (do **not** rebuild project data from scratch):
+Second machine:
 
 ```text
 npm run db:restore-shared -- --confirm-replace-local-rami-ai
 npm run db:check
+npm run db:migrate   # no-op if snapshot already applied 003
 ```
-
-Requires loopback host (`127.0.0.1` / `localhost` / `::1`). Refuses remote targets. Private backups remain `npm run db:backup` → `.rami-db-backups/` (gitignored).
-
-Empty-schema fallback (not the handoff path): `npm run db:migrate && npm run db:seed && npm run db:check`.
 
 ## G. Modal
 
@@ -94,22 +89,31 @@ Optional paid GPU. Default `RAMI_MODEL_PROVIDER=local`. Do not auto-start GPU on
 
 ## H. RFP generation / readiness
 
-Information readiness is implemented. Generation is **not**.  
-States: `NOT_APPLICABLE` | `NOT_READY` | `DRAFTABLE_WITH_TBC` | `READY_TO_DRAFT`.  
-Qwen must not decide readiness. See `rfp-section-readiness.md`.
+Information readiness **and** prose generation are implemented.
 
-## I. Known limitations
+Readiness states: `NOT_APPLICABLE` | `NOT_READY` | `DRAFTABLE_WITH_TBC` | `READY_TO_DRAFT`.  
+Qwen must not decide readiness. See `rfp-section-readiness.md` + `rfp-generation-architecture.md`.
 
-- Coverage gaps (manpower `namedRoles` when that section applies; admin/PMO fields) — documented, not added
-- Spoken-TBC is English whole-value matching only
-- `EXTRACTED` is not BA `CONFIRMED`
-- Other machines need their own `.env.local` + shared snapshot restore (`db:restore-shared`)
+Generation approval statuses: `DRAFT` | `APPROVED` (document workflow — not readiness).
+
+## I. UI / backend contract (for first developer)
+
+| Action | Endpoint |
+|---|---|
+| Get section readiness + current generated content | `GET /api/rami/generation/section?documentKey=&sectionId=` |
+| Generate / regenerate section | `POST /api/rami/generation/section` body `{ documentKey, sectionId, regenerate?, reopenApproved? }` |
+| Approve current section content | `POST /api/rami/generation/approve` body `{ documentKey, sectionId }` |
+| List generated sections + assembled RFP | `GET /api/rami/generation/document?documentKey=` |
+
+Structured content shape: `GeneratedSection` in `src/types/generatedSection.ts` (`blocks`: heading / paragraph / bullet_list / numbered_list / table / tbc).
+
+Demo document key with proven Background + Scope: **`rami-gen-core-demo`**.
 
 ## J. Exact next implementation task
 
-**RFP GENERATION CORE (backend)** — not RAG, not training, not Phase 2.3, not UI redesign.
+**RFP document experience / UI** — wire A4 preview to `GeneratedSection`, Generate/Regenerate/Approve controls, section navigation, visual TBC, then DOCX if contract stays stable.
 
-See `NEXT_STEPS.md` for the second-developer 4-hour scope and the first-developer UI follow-up.
+See `NEXT_STEPS.md`.
 
 ## K. Reading order
 
@@ -117,51 +121,26 @@ See `NEXT_STEPS.md` for the second-developer 4-hour scope and the first-develope
 2. `.private-context/handoff/CURRENT_STATE.md`
 3. `.private-context/handoff/DECISIONS.md`
 4. `.private-context/handoff/NEXT_STEPS.md`
-5. Architecture for the assigned task:
-   - Generation core → `rfp-section-readiness.md` then `rfp-generation-architecture.md`
-   - Persistence → `postgresql-persistence.md`
-   - Asking/gaps → `adaptive-question-architecture.md`
-   - Local/Modal runtime → `local-ai-deployment.md`
-6. Inspect actual code before editing
-
-Reproduce-and-run only (no feature work): `SECOND_MACHINE_HANDOFF.md`.
+5. `rfp-generation-architecture.md`, `rfp-section-readiness.md`, `postgresql-persistence.md`
+6. Inspect: `src/types/generatedSection.ts`, `src/server/rami/sectionGeneration.ts`, `src/app/api/rami/generation/`
 
 ---
 
 ## NEW MACHINE / NEW CURSOR SESSION
 
-1. `git status`
-2. `git fetch origin`
-3. `git pull --ff-only origin main`
-4. Verify clean tree and `HEAD == origin/main`
-5. Read `START_HERE.md`
-6. Read `CURRENT_STATE.md`
-7. Read `DECISIONS.md`
-8. Read `NEXT_STEPS.md`
-9. Read the architecture document for the assigned task
-10. Inspect actual code before modifying
-11. Continue from the exact checkpoint in `NEXT_STEPS.md`
-
-Setup:
-
-1. Install PostgreSQL 18 locally (do not copy another machine's data directory)
-2. Copy `.env.example` → `.env.local` (no `NEXT_PUBLIC_` DB vars). Set `RAMI_DB_PASSWORD` locally. Set `RAMI_DB_NAME=rami_ai` and a loopback host. Port may differ (this laptop uses 5433).
-3. Local Ollama + `qwen3:8b` for default inference
-4. `npm run db:restore-shared -- --confirm-replace-local-rami-ai`
-5. `npm run db:check`
-6. Continue from `NEXT_STEPS.md` (RFP Generation Core)
-
-Do not recreate the acceptance project or other development rows by hand.
+1. `git status` → fetch → `git pull --ff-only origin main`
+2. Verify clean tree and `HEAD == origin/main`
+3. Read this file → CURRENT_STATE → DECISIONS → NEXT_STEPS
+4. `.env.local` with `RAMI_DB_*` (loopback, `RAMI_DB_NAME=rami_ai`, local password)
+5. `npm run db:restore-shared -- --confirm-replace-local-rami-ai` → `npm run db:check`
+6. Continue from `NEXT_STEPS.md` (UI / A4 preview)
 
 ---
 
 ## BEFORE HANDING BACK TO ANOTHER DEVELOPER
 
-1. Run tests (`tsc --noEmit`, lint, `validate:phase1`, `validate:phase2-adaptive`, `validate:modal-integration`, `validate:persistence`, `validate:users-norm`, `validate:section-readiness`; build if you touched app code)
-2. Update `START_HERE` / `CURRENT_STATE` / `DECISIONS` / `NEXT_STEPS` as needed
-3. Record what is done and what remains
-4. Commit (never `.env.local`, passwords, Modal secrets, or `.rami-db-backups/` private dumps). The shared snapshot at `dev/database/rami_ai_shared.dump` may be refreshed only when you intentionally replace the shared development DB.
-5. Push `origin/main`
-6. Verify `origin/main == local main`
-7. Verify clean tree
-8. Tell the next developer the **exact final commit hash**
+1. Run tests including `validate:rfp-generation`
+2. Update handoff docs
+3. Commit (never `.env.local` / passwords / Modal secrets / `.rami-db-backups/`)
+4. Push `origin/main`; verify HEAD == origin/main; clean tree
+5. Tell the next developer the **exact final commit hash**

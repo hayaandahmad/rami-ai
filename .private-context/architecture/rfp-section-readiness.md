@@ -1,14 +1,14 @@
 # RFP Section Readiness
 
-Status: **Implemented (information readiness only). Prose generation is not in the codebase yet.**
+Status: **Implemented (information readiness). Generation Core consumes these gates.**
 
-RFP Generation Core is the **next** implementation (see `.private-context/handoff/NEXT_STEPS.md`). Do not start RAG, training, or UI redesign as part of that work.
+RFP Generation Core backend is implemented (see `rfp-generation-architecture.md` and handoff `START_HERE.md`). Do not start RAG, training, or unrelated redesign as part of UI follow-up.
 
 This document is the authority for:
 
 - Field ↔ Section mapping used for drafting gates
 - Information readiness states
-- The future `generateRfpSection` contract (design only)
+- The `generateRfpSection` readiness contract
 
 Do not confuse this with:
 
@@ -68,32 +68,18 @@ Live report: `npm run report:section-readiness`
 
 Do not add these Fields until asked.
 
-## 5. Future generation contract (design only — not implemented)
+## 5. Generation contract (implemented)
 
 ```text
-generateRfpSection(projectId, sectionId) → refused unless readiness is
+generateRfpSection(documentKey, sectionId) → refused unless readiness is
   READY_TO_DRAFT or DRAFTABLE_WITH_TBC
 ```
 
-Context the next phase may pass to Qwen (never the raw DB, never full chat, never historical RFP values as current facts):
-
-```text
-SectionGenerationContext {
-  sectionId, title, subsections
-  applicable: true
-  readiness: READY_TO_DRAFT | DRAFTABLE_WITH_TBC
-  answeredFacts: { fieldId, value, provenance }[]   // this section + shared
-  tbcFields: { fieldId, label, deferredTo? }[]      // render [To be confirmed]
-  notApplicableFields: fieldId[]                    // omit; do not invent
-  antiHallucinationRules: string[]
-}
-```
+See `src/types/generatedSection.ts` and `src/server/rami/sectionGeneration.ts`.
 
 **Never silently invent:** dates, budget, SLA values, technologies, integrations, users, quantities, evaluation percentages, legal clauses, procurement rules, delivery deadlines, support periods.
 
 Unresolved → professional TBC marker. NOT_APPLICABLE → omit. REFERENCE/historical → never asserted as current ProjectFacts.
-
-Handoff risks for implementers (full list in `NEXT_STEPS.md`): Qwen does not decide readiness; do not dump DB/chat; do not invent unresolved facts; TBC stays TBC; one reusable GeneratedSection; no per-section generators; persist through PostgreSQL; do not break hydration or Local/Modal; do not start RAG.
 
 ## 6. Related documents
 

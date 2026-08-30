@@ -1,7 +1,7 @@
 # PostgreSQL persistence architecture
 
 Status: **Implemented and live-validated** (primary Windows laptop, `rami_ai` on port 5433). PostgreSQL is the authoritative store for current project state.  
-Do not implement RAG, training, or RFP generation in this layer.
+Do not implement RAG or training in this layer. Generated RFP prose is stored separately in `project_section_contents` (see `rfp-generation-architecture.md`).
 
 ## Runtime vs persistence
 

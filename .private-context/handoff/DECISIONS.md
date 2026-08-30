@@ -81,8 +81,8 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 ---
 
 ## #12 — Section drafting deferred until Generation Core exists
-**Decision**: A4 preview (`DocumentPreviewShell`) is still a placeholder. **RFP Generation Core (backend)** is the next implementation. UI preview wiring is the first developer's follow-up after generated content exists and persists.
-**Status**: Active — generation not implemented yet. No fine-tuning exists.
+**Decision**: A4 preview (`DocumentPreviewShell`) was a placeholder while Generation Core was built.
+**Status**: **Superseded for backend.** Generation Core exists. A4/UI wiring is the next first-developer task. Preview still does not consume `GeneratedSection` yet.
 
 ---
 
@@ -219,4 +219,16 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 **Decision**: Questions collect; Fields store. A Field may belong to multiple Sections (`section_fields`). One ProjectFact row per Field — never duplicate facts per section.
 **Status**: Active.
 
+---
+
+## #33 — Generated section content lives in project_section_contents
+**Decision**: Generated RFP prose is stored in `project_section_contents` (versioned, `DRAFT`/`APPROVED`, `is_current`). `project_section_states` remains lifecycle-only. `project_facts` remain business truth and are never overwritten by generation.
+**Regeneration**: Creating a new version supersedes the previous current row but keeps history. Approving content (`APPROVED`) cannot be silently overwritten — callers must pass `reopenApproved=true` to create a new `DRAFT` version.
+**Status**: Active. Binding.
+
+---
+
+## #34 — One generation pipeline for all sections
+**Decision**: `generateRfpSection` / `buildSectionGenerationContext` are section-agnostic. Section-specific shape comes from canonical `RFP_SECTIONS` subsections + mapped facts. Do not create per-section generator modules.
+**Status**: Active.
 
