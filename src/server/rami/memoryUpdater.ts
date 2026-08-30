@@ -17,6 +17,7 @@ import type { ProjectMemory, UsersValue } from '@/types/projectMemory';
 import type { ExtractedFact } from '@/types/conversation';
 import type { GapStatus } from '@/types/gapStatus';
 import { getFieldControlMeta } from '@/schema/fieldControlMeta';
+import { classifySpokenUnknown, type SpokenUnknownKind } from '@/server/rami/spokenTbc';
 
 export type FactUpdateKind = 'assert' | 'correction' | 'conflict';
 
@@ -128,6 +129,47 @@ function markContradiction(
   memoryRecord[fieldId] = updated;
 }
 
+function applyUnknownState(
+  memoryRecord: Record<string, unknown>,
+  fieldId: string,
+  kind: SpokenUnknownKind,
+  existing: MemoryFieldBag | undefined,
+  sourceRef?: string,
+): void {
+  const gapStatus: GapStatus = kind === 'deferred' ? 'DEFERRED' : 'UNKNOWN';
+  const deferredTo = kind === 'deferred' ? 'later' : undefined;
+  const current = {
+    value: null,
+    status: 'TBC' as const,
+    sourceType: 'ba-message' as const,
+    sourceRef,
+    updatedAt: new Date().toISOString(),
+  };
+  if (!existing) {
+    memoryRecord[fieldId] = {
+      fieldId,
+      current,
+      history: [],
+      gapStatus,
+      deferredTo,
+    };
+    return;
+  }
+  const previous = existing.current;
+  const alreadyUnknown =
+    previous.status === 'TBC' &&
+    (previous.value === null || previous.value === undefined) &&
+    (existing.gapStatus === 'UNKNOWN' || existing.gapStatus === 'DEFERRED');
+  memoryRecord[fieldId] = {
+    fieldId,
+    current,
+    history: alreadyUnknown ? existing.history ?? [] : [...(existing.history ?? []), previous],
+    gapStatus,
+    deferredTo,
+    contradiction: undefined,
+  };
+}
+
 function resolveUpdateKind(
   fact: ExtractedFactWithKind,
   latestMessage: string | undefined,
@@ -163,6 +205,14 @@ export function applyExtractedFacts(
 
     if (!isValidFieldId(fieldId)) {
       rejected.push(fieldId);
+      continue;
+    }
+
+    const spoken = classifySpokenUnknown(value);
+    if (spoken) {
+      const existingField = memoryRecord[fieldId] as MemoryFieldBag | undefined;
+      applyUnknownState(memoryRecord, fieldId, spoken, existingField, sourceRef);
+      applied.push(fieldId);
       continue;
     }
 
@@ -316,25 +366,15 @@ export function markFieldDeferred(
   if (!isValidFieldId(fieldId)) return;
   const memoryRecord = memory as unknown as Record<string, unknown>;
   const existing = memoryRecord[fieldId] as MemoryFieldBag | undefined;
-  if (!existing) {
-    memoryRecord[fieldId] = {
-      fieldId,
-      current: {
-        value: null,
-        status: 'TBC',
-        sourceType: 'ba-message',
-        updatedAt: new Date().toISOString(),
-      },
-      history: [],
-      gapStatus: 'DEFERRED' as GapStatus,
-      deferredTo,
-    };
-    return;
-  }
-  memoryRecord[fieldId] = {
-    ...existing,
-    gapStatus: 'DEFERRED' as GapStatus,
-    deferredTo,
-    contradiction: undefined,
-  };
+  applyUnknownState(memoryRecord, fieldId, 'deferred', existing);
+  const bag = memoryRecord[fieldId] as MemoryFieldBag;
+  bag.deferredTo = deferredTo || 'later';
+}
+
+/** Mark a field as BA-unknown / spoken TBC (GapStatus UNKNOWN). */
+export function markFieldUnknown(memory: ProjectMemory, fieldId: string, sourceRef?: string): void {
+  if (!isValidFieldId(fieldId)) return;
+  const memoryRecord = memory as unknown as Record<string, unknown>;
+  const existing = memoryRecord[fieldId] as MemoryFieldBag | undefined;
+  applyUnknownState(memoryRecord, fieldId, 'unknown', existing, sourceRef);
 }

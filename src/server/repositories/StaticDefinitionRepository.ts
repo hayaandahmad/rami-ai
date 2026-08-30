@@ -2,6 +2,7 @@ import type { PoolClient } from 'pg';
 import { RFP_SECTIONS } from '@/schema/rfpSchema';
 import { PROJECT_MEMORY_FIELDS } from '@/schema/projectMemoryFields';
 import { QUESTION_SEEDS } from '@/schema/questionBankSeed';
+import { getSectionFieldLinks } from '@/schema/sectionFieldMap';
 import { getFieldDataType } from '@/server/db/fieldTypes';
 import { query } from '@/server/db/connection';
 
@@ -26,6 +27,7 @@ export async function seedStaticDefinitions(client?: PoolClient): Promise<{
   fields: number;
   questions: number;
   questionFields: number;
+  sectionFields: number;
 }> {
   for (const section of RFP_SECTIONS) {
     await exec(
@@ -78,25 +80,43 @@ export async function seedStaticDefinitions(client?: PoolClient): Promise<{
     }
   }
 
+  let sectionFields = 0;
+  for (const link of getSectionFieldLinks()) {
+    await exec(
+      `INSERT INTO section_fields (section_id, field_id, role, tbc_allows_draft, na_valid)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (section_id, field_id) DO UPDATE SET
+         role = EXCLUDED.role,
+         tbc_allows_draft = EXCLUDED.tbc_allows_draft,
+         na_valid = EXCLUDED.na_valid`,
+      [link.sectionId, link.fieldId, link.role, link.tbcAllowsDraft, link.naValid],
+      client,
+    );
+    sectionFields += 1;
+  }
+
   return {
     sections: RFP_SECTIONS.length,
     fields: PROJECT_MEMORY_FIELDS.length,
     questions: QUESTION_SEEDS.length,
     questionFields,
+    sectionFields,
   };
 }
 
 export async function countStaticDefinitions() {
-  const [s, f, q, qf] = await Promise.all([
+  const [s, f, q, qf, sf] = await Promise.all([
     query<{ n: string }>('SELECT COUNT(*)::text AS n FROM sections'),
     query<{ n: string }>('SELECT COUNT(*)::text AS n FROM fields'),
     query<{ n: string }>('SELECT COUNT(*)::text AS n FROM questions'),
     query<{ n: string }>('SELECT COUNT(*)::text AS n FROM question_fields'),
+    query<{ n: string }>('SELECT COUNT(*)::text AS n FROM section_fields'),
   ]);
   return {
     sections: Number(s.rows[0].n),
     fields: Number(f.rows[0].n),
     questions: Number(q.rows[0].n),
     questionFields: Number(qf.rows[0].n),
+    sectionFields: Number(sf.rows[0].n),
   };
 }

@@ -1,8 +1,10 @@
 # RFP Section Generation Architecture
 
-Status: **Final design for current architecture pass. Not implemented yet.**
+Status: **Final design for current architecture pass. Prose generation is not implemented yet.**
 
-Generation is always **section-level**, never whole-document. A section is only ever drafted once its required fields are resolved (`CONFIRMED` or accepted-`TBC`) per the deterministic gate in `rami-agent-architecture.md`.
+Information readiness (can we draft?) is **not** this lifecycle. See `rfp-section-readiness.md`. This file remains the authority for DRAFTING → REVIEW → APPROVED once generation exists.
+
+Generation is always **section-level**, never whole-document. A section is only ever drafted once information readiness is `READY_TO_DRAFT` or `DRAFTABLE_WITH_TBC`.
 
 ## 1. Section state machine (final)
 

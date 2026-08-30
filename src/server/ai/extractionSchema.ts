@@ -11,6 +11,7 @@ export interface ExtractionSignals {
   granularitySignal?: string;
   domainSignals?: string[];
   deferredStatements?: Array<{ topic: string; deferredTo: string }>;
+  unknownFields?: string[];
   conflictCandidates?: Array<{ fieldId: string; values: unknown[] }>;
 }
 
@@ -65,6 +66,12 @@ export const EXTRACTION_JSON_SCHEMA = {
       items: { type: 'string' },
       description: 'Domain hints if stated (consulting, BPR, system-implementation, etc.)',
     },
+    unknownFields: {
+      type: 'array',
+      items: { type: 'string' },
+      description:
+        'Canonical fieldIds the BA said they do not know yet / TBC / not confirmed. Do NOT put a fake value in extractedFacts for these.',
+    },
     deferredStatements: {
       type: 'array',
       items: {
@@ -102,7 +109,7 @@ You are a structured information extraction engine for an RFP preparation system
 
 Extract ONLY facts that are explicitly stated or clearly implied in the Business Analyst's message.
 Do NOT infer, assume, or fabricate any information not present in the message.
-Do NOT extract partial or uncertain values — omit them entirely.
+Do NOT extract partial guesses — omit them, unless the BA clearly said the field is unknown/TBC (then use unknownFields).
 Do NOT decide workflow, next questions, packs, or stop conditions.
 
 CANONICAL FIELD IDs you may use (use these exact strings):
@@ -120,6 +127,11 @@ UPDATE KIND (per fact):
 - assert: normal new fact
 - correction: BA clearly supersedes a prior value ("actually", "make that", "instead")
 - conflict: BA presents competing simultaneous sources/values ("document says X but annex says Y")
+
+UNKNOWN / TBC:
+- If the BA says they do not know a specific requirement yet ("TBC", "to be confirmed", "we don't know yet", "not confirmed yet"), list that fieldId in unknownFields.
+- Do NOT put the literal string "TBC" (or similar) as the field value in extractedFacts.
+- If the BA gives a real answer that merely contains the letters TBC as part of a name or sentence, extract that answer normally.
 
 Only return fieldIds from the list above. Do not invent new field names.
 If no facts were extractable, return an empty extractedFacts array.`.trim();

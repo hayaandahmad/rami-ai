@@ -13,7 +13,7 @@ import {
   buildContextBlock,
   resolveConversationLanguage,
 } from '@/server/ai/ramiSystemPrompt';
-import { EXTRACTION_JSON_SCHEMA, buildExtractionSystemPrompt } from '@/server/ai/extractionSchema';
+import { EXTRACTION_JSON_SCHEMA, buildExtractionSystemPrompt, isValidFieldId } from '@/server/ai/extractionSchema';
 import type { ExtractionSignals } from '@/server/ai/extractionSchema';
 import { saveSession } from '@/server/rami/sessionStore';
 import {
@@ -27,6 +27,7 @@ import { analyzeGaps, buildApplicabilityContext } from '@/server/rami/gapEngine'
 import {
   applyExtractedFacts,
   markFieldDeferred,
+  markFieldUnknown,
   type ExtractedFactWithKind,
 } from '@/server/rami/memoryUpdater';
 import { detectIntent } from '@/server/rami/intentDetector';
@@ -200,6 +201,12 @@ export async function POST(req: NextRequest) {
               f.label.toLowerCase().includes(topic),
           );
           if (match) markFieldDeferred(session.memory, match.fieldId, d.deferredTo || 'later');
+        }
+
+        for (const fieldId of extractionResult.unknownFields ?? []) {
+          if (isValidFieldId(fieldId)) {
+            markFieldUnknown(session.memory, fieldId, `user-message:${userMsgId}`);
+          }
         }
 
         const newIntent = detectIntent(

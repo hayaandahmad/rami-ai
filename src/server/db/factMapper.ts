@@ -8,6 +8,7 @@ import type { ProjectMemory } from '@/types/projectMemory';
 import type { GapStatus } from '@/types/gapStatus';
 import type { InformationEntry, InformationStatus, InformationSourceType } from '@/types/provenance';
 import { CANONICAL_FIELD_IDS } from '@/schema/projectMemoryFields';
+import { classifySpokenUnknown } from '@/server/rami/spokenTbc';
 
 export type CollectionState = 'ANSWERED' | 'TBC' | 'NOT_APPLICABLE';
 
@@ -40,7 +41,8 @@ export function collectionStateFromField(field: MemoryFieldBag): CollectionState
   if (
     field.gapStatus === 'UNKNOWN' ||
     field.gapStatus === 'DEFERRED' ||
-    field.current.status === 'TBC'
+    field.current.status === 'TBC' ||
+    classifySpokenUnknown(field.current.value) !== null
   ) {
     return 'TBC';
   }
@@ -77,7 +79,8 @@ export function projectMemoryToFactRows(memory: ProjectMemory): ProjectFactRow[]
 }
 
 export function factRowToMemoryField(row: ProjectFactRow): MemoryFieldBag {
-  const current: InformationEntry = {
+  const spoken = classifySpokenUnknown(row.value_json);
+  const storedCurrent: InformationEntry = {
     value: row.value_json,
     status: row.provenance_status as InformationStatus,
     sourceType: (row.source_type as InformationSourceType) ?? 'ba-message',
@@ -85,9 +88,28 @@ export function factRowToMemoryField(row: ProjectFactRow): MemoryFieldBag {
     confirmedBy: row.confirmed_by ?? undefined,
     updatedAt: row.updated_at ?? new Date().toISOString(),
   };
+
+  if (spoken && row.provenance_status !== 'TBC' && row.gap_status !== 'UNKNOWN' && row.gap_status !== 'DEFERRED') {
+    const history = Array.isArray(row.history_json) ? (row.history_json as InformationEntry[]) : [];
+    return {
+      fieldId: row.field_id,
+      current: {
+        value: null,
+        status: 'TBC',
+        sourceType: storedCurrent.sourceType,
+        sourceRef: storedCurrent.sourceRef,
+        updatedAt: storedCurrent.updatedAt,
+      },
+      history: [...history, storedCurrent],
+      gapStatus: spoken === 'deferred' ? 'DEFERRED' : 'UNKNOWN',
+      deferredTo: spoken === 'deferred' ? row.deferred_to ?? 'later' : row.deferred_to ?? undefined,
+      contradiction: row.contradiction_json ?? undefined,
+    };
+  }
+
   return {
     fieldId: row.field_id,
-    current,
+    current: storedCurrent,
     history: Array.isArray(row.history_json) ? (row.history_json as InformationEntry[]) : [],
     gapStatus: (row.gap_status as GapStatus) || undefined,
     deferredTo: row.deferred_to ?? undefined,

@@ -189,3 +189,16 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 **Decision**: Correction requires superseding language or `updateKind=correction` (history kept; not CONTRADICTORY). Conflict requires competing language, `updateKind=conflict`, or two values without clear supersession → CONTRADICTORY + clarify. Ambiguous HIGH/CRITICAL conflicts without supersession prefer clarify over silent overwrite. Do not treat “same field + two ba-messages” alone as correction.
 **Status**: Active.
 
+---
+
+## #28 — Spoken TBC is completeness, not a field value
+**Decision**: When the BA’s *entire* extracted value is a not-yet-known phrase (“TBC”, “to be confirmed”, “we don’t know yet”, …), RAMI stores provenance `TBC`, GapStatus `UNKNOWN` (or `DEFERRED`), `collection_state=TBC`, and `value_json=null`. It must not store the literal string `"TBC"` as EXTRACTED business content. Whole-value match only — text that merely contains the letters TBC stays an answer. English-focused.
+**Status**: Active.
+
+---
+
+## #29 — Information readiness ≠ document approval
+**Decision**: `SectionInformationReadiness` (`NOT_APPLICABLE` | `NOT_READY` | `DRAFTABLE_WITH_TBC` | `READY_TO_DRAFT`) is computed by TypeScript from ProjectFacts. It is not `SectionLifecycleState` (DRAFTING / REVIEW / APPROVED). Qwen does not decide readiness. `DRAFTABLE_WITH_TBC` may later produce a draft with TBC markers but is never treated as approved. Field↔Section mapping is many-to-many (`section_fields`); `fields.section_id` is a convenience FK only.
+**Status**: Active.
+
+

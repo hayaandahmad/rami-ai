@@ -17,6 +17,8 @@
     "ai:smoke": "npx tsx scripts/smoke-test-ai.ts",
     "validate:users-norm": "npx tsx scripts/test-users-norm.ts",
     "validate:persistence": "npx tsx scripts/validate-persistence.ts",
+    "validate:section-readiness": "npx tsx scripts/validate-section-readiness.ts",
+    "report:section-readiness": "npx tsx scripts/report-section-readiness.ts",
     "db:migrate": "npx tsx scripts/db-migrate.ts",
     "db:seed": "npx tsx scripts/db-seed.ts",
     "db:check": "npx tsx scripts/db-check.ts",

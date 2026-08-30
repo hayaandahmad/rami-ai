@@ -1,11 +1,11 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-30 (PostgreSQL persistence live-validated)
+Last updated: 2026-08-30 (Section Readiness foundation)
 
-## Second-machine reproduction
-To clone this repository onto another Windows laptop and run the **current** Rami (not Phase 3), start at:
+## Second-machine / new Cursor session
+Start at:
 
 ```text
-.private-context/handoff/SECOND_MACHINE_HANDOFF.md
+.private-context/handoff/START_HERE.md
 ```
 
 The copy/paste execution prompt is:
@@ -24,9 +24,10 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 - **Phase 2.1**: ✅ Complete — bilingual polish, section applicability, progress semantics, question priority, users normalization
 - **Phase 2.2**: ✅ Complete — Adaptive Control Plane (ProjectContext, packs, GapStatus, NextAction, materiality stop). Working tree only until human asks to commit.
 - **Phase 2.3**: ⏳ Pending — Domain Requirement Catalog Expansion (do not start until asked)
-- **Persistence**: ✅ PostgreSQL is the authoritative store for projects, facts, and messages (Map/localStorage are caches). **Live-validated** on this machine (do not start RFP generation).
+- **Persistence**: ✅ PostgreSQL is the authoritative store (live-validated)
+- **Section Readiness**: ✅ Deterministic information-readiness engine (no prose generation)
 - **Phase 3**: ⏳ Pending — historical RAG, embeddings, PDF ingestion (pgvector-compatible later)
-- **Phase 4**: ⏳ Pending — live section drafting in right pane
+- **Phase 4**: ⏳ Pending — live section drafting in right pane (next after human asks)
 - **Phase 5**: ⏳ Pending — final RFP assembly
 
 ---
@@ -101,8 +102,8 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 - Correction: duration current `18 months`, history keeps `24 months`, `projects.duration_months=18`, survives cache-clear
 - Backup `.rami-db-backups/*.dump` (gitignored); restore only into `rami_ai_restore_test` (live restore refused without `--overwrite-live`)
 - Missing-project hydrate throws `HYDRATION_FAILED` (no blank invent); chat persist failures emit `error`, not `done`
-- **Spoken-TBC (not fixed):** BA “[To be confirmed]” persisted as EXTRACTED `"TBC"` / `ANSWERED` / `KNOWN`. First small fix required before Section Readiness — see `NEXT_STEPS.md`. Do not implement it now.
-- **Do not start Section Readiness / RFP generation / Phase 2.3 / RAG from this result**
+- **Spoken-TBC (fixed)**: whole-value unknown/deferral → provenance `TBC` + GapStatus `UNKNOWN`/`DEFERRED`; literal `"TBC"` is not stored as an answer. English phrases only.
+- **Do not start actual section generation / Phase 2.3 / RAG from this result**
 
 ---
 
@@ -177,7 +178,7 @@ Authority: `.private-context/architecture/adaptive-question-architecture.md`
 - **Real section drafting**: Right pane shows placeholder shell only (Phase 4)
 - **Live PostgreSQL** is configured and validated on the primary Windows laptop (port 5433 / `rami_ai`). Other machines still need `.env.local` + `db:migrate` + `db:seed`
 - **Section state transitions**: Sections always start NOT_STARTED (Phase 4)
-- **Spoken-TBC normalization**: first small fix required before Section Readiness (recorded in `NEXT_STEPS.md`; not implemented)
+- **Spoken-TBC normalization**: implemented (English whole-value). See `spokenTbc.ts`
 - **BA confirmation flow**: EXTRACTED → CONFIRMED promotion (Phase 4)
 - **DOCX / final assembly** (Phase 5)
 
@@ -190,6 +191,7 @@ Authority: `.private-context/architecture/adaptive-question-architecture.md`
 
 ## Files a future agent must read first
 ```
+.private-context/handoff/START_HERE.md            ← new session entrypoint
 .private-context/handoff/CURRENT_STATE.md   ← this file
 .private-context/handoff/DECISIONS.md
 .private-context/handoff/NEXT_STEPS.md
@@ -206,6 +208,9 @@ src/server/rami/gapEngine.ts
 src/server/rami/memoryUpdater.ts
 src/server/rami/projectClassifier.ts
 src/server/rami/projectPersistence.ts
+src/server/rami/sectionReadiness.ts
+src/server/rami/spokenTbc.ts
 .private-context/architecture/postgresql-persistence.md
+.private-context/architecture/rfp-section-readiness.md
 src/views/RamiChat/RamiChatWorkspace.tsx
 ```

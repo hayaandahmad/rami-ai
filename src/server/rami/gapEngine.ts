@@ -20,6 +20,7 @@ import {
   type SectionApplicabilityContext,
 } from '@/schema/rfpSchema';
 import { createEmptyProjectContext } from '@/types/projectContext';
+import { classifySpokenUnknown } from '@/server/rami/spokenTbc';
 
 const MATERIALITY_RANK: Record<Materiality, number> = {
   CRITICAL: 0,
@@ -69,6 +70,7 @@ function isFieldFilled(memory: ProjectMemory, fieldId: string): boolean {
   const entry = getMemoryEntry(memory, fieldId);
   if (!entry) return false;
   if (entry.status === 'TBC') return false;
+  if (classifySpokenUnknown(entry.value) !== null) return false;
   if (entry.value === null || entry.value === undefined) return false;
   if (Array.isArray(entry.value) && entry.value.length === 0) return false;
   if (typeof entry.value === 'string' && entry.value.trim() === '') return false;
