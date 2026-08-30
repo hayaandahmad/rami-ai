@@ -15,7 +15,7 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 ---
 
 ## #2 — LLM is for language; TypeScript is for logic
-**Decision**: The LLM never decides workflow state. Gap detection, section transitions, provenance promotion, and next-question selection are deterministic TypeScript.
+**Decision**: Qwen interprets/generates language. Deterministic TypeScript owns workflow: gaps, packs, provenance, next-question, **Section Readiness**, and generation **gates**. Qwen never decides readiness or invents unresolved business facts.
 **Rationale**: Prevents non-deterministic, untestable business logic drift into the model.
 **Status**: Active. Hard rule.
 
@@ -56,7 +56,7 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 
 ## #8 — Provider abstraction: LocalModelProvider only
 **Decision**: Originally only `LocalModelProvider`.
-**Status**: **Superseded.** `LocalModelProvider` and `ModalModelProvider` both implement `RamiModelProvider`. Default remains `local`. Persistence is independent of the provider.
+**Status**: **Superseded.** Local and Modal inference remain interchangeable behind `RamiModelProvider`. Default remains `local`. Chat must not auto-start GPU. Persistence is independent of the provider. Do not break this abstraction.
 
 ---
 
@@ -75,14 +75,14 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 ---
 
 ## #11 — RAG deferred to Phase 3
-**Decision**: No embedding, PDF ingestion, vector index, or retrieval in Phase 1 or 2. Phase 3 owns RAG.
+**Decision**: RAG does not exist yet. No embedding, PDF ingestion, vector index, or retrieval. Historical RFP files in Git are **reference**, never current ProjectFacts. Do **not** start RAG / pgvector as part of RFP Generation Core.
 **Status**: Active.
 
 ---
 
-## #12 — Section drafting deferred to Phase 4
-**Decision**: The A4 preview right pane shows a placeholder shell in Phase 2. Real draft content is Phase 4.
-**Status**: Active.
+## #12 — Section drafting deferred until Generation Core exists
+**Decision**: A4 preview (`DocumentPreviewShell`) is still a placeholder. **RFP Generation Core (backend)** is the next implementation. UI preview wiring is the first developer's follow-up after generated content exists and persists.
+**Status**: Active — generation not implemented yet. No fine-tuning exists.
 
 ---
 
@@ -199,6 +199,24 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 
 ## #29 — Information readiness ≠ document approval
 **Decision**: `SectionInformationReadiness` (`NOT_APPLICABLE` | `NOT_READY` | `DRAFTABLE_WITH_TBC` | `READY_TO_DRAFT`) is computed by TypeScript from ProjectFacts. It is not `SectionLifecycleState` (DRAFTING / REVIEW / APPROVED). Qwen does not decide readiness. `DRAFTABLE_WITH_TBC` may later produce a draft with TBC markers but is never treated as approved. Field↔Section mapping is many-to-many (`section_fields`); `fields.section_id` is a convenience FK only.
+**Status**: Active.
+
+---
+
+## #30 — Generation must not invent unresolved facts; TBC stays TBC
+**Decision**: When generating RFP prose, unresolved business facts must remain TBC (professional marker). Do not invent dates, budgets, SLAs, quantities, legal terms, evaluation percentages, technologies, users, or procurement requirements. Do not send the entire DB or chat history to Qwen. Do not treat historical/reference content as current ProjectFacts.
+**Status**: Active. Binding on RFP Generation Core.
+
+---
+
+## #31 — One reusable generated-section representation
+**Decision**: Persist, preview, and later DOCX should share one `GeneratedSection` (or equivalent) model. Do not create a separate generation implementation per section. Regeneration must not silently destroy approved content. Generated content must survive server restart (PostgreSQL).
+**Status**: Active. Binding on RFP Generation Core.
+
+---
+
+## #32 — Question ≠ Field
+**Decision**: Questions collect; Fields store. A Field may belong to multiple Sections (`section_fields`). One ProjectFact row per Field — never duplicate facts per section.
 **Status**: Active.
 
 

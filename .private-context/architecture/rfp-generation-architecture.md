@@ -1,8 +1,10 @@
 # RFP Section Generation Architecture
 
-Status: **Final design for current architecture pass. Prose generation is not implemented yet.**
+Status: **Design authority for lifecycle (DRAFTING → APPROVED). Prose generation is not implemented yet.**
 
-Information readiness (can we draft?) is **not** this lifecycle. See `rfp-section-readiness.md`. This file remains the authority for DRAFTING → REVIEW → APPROVED once generation exists.
+Information readiness (can we draft?) is **not** this lifecycle. See `rfp-section-readiness.md`. That file is the **v1 generation contract**.
+
+**RFP Generation Core (next):** implement the readiness-doc contract first. Do **not** include `historicalEvidence` / RAG in the first pipeline. Regeneration must not silently destroy approved content. Full risk list: `.private-context/handoff/NEXT_STEPS.md`.
 
 Generation is always **section-level**, never whole-document. A section is only ever drafted once information readiness is `READY_TO_DRAFT` or `DRAFTABLE_WITH_TBC`.
 

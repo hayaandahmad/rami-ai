@@ -2,79 +2,138 @@
 
 Read this first in a new Cursor session or on a second machine.
 
-## Current baseline
+Do not treat `README.md` as authoritative.
 
-- **Authoritative git**: `origin/main` (this work started from `e24fc68`; after pull, `git log -1` should show the Section Readiness foundation commit)
-- **Product phase**: Conversational RFP workspace + PostgreSQL persistence + **Section Readiness foundation**
-- **Do not start**: actual RFP section generation, A4 prose, Approve/Regenerate, DOCX, RAG, pgvector, fine-tuning, Phase 2.3 catalogs
+## A. Authoritative commit
 
-## Fully complete
+After pull, these must be equal:
 
-- Phase 1 local AI (Ollama + `qwen3:8b`)
-- Phase 2 / 2.1 conversational workspace (bilingual, applicability, users norm)
-- Phase 2.2 Adaptive Control Plane (ProjectContext, packs, GapStatus, NextAction)
-- LocalModelProvider + ModalModelProvider (real Modal streaming; chat does not auto-start GPU)
-- PostgreSQL persistence **live-validated** (Map = cache, localStorage = UI cache)
-- Spoken-TBC normalization
-- Deterministic Section Readiness engine (information readiness only)
+```text
+git rev-parse HEAD
+git rev-parse origin/main
+```
 
-## Architecture in one screen
+Last **feature** milestone (Section Readiness; no prose generation):
+
+```text
+cd69fb55e0acd611abb26fa1550dc79e11008406
+feat: add deterministic RFP section readiness foundation
+```
+
+This handoff documentation sits on `main` after that commit. `git log -1` on a clean `origin/main` is the current authoritative HEAD.
+
+## B. Product goal
+
+RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript owns workflow, persistence, readiness, and (next) generation gates.
+
+## C. Fully completed
+
+- Local Ollama `qwen3:8b` + `LocalModelProvider`
+- `ModalModelProvider` + Start/Stop/status + real streaming (chat does **not** auto-start GPU)
+- PostgreSQL 18 live persistence (authoritative project store)
+- `ProjectMemory` hydration from `project_facts`
+- `ProjectContext` classifier snapshot persist + packs/gaps recomputed after hydrate
+- Server `Map` = cache only; `localStorage` = UI cache only
+- 20 canonical RFP sections, 52 Fields, 62 Questions, 59 QuestionFields, 68 `section_fields`
+- Spoken-TBC normalization (English whole-value)
+- Deterministic Section Readiness (`getSectionReadiness`)
+
+## D. NOT implemented
+
+- Actual RFP **prose** generation (`generateRfpSection` does not exist)
+- Persistent generated-section **content** (no GeneratedSection table/payload)
+- A4 preview still a **placeholder shell** (`DocumentPreviewShell`)
+- Generate / Regenerate / Edit / Approve UI
+- Full RFP assembly
+- DOCX export
+- RAG / pgvector / embeddings
+- Fine-tuning / LoRA / Qwen 14B
+- Phase 2.3 domain catalogs
+
+## E. Architecture (one screen)
 
 | Layer | Owner |
 |---|---|
-| Language / extraction JSON | Qwen3 8B via Local or Modal provider |
-| Workflow, gaps, packs, readiness | Deterministic TypeScript |
-| Project truth | PostgreSQL (`rami_ai`, this laptop port **5433**) |
-| Runtime facts | `ProjectMemory` (52 fields) hydrated from `project_facts` |
-| Control plane | `ProjectContext` (persisted classifiers; packs/gaps recomputed) |
+| Chat wording + extraction JSON | Qwen3 8B via `RamiModelProvider` (`local` or `modal`) |
+| Gaps, packs, readiness, provenance | Deterministic TypeScript |
+| Project truth | PostgreSQL |
+| Runtime facts | `ProjectMemory` (52 fields) |
+| Control plane | `ProjectContext` (classifiers persisted; `activePacks` recomputed) |
 
-Canonical counts: **20** RFP sections, **52** ProjectMemory fields, **62** questions, **59** QuestionFields, **68** section_fields links.
+Question ≠ Field. One Field may map to many Sections (`section_fields`). Historical RFP files in Git are **reference**, never current ProjectFacts.
 
-## PostgreSQL
+## F. PostgreSQL
 
-Live-validated. Config in `.env.local` only (`RAMI_DB_*`, never `NEXT_PUBLIC_`).  
+Live-validated. Server-only `.env.local` (`RAMI_DB_*`, never `NEXT_PUBLIC_`).  
+This laptop: `127.0.0.1:5433` / database `rami_ai`. Other machines set host/port/name from their install.  
 `npm run db:migrate && npm run db:seed && npm run db:check`  
-Restore only into a separate DB (e.g. `rami_ai_restore_test`).
+Restore only into a **separate** DB (e.g. `rami_ai_restore_test`).
 
-## Modal
+## G. Modal
 
-Optional paid GPU. Default `RAMI_MODEL_PROVIDER=local`. Do not auto-start GPU on chat.
+Optional paid GPU. Default `RAMI_MODEL_PROVIDER=local`. Do not auto-start GPU on chat. Do not burn credits for docs or unit tests.
 
-## Current limitations
+## H. RFP generation / readiness
 
-- No RFP prose generation yet
-- 52 fields do not fully cover PMO / manpower / admin procurement detail (documented gaps)
-- A4 preview is still a placeholder shell
-- No BA CONFIRMED promotion UI
-- Spoken-TBC is English-focused whole-value matching
+Information readiness is implemented. Generation is **not**.  
+States: `NOT_APPLICABLE` | `NOT_READY` | `DRAFTABLE_WITH_TBC` | `READY_TO_DRAFT`.  
+Qwen must not decide readiness. See `rfp-section-readiness.md`.
 
-## Exact current task (this commit)
+## I. Known limitations
 
-RFP generation **foundation**: TBC normalization + Field↔Section mapping + Section Readiness + generation contract (design only).
+- Coverage gaps (manpower `namedRoles` when that section applies; admin/PMO fields) — documented, not added
+- Spoken-TBC is English whole-value matching only
+- `EXTRACTED` is not BA `CONFIRMED`
+- Other machines need their own `.env.local` + migrate/seed
 
-## Exact next task
+## J. Exact next implementation task
 
-**First section generation** for one applicable `READY_TO_DRAFT` or `DRAFTABLE_WITH_TBC` section, using the contract in `rfp-section-readiness.md`. Do not start until the human asks.
+**RFP GENERATION CORE (backend)** — not RAG, not training, not Phase 2.3, not UI redesign.
 
-## Deeper documents
+See `NEXT_STEPS.md` for the second-developer 4-hour scope and the first-developer UI follow-up.
 
-See reading order below. Do not treat `README.md` as authoritative.
-
----
-
-## FOR A NEW CURSOR SESSION / SECOND MACHINE
-
-Exact reading order:
+## K. Reading order
 
 1. `.private-context/handoff/START_HERE.md` (this file)
 2. `.private-context/handoff/CURRENT_STATE.md`
 3. `.private-context/handoff/DECISIONS.md`
 4. `.private-context/handoff/NEXT_STEPS.md`
-5. `.private-context/architecture/rfp-section-readiness.md`
-6. Relevant architecture as needed:
-   - `.private-context/architecture/postgresql-persistence.md`
-   - `.private-context/architecture/adaptive-question-architecture.md`
-   - `.private-context/architecture/rfp-generation-architecture.md` (lifecycle; not yet implemented)
-   - `.private-context/architecture/local-ai-deployment.md`
+5. Architecture for the assigned task:
+   - Generation core → `rfp-section-readiness.md` then `rfp-generation-architecture.md`
+   - Persistence → `postgresql-persistence.md`
+   - Asking/gaps → `adaptive-question-architecture.md`
+   - Local/Modal runtime → `local-ai-deployment.md`
+6. Inspect actual code before editing
 
-Reproduce-and-run only (no code changes): `.private-context/handoff/SECOND_MACHINE_HANDOFF.md`
+Reproduce-and-run only (no feature work): `SECOND_MACHINE_HANDOFF.md`.
+
+---
+
+## NEW MACHINE / NEW CURSOR SESSION
+
+1. `git status`
+2. `git fetch origin`
+3. `git pull --ff-only origin main`
+4. Verify clean tree and `HEAD == origin/main`
+5. Read `START_HERE.md`
+6. Read `CURRENT_STATE.md`
+7. Read `DECISIONS.md`
+8. Read `NEXT_STEPS.md`
+9. Read the architecture document for the assigned task
+10. Inspect actual code before modifying
+11. Continue from the exact checkpoint in `NEXT_STEPS.md`
+
+Setup: copy `.env.example` → `.env.local` (no `NEXT_PUBLIC_` DB vars). Local Ollama + `qwen3:8b` for default inference. `npm run db:migrate && npm run db:seed && npm run db:check`.
+
+---
+
+## BEFORE HANDING BACK TO ANOTHER DEVELOPER
+
+1. Run tests (`tsc --noEmit`, lint, `validate:phase1`, `validate:phase2-adaptive`, `validate:modal-integration`, `validate:persistence`, `validate:users-norm`, `validate:section-readiness`; build if you touched app code)
+2. Update `START_HERE` / `CURRENT_STATE` / `DECISIONS` / `NEXT_STEPS` as needed
+3. Record what is done and what remains
+4. Commit (never `.env.local`, dumps, passwords, Modal secrets)
+5. Push `origin/main`
+6. Verify `origin/main == local main`
+7. Verify clean tree
+8. Tell the next developer the **exact final commit hash**

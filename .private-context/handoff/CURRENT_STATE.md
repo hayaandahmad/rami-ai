@@ -1,20 +1,64 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-30 (Section Readiness foundation)
+Last updated: 2026-08-30 (handoff: RFP Generation Core is next)
 
-## Second-machine / new Cursor session
-Start at:
+Authoritative HEAD: `origin/main` after this handoff (`git log -1`).  
+Last feature milestone: `cd69fb55e0acd611abb26fa1550dc79e11008406` (Section Readiness).
 
-```text
-.private-context/handoff/START_HERE.md
-```
+## New session
+Start at `.private-context/handoff/START_HERE.md` only.
 
-The copy/paste execution prompt is:
+`SECOND_MACHINE_HANDOFF.md` / `SECOND_MACHINE_PROMPT_2.md` are reproduce-and-run for the persistence/readiness baseline. They are **not** the next-feature prompt. Next implementation is **RFP Generation Core**.
 
-```text
-.private-context/handoff/SECOND_MACHINE_PROMPT_2.md
-```
+---
 
-That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase 3.
+## Runtime truth (must match code)
+
+### PostgreSQL — live-validated
+- PostgreSQL **18.6**, this laptop: `127.0.0.1:5433`, database `rami_ai` (other machines set their own host/port/name in gitignored `.env.local`).
+- Driver: `pg`. No ORM. Migrations: `001_init.sql` + `002_section_fields.sql`.
+- Seed (idempotent): Sections **20**, Fields **52**, Questions **62**, QuestionFields **59**, `section_fields` **68**.
+- Authority: PostgreSQL. Server `Map` = cache (`POST /api/rami/cache/clear`). `localStorage` = UI cache; PostgreSQL wins on `GET /api/rami/session`.
+- Qwen never gets DB credentials or SQL.
+- Restore: never overwrite live `rami_ai` without `--overwrite-live`; use `rami_ai_restore_test`.
+
+### ProjectMemory hydration
+- Facts live in `project_facts`. Hydrate: `hydrateProject` → `factRowsToProjectMemory`.
+- Missing-project hydrate throws `HYDRATION_FAILED` (does not invent a blank project).
+- Spoken-TBC hydrate rewrites stale EXTRACTED `"TBC"` string rows to provenance `TBC` + `value_json=null`.
+
+### ProjectContext
+- Classifier snapshot persisted in `project_runtime` (`documentStage`, `contractingGranularity`, `primaryDomain`, `secondaryDomains`, `complexity`, contradictions, intent, language, active section).
+- After hydrate, `activePacks` and `collectionSufficient` are **recomputed** (`applyDerivedContext`). They are not the persisted source of truth.
+
+### `project_section_states`
+- Persists **lifecycle** records (`SectionLifecycleState`: NOT_STARTED … APPROVED) plus optional `draft_field_snapshot` (field IDs for reopen detection).
+- Does **not** store generated RFP prose. Generated-section **content** persistence is **not implemented**.
+
+### Local / Modal
+- `RamiModelProvider` with `LocalModelProvider` (default) and `ModalModelProvider`.
+- `RAMI_MODEL_PROVIDER=local|modal`. Chat must **not** auto-start GPU. Do not burn Modal credits for docs or unit tests.
+
+### Canonical structure
+- 20 sections, 52 fields, 62 questions, 59 question↔field links, 68 section↔field links (many-to-many).
+- `fields.section_id` is convenience FK only. Real mapping: `src/schema/sectionFieldMap.ts` seeded to `section_fields`.
+- Question ≠ Field. One Field may belong to many Sections. One ProjectFact per Field.
+
+### Spoken TBC
+- `src/server/rami/spokenTbc.ts`: whole-value English phrases only (`TBC`, `to be confirmed`, `we don't know yet`, deferrals).
+- Stores provenance `TBC`, GapStatus `UNKNOWN`/`DEFERRED`, `collection_state=TBC`, `value_json=null`.
+- Does not match letters TBC inside a real answer.
+
+### Section Readiness (information only)
+- `getSectionReadiness` in `src/server/rami/sectionReadiness.ts`.
+- States: `NOT_APPLICABLE` | `NOT_READY` | `DRAFTABLE_WITH_TBC` | `READY_TO_DRAFT`.
+- **Not** the same as `SectionLifecycleState`. Qwen does not decide readiness.
+- Scripts: `npm run validate:section-readiness` (13/13), `npm run report:section-readiness`.
+
+### Generated-document status (code authority)
+- **Actual RFP prose generation is NOT implemented.** No `generateRfpSection` / `SectionGenerationContext` builder in `src/`.
+- **ProjectSections generated-content persistence is NOT implemented.** (`project_section_states` is lifecycle only.)
+- **A4 preview does not contain real generated prose.** `DocumentPreviewShell` is a placeholder shell ("Draft pending").
+- **DOCX generation is NOT implemented.**
 
 ---
 
@@ -22,13 +66,14 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 - **Phase 1**: ✅ Complete — local AI foundations (commit `dbf362a`)
 - **Phase 2**: ✅ Complete — conversational AI workspace
 - **Phase 2.1**: ✅ Complete — bilingual polish, section applicability, progress semantics, question priority, users normalization
-- **Phase 2.2**: ✅ Complete — Adaptive Control Plane (ProjectContext, packs, GapStatus, NextAction, materiality stop). Working tree only until human asks to commit.
-- **Phase 2.3**: ⏳ Pending — Domain Requirement Catalog Expansion (do not start until asked)
+- **Phase 2.2**: ✅ Complete — Adaptive Control Plane (on `main`)
+- **Phase 2.3**: ⏳ Pending — Domain Requirement Catalog Expansion (do not start)
 - **Persistence**: ✅ PostgreSQL is the authoritative store (live-validated)
 - **Section Readiness**: ✅ Deterministic information-readiness engine (no prose generation)
-- **Phase 3**: ⏳ Pending — historical RAG, embeddings, PDF ingestion (pgvector-compatible later)
-- **Phase 4**: ⏳ Pending — live section drafting in right pane (next after human asks)
-- **Phase 5**: ⏳ Pending — final RFP assembly
+- **RFP Generation Core**: ⏳ **Next** — backend (second developer)
+- **Phase 3**: ⏳ Pending — historical RAG, embeddings, PDF ingestion (not on the critical path)
+- **Document preview / UI**: ⏳ After generation core lands — first developer
+- **Phase 5**: ⏳ Pending — final RFP assembly + DOCX
 
 ---
 
@@ -95,7 +140,7 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 
 ### Live validation (this machine, 2026-08-30)
 - PostgreSQL **18.6** at `127.0.0.1:5433`, database `rami_ai` (do not change the port)
-- Seed: Sections 20, Fields 52, Questions 62, QuestionFields 59; migrate/seed idempotent
+- Seed: Sections 20, Fields 52, Questions 62, QuestionFields 59, section_fields 68; migrate/seed idempotent
 - Acceptance project: `document_key=rami-persist-accept-20260830`, name `RAMI Persistence Acceptance Test`, `project_id=96345d36-d17b-46cb-869d-188e305040bf`
 - Live chat write-through (local Ollama `qwen3:8b`): BA + RAMI messages, multiple `project_facts`, `project_runtime` classifiers (`FULL_RFP` / `SINGLE_PROJECT` / `ASSESSMENT`)
 - Full Next.js restart + `POST /api/rami/cache/clear` hydrate from PostgreSQL; did not re-ask beneficiary / duration / objectives
@@ -103,7 +148,7 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 - Backup `.rami-db-backups/*.dump` (gitignored); restore only into `rami_ai_restore_test` (live restore refused without `--overwrite-live`)
 - Missing-project hydrate throws `HYDRATION_FAILED` (no blank invent); chat persist failures emit `error`, not `done`
 - **Spoken-TBC (fixed)**: whole-value unknown/deferral → provenance `TBC` + GapStatus `UNKNOWN`/`DEFERRED`; literal `"TBC"` is not stored as an answer. English phrases only.
-- **Do not start actual section generation / Phase 2.3 / RAG from this result**
+- **Do not start RAG / Phase 2.3 / training from this result.** Next feature work is RFP Generation Core (see `NEXT_STEPS.md`).
 
 ---
 
@@ -173,14 +218,17 @@ Authority: `.private-context/architecture/adaptive-question-architecture.md`
 ---
 
 ## What is NOT implemented yet
-- **Phase 2.3 domain catalogs** (AI/CDC/telecom/ARIS expansion fields)
-- **RAG**: No embedding, PDF ingestion, vector retrieval (Phase 3)
-- **Real section drafting**: Right pane shows placeholder shell only (Phase 4)
-- **Live PostgreSQL** is configured and validated on the primary Windows laptop (port 5433 / `rami_ai`). Other machines still need `.env.local` + `db:migrate` + `db:seed`
-- **Section state transitions**: Sections always start NOT_STARTED (Phase 4)
-- **Spoken-TBC normalization**: implemented (English whole-value). See `spokenTbc.ts`
-- **BA confirmation flow**: EXTRACTED → CONFIRMED promotion (Phase 4)
-- **DOCX / final assembly** (Phase 5)
+- **RFP prose generation** — no `generateRfpSection`, no `SectionGenerationContext` builder
+- **Generated-section content storage** — `project_section_states` is lifecycle only; no GeneratedSection payload
+- **A4 real prose** — `DocumentPreviewShell` is still a placeholder
+- **Generate / Regenerate / Edit / Approve** product flow (lifecycle types exist; generation path does not)
+- **Full RFP assembly**
+- **DOCX export**
+- **Phase 2.3 domain catalogs**
+- **RAG / embeddings / pgvector / PDF ingestion**
+- **Fine-tuning / LoRA / Qwen 14B**
+- **BA confirmation flow**: EXTRACTED → CONFIRMED promotion UI
+- Other machines still need `.env.local` + `db:migrate` + `db:seed` (this laptop: port 5433 / `rami_ai`)
 
 ---
 
@@ -190,27 +238,16 @@ Authority: `.private-context/architecture/adaptive-question-architecture.md`
 ---
 
 ## Files a future agent must read first
+See `START_HERE.md` reading order. For RFP Generation Core:
+
 ```
-.private-context/handoff/START_HERE.md            ← new session entrypoint
-.private-context/handoff/CURRENT_STATE.md   ← this file
+.private-context/handoff/START_HERE.md
+.private-context/handoff/CURRENT_STATE.md
 .private-context/handoff/DECISIONS.md
 .private-context/handoff/NEXT_STEPS.md
-.private-context/handoff/SECOND_MACHINE_HANDOFF.md   ← second-laptop reproduction only
-.private-context/handoff/SECOND_MACHINE_PROMPT_2.md  ← copy/paste Prompt 2 after handoff is read
-.private-context/architecture/adaptive-question-architecture.md  ← Phase 2.2 authority
-.private-context/architecture/rami-agent-architecture.md
-.private-context/architecture/local-ai-deployment.md
-.private-context/product/conversational-rfp-workflow.md
-src/types/projectContext.ts
-src/types/nextAction.ts
-src/app/api/rami/chat/route.ts
-src/server/rami/gapEngine.ts
-src/server/rami/memoryUpdater.ts
-src/server/rami/projectClassifier.ts
-src/server/rami/projectPersistence.ts
-src/server/rami/sectionReadiness.ts
-src/server/rami/spokenTbc.ts
-.private-context/architecture/postgresql-persistence.md
 .private-context/architecture/rfp-section-readiness.md
-src/views/RamiChat/RamiChatWorkspace.tsx
+.private-context/architecture/rfp-generation-architecture.md
+src/server/rami/sectionReadiness.ts
+src/server/ai/   (RamiModelProvider, Local, Modal)
+src/server/rami/projectPersistence.ts
 ```

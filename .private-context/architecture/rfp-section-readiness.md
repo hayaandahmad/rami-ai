@@ -1,6 +1,8 @@
 # RFP Section Readiness
 
-Status: **Implemented (information readiness only). Do not generate RFP prose yet.**
+Status: **Implemented (information readiness only). Prose generation is not in the codebase yet.**
+
+RFP Generation Core is the **next** implementation (see `.private-context/handoff/NEXT_STEPS.md`). Do not start RAG, training, or UI redesign as part of that work.
 
 This document is the authority for:
 
@@ -90,6 +92,8 @@ SectionGenerationContext {
 **Never silently invent:** dates, budget, SLA values, technologies, integrations, users, quantities, evaluation percentages, legal clauses, procurement rules, delivery deadlines, support periods.
 
 Unresolved → professional TBC marker. NOT_APPLICABLE → omit. REFERENCE/historical → never asserted as current ProjectFacts.
+
+Handoff risks for implementers (full list in `NEXT_STEPS.md`): Qwen does not decide readiness; do not dump DB/chat; do not invent unresolved facts; TBC stays TBC; one reusable GeneratedSection; no per-section generators; persist through PostgreSQL; do not break hydration or Local/Modal; do not start RAG.
 
 ## 6. Related documents
 
