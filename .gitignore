@@ -168,3 +168,9 @@ tmp-extract/
 infra/modal-poc/.usage/
 infra/modal-poc/.session-state.json
 infra/modal-poc/**/__pycache__/
+
+# PostgreSQL dumps and local backup output (never commit project data)
+.rami-db-backups/
+*.dump
+*.pgdump
+*.sql.gz

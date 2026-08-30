@@ -55,8 +55,8 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 ---
 
 ## #8 — Provider abstraction: LocalModelProvider only
-**Decision**: `RamiModelProvider` interface exists but only `LocalModelProvider` (Ollama) is implemented. Do not add provider implementations until the zero-cost constraint is explicitly relaxed.
-**Status**: Active.
+**Decision**: Originally only `LocalModelProvider`.
+**Status**: **Superseded.** `LocalModelProvider` and `ModalModelProvider` both implement `RamiModelProvider`. Default remains `local`. Persistence is independent of the provider.
 
 ---
 
@@ -102,10 +102,17 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 ---
 
 ## #15 — Phase 2 persistence: in-memory + localStorage
-**Decision**: Phase 2 uses server-side in-memory Map (global singleton) for session state and client-side localStorage for conversation history backup. No database, no Google Sheets for conversational state.
-**Trade-off**: Sessions reset if the Node.js process restarts. localStorage provides client-side recovery of conversation history. Acceptable for Phase 2 prototype.
-**Phase 3 migration path**: Replace server Map with a lightweight embedded store (e.g. better-sqlite3) keyed by sessionId.
-**Status**: Active for Phase 2.
+**Decision**: Phase 2 used server-side in-memory Map + localStorage.
+**Status**: **Superseded by #27.**
+
+---
+
+## #27 — PostgreSQL is the authoritative project store
+**Decision**: Conversational `ProjectMemory`, messages, and ProjectContext classifier snapshots persist in PostgreSQL. The server Map is a cache. localStorage is a UI cache and loses to PostgreSQL on hydrate.
+**ProjectContext**: classifier fields (`documentStage`, `contractingGranularity`, `primaryDomain`, `secondaryDomains`, `complexity`) are persisted because `classifyProject()` is not restart-identical without previous context and per-turn LLM signals. `activePacks` and `collectionSufficient` are recomputed after hydrate.
+**Qwen never receives DB credentials or executes SQL.**
+**Budget** is stored on `projects.budget_jod` after deterministic FX conversion. **Duration** is stored as months.
+**Status**: Active.
 
 ---
 

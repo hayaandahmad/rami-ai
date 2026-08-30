@@ -1,12 +1,8 @@
 /**
  * Phase 2 runtime session store.
  *
- * Persistence decision (documented in DECISIONS.md):
- * - In-memory Map on the server for Phase 2 (simple, fast, zero setup)
- * - Uses the global singleton pattern to survive Next.js HMR in development
- * - Client-side localStorage provides conversation history backup
- * - Google Sheets NOT used for conversational state (too slow, wrong tool)
- * - Full Sheets integration for ProjectMemory deferred to Phase 2.5 / Phase 3
+ * Cache only. PostgreSQL is authoritative (DECISIONS.md #27).
+ * The Map survives Next.js HMR; process restart hydrates from PostgreSQL.
  */
 
 import { createEmptyProjectMemory } from '@/types/projectMemory';
@@ -102,4 +98,14 @@ export function saveSession(session: RamiServerSession): void {
 
 export function listSessions(): string[] {
   return Array.from(getStore().keys());
+}
+
+/** Drop one cached session (cache miss → PostgreSQL hydrate). */
+export function clearSessionCache(sessionId: string): void {
+  getStore().delete(sessionId);
+}
+
+/** Drop the entire process cache. Does not touch PostgreSQL. */
+export function clearAllSessionCache(): void {
+  getStore().clear();
 }

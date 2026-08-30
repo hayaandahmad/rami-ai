@@ -34,17 +34,6 @@ interface StoredChat {
   updatedAt: string;
 }
 
-function loadFromStorage(sessionId: string): StoredChat | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = localStorage.getItem(storageKey(sessionId));
-    if (!raw) return null;
-    return JSON.parse(raw) as StoredChat;
-  } catch {
-    return null;
-  }
-}
-
 function saveToStorage(sessionId: string, data: StoredChat) {
   if (typeof window === 'undefined') return;
   try {
@@ -93,15 +82,9 @@ export function useRamiChat({
   onIntentChange,
   onFactsExtracted,
 }: UseRamiChatOptions) {
-  const [messages, setMessages] = useState<ConversationMessage[]>(() => {
-    const stored = loadFromStorage(sessionId);
-    return stored?.messages ?? [];
-  });
+  const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [status, setStatus] = useState<ChatStatus>('idle');
-  const [rfpIntent, setRfpIntent] = useState<RfpIntent>(() => {
-    const stored = loadFromStorage(sessionId);
-    return stored?.rfpIntent ?? 'NONE';
-  });
+  const [rfpIntent, setRfpIntent] = useState<RfpIntent>('NONE');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [applicabilityContext, setApplicabilityContext] = useState<ApplicabilityContext>({
     applicableSectionCount: 12, // default to mandatory count
@@ -113,7 +96,58 @@ export function useRamiChat({
   // Latest updated field IDs from last response
   const [lastUpdatedFields, setLastUpdatedFields] = useState<string[]>([]);
 
-  // Persist to localStorage whenever messages change
+  // PostgreSQL is authority. Hydrate on mount; localStorage is only a UI cache.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(
+          `/api/rami/session?sessionId=${encodeURIComponent(sessionId)}&documentId=${encodeURIComponent(documentId ?? sessionId)}`,
+          { cache: 'no-store' },
+        );
+        const data = (await res.json()) as {
+          ok?: boolean;
+          error?: string;
+          messages?: ConversationMessage[];
+          rfpIntent?: RfpIntent;
+          documentType?: string;
+          engagementType?: string;
+          applicableSectionCount?: number;
+          completionPercent?: number;
+          collectionSufficient?: boolean;
+        };
+        if (!res.ok || !data.ok) {
+          if (!cancelled) {
+            setErrorMessage(data.error ?? 'Could not load this project from PostgreSQL.');
+          }
+          return;
+        }
+        if (cancelled) return;
+        setMessages(data.messages ?? []);
+        if (data.rfpIntent) {
+          setRfpIntent(data.rfpIntent);
+          onIntentChange?.(data.rfpIntent);
+        }
+        setApplicabilityContext((prev) => ({
+          ...prev,
+          documentType: data.documentType ?? prev.documentType,
+          engagementType: data.engagementType ?? prev.engagementType,
+          applicableSectionCount: data.applicableSectionCount ?? prev.applicableSectionCount,
+          completionPercent: data.completionPercent ?? prev.completionPercent,
+          collectionSufficient: data.collectionSufficient ?? prev.collectionSufficient,
+        }));
+      } catch {
+        if (!cancelled) {
+          setErrorMessage('Could not load this project from PostgreSQL.');
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionId, documentId, onIntentChange]);
+
+  // Optional UI cache only — never authoritative
   useEffect(() => {
     if (messages.length === 0) return;
     saveToStorage(sessionId, {

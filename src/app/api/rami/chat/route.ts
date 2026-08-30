@@ -15,7 +15,14 @@ import {
 } from '@/server/ai/ramiSystemPrompt';
 import { EXTRACTION_JSON_SCHEMA, buildExtractionSystemPrompt } from '@/server/ai/extractionSchema';
 import type { ExtractionSignals } from '@/server/ai/extractionSchema';
-import { getOrCreateSession, saveSession } from '@/server/rami/sessionStore';
+import { saveSession } from '@/server/rami/sessionStore';
+import {
+  getOrHydrateSession,
+  persistAssistantMessage,
+  persistRuntimeState,
+  persistUserMessage,
+  PersistenceError,
+} from '@/server/rami/projectPersistence';
 import { analyzeGaps, buildApplicabilityContext } from '@/server/rami/gapEngine';
 import {
   applyExtractedFacts,
@@ -97,7 +104,17 @@ export async function POST(req: NextRequest) {
       try {
         encode({ type: 'thinking' });
 
-        const session = getOrCreateSession(sessionId, documentId);
+        let session;
+        try {
+          session = await getOrHydrateSession(sessionId, documentId);
+        } catch (persistErr) {
+          const msg =
+            persistErr instanceof PersistenceError
+              ? persistErr.message
+              : 'Could not load this project from PostgreSQL.';
+          encode({ type: 'error', message: msg });
+          return;
+        }
 
         const conversationLanguage = resolveConversationLanguage(
           message,
@@ -106,13 +123,24 @@ export async function POST(req: NextRequest) {
         session.conversation.language = conversationLanguage;
 
         const userMsgId = `msg-${Date.now()}-u`;
-        session.conversation.messages.push({
+        const userMessage = {
           id: userMsgId,
-          role: 'user',
+          role: 'user' as const,
           content: message,
           language: conversationLanguage,
           createdAt: new Date().toISOString(),
-        });
+        };
+        session.conversation.messages.push(userMessage);
+        try {
+          await persistUserMessage(session, userMessage);
+        } catch (persistErr) {
+          const msg =
+            persistErr instanceof PersistenceError
+              ? persistErr.message
+              : 'Could not save your message. The project was not updated.';
+          encode({ type: 'error', message: msg });
+          return;
+        }
 
         let extractionResult: ExtendedExtraction = {
           extractedFacts: [],
@@ -259,6 +287,17 @@ export async function POST(req: NextRequest) {
           ...recentHistory,
         ];
 
+        try {
+          await persistRuntimeState(session);
+        } catch (persistErr) {
+          const msg =
+            persistErr instanceof PersistenceError
+              ? persistErr.message
+              : 'Could not save extracted project facts. The reply was not generated.';
+          encode({ type: 'error', message: msg });
+          return;
+        }
+
         let assistantContent = '';
         try {
           for await (const chunk of provider.completeStream(chatMessages, {
@@ -293,14 +332,27 @@ export async function POST(req: NextRequest) {
         }
 
         const assistantMsgId = `msg-${Date.now()}-a`;
-        session.conversation.messages.push({
+        const assistantMessage = {
           id: assistantMsgId,
-          role: 'assistant',
+          role: 'assistant' as const,
           content: assistantContent,
           language: conversationLanguage,
           createdAt: new Date().toISOString(),
           extractedFieldIds: memoryUpdate.applied,
-        });
+        };
+        session.conversation.messages.push(assistantMessage);
+
+        try {
+          await persistAssistantMessage(session, assistantMessage);
+          await persistRuntimeState(session);
+        } catch (persistErr) {
+          const msg =
+            persistErr instanceof PersistenceError
+              ? persistErr.message
+              : 'Rami replied but the response could not be saved to PostgreSQL.';
+          encode({ type: 'error', message: msg });
+          return;
+        }
 
         saveSession(session);
 

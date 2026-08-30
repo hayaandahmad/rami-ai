@@ -1,6 +1,6 @@
 # Rami — Next Steps
 
-Last updated: 2026-08-26 (Phase 2.2 Adaptive Control Plane complete; not committed)
+Last updated: 2026-08-30 (PostgreSQL persistence foundation)
 
 ## If you are setting up a second Windows laptop
 
@@ -62,12 +62,13 @@ After Phase 2.3 (or if human reorders):
 
 ---
 
-## Known limitations (post Phase 2.2)
-1. Sessions still reset on server restart (in-memory store)
-2. Section progress states still mostly NOT_STARTED until Phase 4
+## Known limitations (post persistence)
+1. Local PostgreSQL must be installed and migrated (`npm run db:migrate && npm run db:seed`) or chat cannot persist
+2. Section progress states still mostly NOT_STARTED until Phase 4 generation
 3. No BA confirmation UI (EXTRACTED may be KNOWN for questioning; CONFIRMED UI is Phase 4)
 4. Domain catalogs still thin (Phase 2.3)
 5. No RAG / generation / DOCX yet
+6. Backup dumps must be stored off the live database disk (not OneDrive-synced PG data dirs)
 
 ---
 

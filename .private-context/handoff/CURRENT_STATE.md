@@ -1,5 +1,5 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-26 (Phase 2.2 Adaptive Control Plane complete; not committed)
+Last updated: 2026-08-30 (PostgreSQL persistence foundation)
 
 ## Second-machine reproduction
 To clone this repository onto another Windows laptop and run the **current** Rami (not Phase 3), start at:
@@ -23,8 +23,9 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 - **Phase 2**: ✅ Complete — conversational AI workspace
 - **Phase 2.1**: ✅ Complete — bilingual polish, section applicability, progress semantics, question priority, users normalization
 - **Phase 2.2**: ✅ Complete — Adaptive Control Plane (ProjectContext, packs, GapStatus, NextAction, materiality stop). Working tree only until human asks to commit.
-- **Phase 2.3**: ⏳ Next — Domain Requirement Catalog Expansion (do not start until asked)
-- **Phase 3**: ⏳ Pending — historical RAG, embeddings, PDF ingestion
+- **Phase 2.3**: ⏳ Pending — Domain Requirement Catalog Expansion (do not start until asked)
+- **Persistence**: ✅ PostgreSQL is the authoritative store for projects, facts, and messages (Map/localStorage are caches)
+- **Phase 3**: ⏳ Pending — historical RAG, embeddings, PDF ingestion (pgvector-compatible later)
 - **Phase 4**: ⏳ Pending — live section drafting in right pane
 - **Phase 5**: ⏳ Pending — final RFP assembly
 
@@ -84,11 +85,12 @@ That work is reproduce-and-run only. Do not modify the Agent. Do not begin Phase
 
 ---
 
-## Phase 2 persistence decision
-- **Server**: in-memory Map (global singleton, HMR-safe, reset on process restart)
-- **Client**: localStorage backup (key: `rami-chat-v1:{sessionId}`)
-- **Google Sheets**: NOT used for conversational state (non-blocking async conversation requirement)
-- **Decision**: documented in DECISIONS.md. Full Sheets integration for ProjectMemory deferred to Phase 3/milestone.
+## Persistence (current)
+- **PostgreSQL**: authoritative for Projects, ProjectFacts, Messages, ProjectContext classifier snapshot
+- **Server Map**: process cache only (`clearAllSessionCache()` forces hydrate)
+- **localStorage**: optional UI cache; PostgreSQL wins on load
+- **Google Sheets**: still unused for conversational state
+- Authority: `.private-context/architecture/postgresql-persistence.md`
 
 ---
 
@@ -161,7 +163,7 @@ Authority: `.private-context/architecture/adaptive-question-architecture.md`
 - **Phase 2.3 domain catalogs** (AI/CDC/telecom/ARIS expansion fields)
 - **RAG**: No embedding, PDF ingestion, vector retrieval (Phase 3)
 - **Real section drafting**: Right pane shows placeholder shell only (Phase 4)
-- **Google Sheets** for ProjectMemory persistence (deferred)
+- **Live PostgreSQL** must be configured via `.env.local` (`npm run db:migrate` + `db:seed`)
 - **Section state transitions**: Sections always start NOT_STARTED (Phase 4)
 - **BA confirmation flow**: EXTRACTED → CONFIRMED promotion (Phase 4)
 - **DOCX / final assembly** (Phase 5)
@@ -190,5 +192,7 @@ src/app/api/rami/chat/route.ts
 src/server/rami/gapEngine.ts
 src/server/rami/memoryUpdater.ts
 src/server/rami/projectClassifier.ts
+src/server/rami/projectPersistence.ts
+.private-context/architecture/postgresql-persistence.md
 src/views/RamiChat/RamiChatWorkspace.tsx
 ```
