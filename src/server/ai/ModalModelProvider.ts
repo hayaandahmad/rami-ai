@@ -11,6 +11,7 @@ import type {
   CompletionResult,
   ProviderHealthResult,
   ModelInfo,
+  HealthCheckOptions,
 } from './RamiModelProvider';
 import { getModelManifest } from './modelManifest';
 import { runModalBridge, runModalBridgeStream } from './modalBridge';
@@ -172,7 +173,8 @@ export class ModalModelProvider implements RamiModelProvider {
     );
   }
 
-  async healthCheck(): Promise<ProviderHealthResult> {
+  async healthCheck(options?: HealthCheckOptions): Promise<ProviderHealthResult> {
+    void options;
     const checkedAt = new Date().toISOString();
     const manifest = getModelManifest();
     try {

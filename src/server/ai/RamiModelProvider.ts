@@ -53,6 +53,15 @@ export interface ModelInfo {
   sizeBytes?: number;
 }
 
+/** Optional flags for provider health checks. */
+export interface HealthCheckOptions {
+  /**
+   * Skip the inference round-trip. Status polling must use this so the
+   * floating engine widget cannot queue a Qwen job every few seconds.
+   */
+  skipSmoke?: boolean;
+}
+
 /** Comprehensive health-check result for the provider. */
 export interface ProviderHealthResult {
   providerType: string;
@@ -115,7 +124,7 @@ export interface RamiModelProvider {
    * Perform a comprehensive health check:
    * - endpoint reachable
    * - configured model(s) installed
-   * - trivial inference round-trip
+   * - trivial inference round-trip (unless skipSmoke)
    */
-  healthCheck(): Promise<ProviderHealthResult>;
+  healthCheck(options?: HealthCheckOptions): Promise<ProviderHealthResult>;
 }

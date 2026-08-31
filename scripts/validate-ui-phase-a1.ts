@@ -90,10 +90,15 @@ async function main() {
   });
 
   await run('local engine status has no modal billing fields', async () => {
+    const t0 = Date.now();
     const status = await getLocalEngineStatus();
+    const elapsedMs = Date.now() - t0;
     assert.equal(status.provider, 'local');
     assert.equal((status as Record<string, unknown>).estimated, undefined);
     assert.equal((status as Record<string, unknown>).billingNote, undefined);
+    // Status polling must not run a Qwen smoke test (widget interval is 5s).
+    assert.ok(elapsedMs < 15_000, `local status took ${elapsedMs}ms`);
+    assert.notEqual(status.lastError, 'AbortError: This operation was aborted');
   });
 
   await run('modal status payload has session estimate not fake budget', () => {

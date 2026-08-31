@@ -25,7 +25,7 @@ export async function getLocalEngineStatus(): Promise<Record<string, unknown>> {
 
   let health;
   try {
-    health = await provider.healthCheck();
+    health = await provider.healthCheck({ skipSmoke: true });
   } catch (err) {
     return {
       state: 'ERROR',
@@ -41,10 +41,8 @@ export async function getLocalEngineStatus(): Promise<Record<string, unknown>> {
     };
   }
 
-  const ready =
-    health.endpointReachable && health.defaultModelAvailable && health.smokeTestPassed;
-  const reachableButNotReady =
-    health.endpointReachable && health.defaultModelAvailable && !health.smokeTestPassed;
+  const ready = health.endpointReachable && health.defaultModelAvailable;
+  const reachableButNotReady = health.endpointReachable && !health.defaultModelAvailable;
 
   let state: 'OFF' | 'READY' | 'ERROR' = 'OFF';
   if (ready) state = 'READY';
@@ -61,7 +59,9 @@ export async function getLocalEngineStatus(): Promise<Record<string, unknown>> {
     endpointReachable: health.endpointReachable,
     defaultModelAvailable: health.defaultModelAvailable,
     modelsInstalled: health.models.map((m) => m.name),
-    lastError: health.smokeTestError ?? (reachableButNotReady ? 'Model health check failed' : null),
+    lastError: reachableButNotReady
+      ? (health.smokeTestError ?? 'Default model is not installed in Ollama')
+      : health.smokeTestError ?? null,
     checkedAt: health.checkedAt,
     runtimeNote:
       'Local Ollama runs as a system service. Start or stop Ollama outside RAMI.',

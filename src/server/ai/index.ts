@@ -11,6 +11,7 @@ export type {
   CompletionResult,
   ProviderHealthResult,
   ModelInfo,
+  HealthCheckOptions,
 } from './RamiModelProvider';
 
 export { LocalModelProvider } from './LocalModelProvider';

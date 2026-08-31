@@ -22,6 +22,7 @@ import type {
   CompletionResult,
   ProviderHealthResult,
   ModelInfo,
+  HealthCheckOptions,
 } from './RamiModelProvider';
 import { getModelManifest, type ModelManifest } from './modelManifest';
 
@@ -344,7 +345,7 @@ export class LocalModelProvider implements RamiModelProvider {
     return json.embedding;
   }
 
-  async healthCheck(): Promise<ProviderHealthResult> {
+  async healthCheck(options?: HealthCheckOptions): Promise<ProviderHealthResult> {
     const checkedAt = new Date().toISOString();
     let endpointReachable = false;
     let models: ModelInfo[] = [];
@@ -383,8 +384,9 @@ export class LocalModelProvider implements RamiModelProvider {
     const defaultModelAvailable = modelInstalled(this.manifest.models.default);
     const lightweightModelAvailable = modelInstalled(this.manifest.models.lightweight);
 
-    // 2. Smoke-test inference only if endpoint is reachable and default model is installed
-    if (endpointReachable && defaultModelAvailable) {
+    // 2. Smoke-test inference only when requested. Status polling must skip this
+    // or the engine widget (5s interval) queues a 120s Qwen job on every tick.
+    if (!options?.skipSmoke && endpointReachable && defaultModelAvailable) {
       try {
         const schema = {
           type: 'object',
@@ -415,7 +417,7 @@ export class LocalModelProvider implements RamiModelProvider {
       }
     } else if (!endpointReachable) {
       smokeTestError = `Ollama endpoint not reachable at ${this.baseUrl}`;
-    } else {
+    } else if (!defaultModelAvailable) {
       smokeTestError = `Default model '${this.manifest.models.default}' not installed`;
     }
 
