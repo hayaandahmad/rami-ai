@@ -22,6 +22,7 @@ import type {
 import type { ExtractedFact } from '@/types/conversation';
 import type { GapStatus } from '@/types/gapStatus';
 import { getFieldControlMeta } from '@/schema/fieldControlMeta';
+import { isAudienceNotEntity } from '@/server/rami/factValueGuards';
 import {
   classifySpokenNotApplicable,
   classifySpokenUnknown,
@@ -95,6 +96,28 @@ export function hasCompetingSourceLanguage(message: string): boolean {
   );
 }
 
+export function normalizeComparableValue(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value.trim().toLowerCase().replace(/\s+/g, ' ');
+  try {
+    return JSON.stringify(value).toLowerCase();
+  } catch {
+    return String(value).toLowerCase();
+  }
+}
+
+/** Same fact written differently — not a conflict. */
+export function valuesAreCompatibleFacts(a: unknown, b: unknown): boolean {
+  const na = normalizeComparableValue(a);
+  const nb = normalizeComparableValue(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  const shorter = na.length <= nb.length ? na : nb;
+  const longer = na.length <= nb.length ? nb : na;
+  if (shorter.length >= 12 && longer.includes(shorter)) return true;
+  return false;
+}
+
 export interface MemoryUpdateResult {
   applied: string[];
   rejected: string[];
@@ -112,6 +135,29 @@ type MemoryFieldBag = {
   deferredTo?: string;
   contradiction?: { values: unknown[]; sources: string[]; severity: 'BLOCKING' | 'WARNING' };
 };
+
+/** Write-path only: drop audience-as-entity peers after a beneficiary update is persisted. */
+export function reconcileInvalidContradictions(memory: ProjectMemory): string[] {
+  const cleared: string[] = [];
+  const memoryRecord = memory as unknown as Record<string, unknown>;
+  for (const [fieldId, raw] of Object.entries(memoryRecord)) {
+    if (!raw || typeof raw !== 'object') continue;
+    const fieldBag = raw as MemoryFieldBag;
+    if (fieldBag.gapStatus !== 'CONTRADICTORY' && !fieldBag.contradiction) continue;
+    const values = fieldBag.contradiction?.values ?? [];
+    const peers = values.filter((v) => !valuesAreCompatibleFacts(fieldBag.current?.value, v));
+    const genuinePeer = peers.find((v) => !isAudienceNotEntity(v));
+    if (!genuinePeer) {
+      memoryRecord[fieldId] = {
+        ...fieldBag,
+        gapStatus: 'KNOWN' as GapStatus,
+        contradiction: undefined,
+      };
+      cleared.push(fieldId);
+    }
+  }
+  return cleared;
+}
 
 function markContradiction(
   existing: MemoryFieldBag,
@@ -205,12 +251,14 @@ export function applyExtractedFacts(
   const protected_: string[] = [];
   const contradicted: string[] = [];
   const corrected: string[] = [];
+  let touchedBeneficiary = false;
 
   const memoryRecord = memory as unknown as Record<string, unknown>;
 
   for (const fact of facts) {
     const { fieldId, value } = fact;
     const updateKind = resolveUpdateKind(fact, latestMessage);
+    if (fieldId === 'beneficiaryEntity') touchedBeneficiary = true;
 
     if (!isValidFieldId(fieldId)) {
       rejected.push(fieldId);
@@ -280,6 +328,13 @@ export function applyExtractedFacts(
 
     try {
       if (!existingField) {
+        if (
+          (fieldId === 'beneficiaryEntity' || fieldId === 'issuerEntity') &&
+          isAudienceNotEntity(normalizedValue)
+        ) {
+          rejected.push(fieldId);
+          continue;
+        }
         memoryRecord[fieldId] = {
           ...createMemoryField(fieldId, normalizedValue, 'EXTRACTED', 'ba-message', sourceRef),
           gapStatus: 'KNOWN' as GapStatus,
@@ -290,6 +345,7 @@ export function applyExtractedFacts(
 
       const existing = existingField;
       const sameValue =
+        valuesAreCompatibleFacts(existing.current.value, normalizedValue) ||
         JSON.stringify(existing.current.value) === JSON.stringify(normalizedValue);
 
       if (sameValue) {
@@ -297,8 +353,51 @@ export function applyExtractedFacts(
         continue;
       }
 
+      if (
+        (fieldId === 'beneficiaryEntity' || fieldId === 'issuerEntity') &&
+        isAudienceNotEntity(normalizedValue)
+      ) {
+        rejected.push(fieldId);
+        continue;
+      }
+
+      if (fieldId === 'users') {
+        const currentUsers = normalizeUsersValue(existing.current.value);
+        const incomingUsers = normalizeUsersValue(normalizedValue);
+        if (currentUsers && incomingUsers) {
+          const merged: UsersValue = {
+            internal: [...new Set([...currentUsers.internal, ...incomingUsers.internal])],
+            external: [...new Set([...currentUsers.external, ...incomingUsers.external])],
+          };
+          if (JSON.stringify(merged) === JSON.stringify(currentUsers)) {
+            protected_.push(fieldId);
+            continue;
+          }
+          memoryRecord[fieldId] = {
+            ...updateMemoryField(
+              existing as Parameters<typeof updateMemoryField>[0],
+              merged,
+              'EXTRACTED',
+              'ba-message',
+              sourceRef,
+            ),
+            gapStatus: 'KNOWN' as GapStatus,
+            contradiction: undefined,
+          };
+          applied.push(fieldId);
+          continue;
+        }
+      }
+
       // Conflict: competing evidence — do not overwrite
       if (updateKind === 'conflict') {
+        if (
+          isAudienceNotEntity(normalizedValue) &&
+          (fieldId === 'beneficiaryEntity' || fieldId === 'issuerEntity')
+        ) {
+          rejected.push(fieldId);
+          continue;
+        }
         markContradiction(existing, normalizedValue, sourceRef, memoryRecord, fieldId);
         contradicted.push(fieldId);
         continue;
@@ -331,7 +430,14 @@ export function applyExtractedFacts(
       if (existing.current.value !== undefined && existing.current.value !== null) {
         const meta = getFieldControlMeta(fieldId);
         const material = meta.materiality === 'CRITICAL' || meta.materiality === 'HIGH';
-        if (material && !hasSupersedingLanguage(latestMessage ?? '')) {
+        if (
+          material &&
+          !hasSupersedingLanguage(latestMessage ?? '') &&
+          !(
+            (fieldId === 'beneficiaryEntity' || fieldId === 'issuerEntity') &&
+            isAudienceNotEntity(normalizedValue)
+          )
+        ) {
           markContradiction(existing, normalizedValue, sourceRef, memoryRecord, fieldId);
           contradicted.push(fieldId);
           continue;
@@ -389,6 +495,10 @@ export function applyExtractedFacts(
     } catch {
       rejected.push(fieldId);
     }
+  }
+
+  if (touchedBeneficiary) {
+    reconcileInvalidContradictions(memory);
   }
 
   return { applied, rejected, protected: protected_, contradicted, corrected };

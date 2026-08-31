@@ -76,7 +76,7 @@ export function DocumentPreviewShell({
 
             {beneficiaryEntity ? (
               <p className="text-small text-text-secondary">
-                Issued by: {beneficiaryEntity}
+                Beneficiary: {beneficiaryEntity}
               </p>
             ) : (
               <div className="h-4 w-1/2 animate-pulse rounded bg-[var(--color-neutral-100)]" />

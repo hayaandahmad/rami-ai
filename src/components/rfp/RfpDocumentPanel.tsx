@@ -29,6 +29,7 @@ import {
 import type { GeneratedBlock, GeneratedSection } from '@/types/generatedSection';
 import type { SectionInformationReadiness } from '@/types/sectionReadiness';
 import { describeBlocker, exportStatusCopy } from '@/utils/fieldDisplay';
+import { isStructuralSectionId } from '@/schema/rfpSchema';
 import { useRamiEngineStatus } from '@/providers/RamiEngineStatusProvider';
 
 const ENGINE_OFF_GENERATION_MSG =
@@ -59,6 +60,19 @@ function canGenerate(row: SectionUiRow): boolean {
   return (
     row.readiness === 'READY_TO_DRAFT' || row.readiness === 'DRAFTABLE_WITH_TBC'
   );
+}
+
+function needsAiEngine(row: SectionUiRow): boolean {
+  return !isStructuralSectionId(row.sectionId);
+}
+
+function isPersistedSection(row: SectionUiRow): boolean {
+  return Boolean(row.generated && row.approvalStatus);
+}
+
+function documentStatusLabel(row: SectionUiRow): string {
+  if (isStructuralSectionId(row.sectionId) && row.generated) return 'Deterministic';
+  return DOC_STATUS_LABEL[row.documentStatus];
 }
 
 export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocumentPanelProps) {
@@ -202,7 +216,7 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
 
   const onGenerate = async (regenerate: boolean) => {
     if (!selected) return;
-    if (isModalEngineUnavailable) {
+    if (needsAiEngine(selected) && isModalEngineUnavailable) {
       doc.setError(ENGINE_OFF_GENERATION_MSG);
       return;
     }
@@ -245,7 +259,9 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
     ? 'All sections approved'
     : doc.hasGeneratedContent
       ? 'Working draft'
-      : 'No drafts yet';
+      : doc.hasPreparedStructural
+        ? 'Automatic sections prepared'
+        : 'No drafts yet';
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-surface">
@@ -337,7 +353,7 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                   </span>
                   <span className="mt-0.5 flex flex-wrap gap-1">
                     <StatusChip kind="readiness" value={row.readiness} />
-                    <StatusChip kind="doc" value={row.documentStatus} />
+                    <StatusChip kind="doc" value={row.documentStatus} label={documentStatusLabel(row)} />
                   </span>
                 </button>
               </li>
@@ -345,8 +361,8 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
           </ul>
           {doc.assembled && (
             <p className="mt-auto border-t border-border px-2 py-2 text-caption text-text-muted">
-              {doc.assembled.generatedApplicableCount}/
-              {doc.assembled.applicableSectionCount} generated ·{' '}
+              {doc.assembled.generatedApplicableCount} drafted ·{' '}
+              {doc.assembled.structuralPreparedCount} automatic ·{' '}
               {doc.assembled.approvedApplicableCount} approved
               {doc.assembled.complete ? ' · all sections approved' : ''}
             </p>
@@ -364,8 +380,10 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                   </p>
                   <p className="text-[11px] text-text-muted">
                     Info: {READINESS_LABEL[selected.readiness]} · Doc:{' '}
-                    {DOC_STATUS_LABEL[selected.documentStatus]}
-                    {selected.generated ? ` · v${selected.generated.version}` : ''}
+                    {documentStatusLabel(selected)}
+                    {isPersistedSection(selected) && selected.generated
+                      ? ` · v${selected.generated.version}`
+                      : ''}
                   </p>
                 </div>
 
@@ -376,9 +394,11 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                     </span>
                   )}
 
-                  {canGenerate(selected) && !selected.generated && (
+                  {canGenerate(selected) &&
+                    !isPersistedSection(selected) &&
+                    !isStructuralSectionId(selected.sectionId) && (
                     <ActionButton
-                      disabled={doc.busy || isModalEngineUnavailable}
+                      disabled={doc.busy || (needsAiEngine(selected) && isModalEngineUnavailable)}
                       onClick={() => void onGenerate(false)}
                       label={
                         selected.readiness === 'DRAFTABLE_WITH_TBC'
@@ -389,7 +409,10 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                     />
                   )}
 
-                  {selected.generated && selected.documentStatus === 'DRAFT' && !viewingHistorical && (
+                  {selected.generated &&
+                    selected.documentStatus === 'DRAFT' &&
+                    isPersistedSection(selected) &&
+                    !viewingHistorical && (
                     <>
                       <ActionButton
                         disabled={doc.busy}
@@ -399,7 +422,7 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                         primary
                       />
                       <ActionButton
-                        disabled={doc.busy || isModalEngineUnavailable}
+                        disabled={doc.busy || (needsAiEngine(selected) && isModalEngineUnavailable)}
                         onClick={() => void onGenerate(true)}
                         label="Regenerate"
                       />
@@ -410,7 +433,11 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                         icon={<Pencil className="h-3.5 w-3.5" />}
                       />
                       <ActionButton
-                        disabled={doc.busy || isModalEngineUnavailable || editing}
+                        disabled={
+                          doc.busy ||
+                          (needsAiEngine(selected) && isModalEngineUnavailable) ||
+                          editing
+                        }
                         onClick={openAiEdit}
                         label="Edit with Rami"
                       />
@@ -477,7 +504,7 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                 </div>
               )}
 
-              {isModalEngineUnavailable && selected.applicable && (
+              {isModalEngineUnavailable && selected.applicable && needsAiEngine(selected) && (
                 <p className="mt-2 text-caption text-[var(--color-warning-700)]">
                   {ENGINE_OFF_GENERATION_MSG}
                 </p>
@@ -643,7 +670,7 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                   </h1>
                   {doc.documentMeta.beneficiaryEntity && (
                     <p className="rfp-cover-meta">
-                      Issued by: {doc.documentMeta.beneficiaryEntity}
+                      Beneficiary: {doc.documentMeta.beneficiaryEntity}
                     </p>
                   )}
                   <p className="rfp-cover-meta">
@@ -699,14 +726,17 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
 function StatusChip({
   kind,
   value,
+  label,
 }: {
   kind: 'readiness' | 'doc';
   value: SectionInformationReadiness | DocumentStatus;
+  label?: string;
 }) {
-  const label =
-    kind === 'readiness'
+  const resolved =
+    label ??
+    (kind === 'readiness'
       ? READINESS_LABEL[value as SectionInformationReadiness]
-      : DOC_STATUS_LABEL[value as DocumentStatus];
+      : DOC_STATUS_LABEL[value as DocumentStatus]);
   const tone =
     value === 'APPROVED' || value === 'READY_TO_DRAFT'
       ? 'rfp-chip-ok'
@@ -715,7 +745,7 @@ function StatusChip({
         : value === 'NOT_READY'
           ? 'rfp-chip-alert'
           : 'rfp-chip-muted';
-  return <span className={`rfp-chip ${tone}`}>{label}</span>;
+  return <span className={`rfp-chip ${tone}`}>{resolved}</span>;
 }
 
 function ActionButton({
@@ -815,7 +845,7 @@ function SectionPreview({
         {row.documentStatus === 'APPROVED' && (
           <p className="rfp-approved-banner">Approved · version {row.generated.version}</p>
         )}
-        {row.documentStatus === 'DRAFT' && (
+        {row.documentStatus === 'DRAFT' && row.approvalStatus === 'DRAFT' && (
           <p className="rfp-draft-banner">Draft · version {row.generated.version}</p>
         )}
         <DraftingLineage section={row.generated} />
@@ -841,29 +871,24 @@ function SectionPreview({
 }
 
 function FullDocumentView({ rows }: { rows: SectionUiRow[] }) {
+  const pending = rows.filter((row) => row.applicable && !row.generated);
   return (
     <div className="flex flex-col gap-8">
+      {pending.length > 0 ? (
+        <p className="rounded-md border border-border bg-surface-subtle px-3 py-2 text-caption text-text-secondary">
+          {pending.length} applicable {pending.length === 1 ? 'section has' : 'sections have'} not
+          been drafted yet. They are omitted from this preview until generated.
+        </p>
+      ) : null}
       {rows.map((row) => {
-        if (!row.applicable) return null;
+        if (!row.applicable || !row.generated) return null;
         return (
           <section key={row.sectionId} className="rfp-section-slot" id={`rfp-${row.sectionId}`}>
-            {!row.generated ? (
-              <>
-                <h2 className="rfp-h1">{row.title}</h2>
-                <p className="rfp-missing">
-                  [{row.title} — not yet generated
-                  {row.readiness === 'NOT_READY' ? '; information incomplete' : ''}]
-                </p>
-              </>
-            ) : (
-              <>
-                {row.documentStatus === 'APPROVED' && (
-                  <p className="rfp-approved-banner">Approved</p>
-                )}
-                <DraftingLineage section={row.generated as GeneratedSection} />
-                <GeneratedSectionBlocks section={row.generated as GeneratedSection} />
-              </>
+            {row.documentStatus === 'APPROVED' && (
+              <p className="rfp-approved-banner">Approved</p>
             )}
+            <DraftingLineage section={row.generated as GeneratedSection} />
+            <GeneratedSectionBlocks section={row.generated as GeneratedSection} />
           </section>
         );
       })}

@@ -29,8 +29,14 @@ import {
   GENERATED_SECTION_JSON_SCHEMA,
 } from '@/server/rami/generationPrompt';
 import { getSectionReadiness, getAllSectionReadiness } from '@/server/rami/sectionReadiness';
-import { getRfpSection, RFP_SECTIONS, isSectionApplicable } from '@/schema/rfpSchema';
+import {
+  getRfpSection,
+  RFP_SECTIONS,
+  isSectionApplicable,
+  isStructuralSectionId,
+} from '@/schema/rfpSchema';
 import { buildApplicabilityContext } from '@/server/rami/gapEngine';
+import { buildStructuralSection } from '@/server/rami/structuralSections';
 import {
   advanceSectionState,
   createSectionStateRecord,
@@ -197,7 +203,23 @@ export interface GenerateSectionResult {
 async function draftBlocks(
   ctx: SectionGenerationContext,
   provider: RamiModelProvider,
+  memory?: import('@/types/projectMemory').ProjectMemory,
+  tocEntries?: Array<{ sectionId: string; title: string }>,
 ): Promise<{ blocks: GeneratedBlock[]; modelUsed: string }> {
+  if (isStructuralSectionId(ctx.sectionId)) {
+    const built = memory
+      ? buildStructuralSection({
+          sectionId: ctx.sectionId,
+          memory,
+          tocEntries: tocEntries ?? [],
+        })
+      : null;
+    if (built) return { blocks: built.blocks, modelUsed: 'structural-deterministic' };
+    throw new GenerationError(
+      'NOT_READY',
+      `Section ${ctx.sectionId} has no derived structural content to render.`,
+    );
+  }
   const messages = buildGenerationMessages(ctx);
   return draftBlocksFromMessages(ctx, messages, provider);
 }
@@ -277,7 +299,14 @@ export async function generateRfpSection(input: {
   });
 
   const provider = input.provider ?? getDefaultProvider();
-  const drafted = await draftBlocks(ctx, provider);
+  const drafted = await draftBlocks(
+    ctx,
+    provider,
+    session.memory,
+    RFP_SECTIONS.filter((s) =>
+      isSectionApplicable(s, buildApplicabilityContext(session.memory, session.projectContext)),
+    ).map((s) => ({ sectionId: s.sectionId, title: s.title })),
+  );
   const sanitized = sanitizeHistoricalLeakage(drafted.blocks, ctx);
 
   const factsAfter = JSON.stringify(projectMemoryToFactRows(session.memory));
@@ -577,6 +606,38 @@ export async function listGeneratedSections(input: {
   return listCurrentSectionContents(project.project_id);
 }
 
+/** AI-drafted vs automatically prepared progress. Does not change assembly or approval. */
+export function summarizeAssembledSectionProgress(
+  sections: AssembledRfp['sections'],
+): Pick<
+  AssembledRfp,
+  | 'applicableSectionCount'
+  | 'generatedApplicableCount'
+  | 'structuralPreparedCount'
+  | 'approvedApplicableCount'
+  | 'complete'
+> {
+  const applicableSections = sections.filter((s) => s.applicable);
+  const generatedApplicableCount = applicableSections.filter(
+    (s) => Boolean(s.generated) && !isStructuralSectionId(s.sectionId),
+  ).length;
+  const structuralPreparedCount = applicableSections.filter(
+    (s) => Boolean(s.generated) && isStructuralSectionId(s.sectionId),
+  ).length;
+  const approvedApplicableCount = applicableSections.filter(
+    (s) => s.approvalStatus === 'APPROVED',
+  ).length;
+  return {
+    applicableSectionCount: applicableSections.length,
+    generatedApplicableCount,
+    structuralPreparedCount,
+    approvedApplicableCount,
+    complete:
+      applicableSections.length > 0 &&
+      approvedApplicableCount === applicableSections.length,
+  };
+}
+
 /**
  * Assemble backend RFP from persisted generated sections in canonical order.
  * Does not invent missing sections.
@@ -589,11 +650,23 @@ export async function assembleRfpDocument(documentKey: string): Promise<Assemble
   const readinessAll = getAllSectionReadiness(session.memory, session.projectContext);
   const readinessMap = new Map(readinessAll.map((r) => [r.sectionId, r]));
   const sectionCtx = buildApplicabilityContext(session.memory, session.projectContext);
+  const tocEntries = RFP_SECTIONS.filter((s) => isSectionApplicable(s, sectionCtx)).map((s) => ({
+    sectionId: s.sectionId,
+    title: s.title,
+  }));
 
   const sections = RFP_SECTIONS.map((s) => {
     const applicable = isSectionApplicable(s, sectionCtx);
     const readiness = readinessMap.get(s.sectionId)?.readiness ?? 'NOT_APPLICABLE';
     const row = bySection.get(s.sectionId) ?? null;
+    let generated = row?.content_json ?? null;
+    if (applicable && !generated && isStructuralSectionId(s.sectionId)) {
+      generated = buildStructuralSection({
+        sectionId: s.sectionId,
+        memory: session.memory,
+        tocEntries,
+      });
+    }
     return {
       sectionId: s.sectionId,
       title: s.title,
@@ -601,28 +674,18 @@ export async function assembleRfpDocument(documentKey: string): Promise<Assemble
       applicable,
       readiness,
       approvalStatus: row?.approval_status ?? null,
-      generated: row?.content_json ?? null,
-      missingGeneration: applicable && !row,
+      generated,
+      missingGeneration: applicable && !generated,
     };
   });
 
-  const applicableSections = sections.filter((s) => s.applicable);
-  const generatedApplicableCount = applicableSections.filter((s) => s.generated).length;
-  const approvedApplicableCount = applicableSections.filter(
-    (s) => s.approvalStatus === 'APPROVED',
-  ).length;
-
+  const progress = summarizeAssembledSectionProgress(sections);
   return {
     documentKey,
     projectId: project.project_id,
     assembledAt: new Date().toISOString(),
     sections,
-    applicableSectionCount: applicableSections.length,
-    generatedApplicableCount,
-    approvedApplicableCount,
-    complete:
-      applicableSections.length > 0 &&
-      approvedApplicableCount === applicableSections.length,
+    ...progress,
   };
 }
 

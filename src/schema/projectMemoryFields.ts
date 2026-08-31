@@ -1,5 +1,6 @@
 /**
- * Canonical project information requirements (52 legacy + 7 promoted 2026-08).
+ * Canonical project information requirements
+ * (52 legacy + 7 promoted 2026-08 + issuerEntity).
  * Authority: .private-context/analysis/question-information-mapping.md
  *
  * These are the ONLY facts that belong in structured project memory.
@@ -82,6 +83,18 @@ export const PROJECT_MEMORY_FIELDS: readonly ProjectMemoryFieldDef[] = [
     notes: 'Usually volunteered in the opening BA message.',
   },
   {
+    fieldId: 'issuerEntity',
+    label: 'Issuing / Procuring Entity',
+    targetSections: ['coverPage', 'administrativeProcedures'],
+    requirement: 'conditional',
+    category: 'PROJECT_INFORMATION',
+    explicitAskIfMissing: true,
+    historicalRetrievalSupported: false,
+    baConfirmationRequired: true,
+    notes:
+      'Organization formally issuing / procuring the RFP. Distinct from beneficiaryEntity. Same organization in both fields is valid. Missing renders Cover Issued by: TBC; never blocks Cover.',
+  },
+  {
     fieldId: 'beneficiaryEntity',
     label: 'Beneficiary Entity / Ministry',
     targetSections: ['coverPage', 'introduction'],
@@ -90,7 +103,7 @@ export const PROJECT_MEMORY_FIELDS: readonly ProjectMemoryFieldDef[] = [
     explicitAskIfMissing: true,
     historicalRetrievalSupported: false,
     baConfirmationRequired: true,
-    notes: 'Merges Question Bank 0.3 and 3.1 (same fact, two angles).',
+    notes: 'Merges Question Bank 0.3 and 3.1 (same fact, two angles). Distinct from issuerEntity.',
   },
   {
     fieldId: 'tenderNumber',
@@ -621,12 +634,13 @@ export const PROJECT_MEMORY_FIELDS: readonly ProjectMemoryFieldDef[] = [
     fieldId: 'requiredAnnexes',
     label: 'Required Annexes and Compliance Forms',
     targetSections: ['annexes'],
-    requirement: 'required',
+    requirement: 'conditional',
     category: 'PROJECT_INFORMATION',
-    explicitAskIfMissing: true,
+    explicitAskIfMissing: false,
     historicalRetrievalSupported: true,
     baConfirmationRequired: true,
-    notes: 'Template lists 12 candidate annexes usable as a PROPOSED checklist. Absorbs Q-Bank duplicate 12.8.',
+    notes:
+      'Project-specific annexes only. The organization standard annex pack is template-level and does not live in this field.',
   },
 
   // ── Group 18: Promoted procurement / delivery facts (evidence-driven 2026-08) ──
@@ -737,6 +751,9 @@ export const PROMOTED_FIELD_IDS = [
   'governanceCadence',
   'knowledgeTransferRequirements',
 ] as const;
+
+/** Document-setup field added when issuer was split from beneficiary. */
+export const POST_EXPANSION_FIELD_IDS = ['issuerEntity'] as const;
 
 /** Total canonical field count — validated at module level. */
 export const CANONICAL_FIELD_COUNT = PROJECT_MEMORY_FIELDS.length;

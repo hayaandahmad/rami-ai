@@ -93,6 +93,7 @@ function sampleAssembled(): AssembledRfp {
     assembledAt: new Date().toISOString(),
     applicableSectionCount: 2,
     generatedApplicableCount: 1,
+    structuralPreparedCount: 0,
     approvedApplicableCount: 0,
     complete: false,
     sections: [
@@ -155,7 +156,7 @@ async function main() {
     assert.match(xml, /Phase 1/);
     assert.match(xml, /Assessment/);
     assert.match(xml, /To be confirmed/i);
-    assert.match(xml, /not yet generated/i);
+    assert.doesNotMatch(xml, /not yet generated/i);
     // Missing section must not invent evaluation weights
     assert.doesNotMatch(xml, /40%|technical score invented/i);
   });

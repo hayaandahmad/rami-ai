@@ -21,6 +21,8 @@ import {
 } from '@/schema/rfpSchema';
 import { createEmptyProjectContext } from '@/types/projectContext';
 import { classifySpokenUnknown } from '@/server/rami/spokenTbc';
+import { hasAnnexMaterial, hasDerivedGlossary } from '@/server/rami/structuralSections';
+import { isStandardAnnexPackApplicable } from '@/schema/standardAnnexPack';
 
 const MATERIALITY_RANK: Record<Materiality, number> = {
   CRITICAL: 0,
@@ -69,6 +71,9 @@ export function buildApplicabilityContext(
     hasSupportPeriod: isSystem || isSupport || isConnectivity,
     hasNamedRoles: hasNamedKeyPersonnelEvidence(memory),
     isLargeEngagement: isSystem || ctx.complexity.process === 'HIGH',
+    hasAnnexRequirements: hasAnnexMaterial(memory),
+    hasStandardAnnexPack: isStandardAnnexPackApplicable(ctx.documentStage),
+    hasGlossaryTerms: hasDerivedGlossary(memory),
   };
 }
 

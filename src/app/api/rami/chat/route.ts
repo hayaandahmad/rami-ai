@@ -24,12 +24,8 @@ import {
   PersistenceError,
 } from '@/server/rami/projectPersistence';
 import { analyzeGaps, buildApplicabilityContext } from '@/server/rami/gapEngine';
-import {
-  applyExtractedFacts,
-  markFieldDeferred,
-  markFieldUnknown,
-  type ExtractedFactWithKind,
-} from '@/server/rami/memoryUpdater';
+import { applyExtractedFacts, markFieldDeferred, markFieldUnknown, type ExtractedFactWithKind } from '@/server/rami/memoryUpdater';
+import { normalizeExtractedFacts } from '@/server/rami/extractedFactNormalize';
 import { detectIntent } from '@/server/rami/intentDetector';
 import { classifyProject } from '@/server/rami/projectClassifier';
 import { withActivePacks } from '@/server/rami/questionPackEngine';
@@ -174,20 +170,22 @@ export async function POST(req: NextRequest) {
           console.error('[Rami chat] Extraction error:', extractErr);
         }
 
-        const validFacts = (extractionResult.extractedFacts ?? []).filter((f) =>
+        const rawFacts = (extractionResult.extractedFacts ?? []).filter((f) =>
           PROJECT_MEMORY_FIELDS.some((def) => def.fieldId === f.fieldId),
         );
 
         // conflictCandidates from extraction → mark as conflict updateKind
         for (const c of extractionResult.conflictCandidates ?? []) {
           if (!c.fieldId || !Array.isArray(c.values) || c.values.length < 2) continue;
-          validFacts.push({
+          rawFacts.push({
             fieldId: c.fieldId,
             value: c.values[1],
             confidence: 'high',
             updateKind: 'conflict',
           });
         }
+
+        const validFacts = normalizeExtractedFacts(rawFacts, message);
 
         const memoryUpdate = applyExtractedFacts(
           session.memory,

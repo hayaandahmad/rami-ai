@@ -58,6 +58,65 @@ function classifyFieldCompleteness(memory: ProjectMemory, fieldId: string): Comp
   return 'answered';
 }
 
+/** Foundational Introduction clusters — RAMI drafts from these; BA does not supply intro prose. */
+export const INTRODUCTION_WHO_FIELDS = ['beneficiaryEntity'] as const;
+export const INTRODUCTION_WHAT_FIELDS = ['documentTitle', 'documentType', 'engagementType'] as const;
+export const INTRODUCTION_WHY_FIELDS = [
+  'currentSituation',
+  'businessNeedRationale',
+  'businessObjectives',
+  'inScope',
+] as const;
+
+function clusterStatus(
+  memory: ProjectMemory,
+  fieldIds: readonly string[],
+): Completeness {
+  const states = fieldIds.map((id) => classifyFieldCompleteness(memory, id));
+  if (states.some((s) => s === 'contradictory')) return 'contradictory';
+  if (states.some((s) => s === 'answered')) return 'answered';
+  if (states.some((s) => s === 'tbc')) return 'tbc';
+  return 'missing';
+}
+
+function resolveIntroductionReadiness(input: {
+  memory: ProjectMemory;
+  criticalBlockers: string[];
+}): SectionInformationReadiness {
+  const who = clusterStatus(input.memory, INTRODUCTION_WHO_FIELDS);
+  const what = clusterStatus(input.memory, INTRODUCTION_WHAT_FIELDS);
+  const why = clusterStatus(input.memory, INTRODUCTION_WHY_FIELDS);
+
+  if (who === 'missing' || who === 'contradictory') {
+    if (!input.criticalBlockers.includes('beneficiaryEntity')) {
+      input.criticalBlockers.push('beneficiaryEntity');
+    }
+  }
+  if (what === 'missing' || what === 'contradictory') {
+    if (!input.criticalBlockers.includes('documentType')) {
+      input.criticalBlockers.push('documentType');
+    }
+  }
+  if (why === 'missing' || why === 'contradictory') {
+    if (!input.criticalBlockers.includes('businessNeedRationale')) {
+      input.criticalBlockers.push('businessNeedRationale');
+    }
+  }
+
+  if (
+    who === 'missing' ||
+    what === 'missing' ||
+    why === 'missing' ||
+    who === 'contradictory' ||
+    what === 'contradictory' ||
+    why === 'contradictory'
+  ) {
+    return 'NOT_READY';
+  }
+  if (who === 'tbc' || what === 'tbc' || why === 'tbc') return 'DRAFTABLE_WITH_TBC';
+  return 'READY_TO_DRAFT';
+}
+
 function isPackAskable(fieldId: string, ctx: ProjectContext): boolean {
   const meta = getFieldControlMeta(fieldId);
   return meta.packs.some((p) => ctx.activePacks.includes(p));
@@ -135,7 +194,20 @@ export function getSectionReadiness(
   const boilerplate = BOILERPLATE_SECTION_IDS.has(sectionId);
 
   let readiness: SectionInformationReadiness;
-  if (criticalBlockers.length > 0) {
+  if (sectionId === 'coverPage') {
+    readiness =
+      tbcFields.length > 0 || missingFields.length > 0 || criticalBlockers.length > 0
+        ? 'DRAFTABLE_WITH_TBC'
+        : 'READY_TO_DRAFT';
+  } else if (sectionId === 'annexes') {
+    const annexTbc = tbcFields.filter((id) => id !== 'requiredAnnexes');
+    readiness = annexTbc.length > 0 ? 'DRAFTABLE_WITH_TBC' : 'READY_TO_DRAFT';
+  } else if (sectionId === 'introduction') {
+    readiness = resolveIntroductionReadiness({
+      memory,
+      criticalBlockers,
+    });
+  } else if (criticalBlockers.length > 0) {
     readiness = 'NOT_READY';
   } else if (boilerplate && links.length === 0) {
     readiness = 'READY_TO_DRAFT';
@@ -145,7 +217,7 @@ export function getSectionReadiness(
     readiness = 'READY_TO_DRAFT';
   }
 
-  if (coverage?.severity === 'CRITICAL' && applicable) {
+  if (coverage?.severity === 'CRITICAL' && applicable && sectionId !== 'coverPage') {
     if (answeredFields.length === 0 && tbcFields.length === 0) {
       readiness = 'NOT_READY';
       if (!criticalBlockers.includes('__coverage_gap__')) criticalBlockers.push('__coverage_gap__');

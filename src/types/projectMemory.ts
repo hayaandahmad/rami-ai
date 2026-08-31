@@ -78,6 +78,7 @@ export interface ProjectMemory {
   // ── meta ──────────────────────────────────────────────────────────────────
   documentType:          ProjectMemoryField<string>         | null;
   documentTitle:         ProjectMemoryField<string>         | null;
+  issuerEntity:          ProjectMemoryField<string>         | null;
   beneficiaryEntity:     ProjectMemoryField<string>         | null;
   tenderNumber:          ProjectMemoryField<string>         | null;
   proposalDeadline:      ProjectMemoryField<string>         | null;
@@ -178,6 +179,7 @@ export function createEmptyProjectMemory(): ProjectMemory {
   return {
     documentType: null,
     documentTitle: null,
+    issuerEntity: null,
     beneficiaryEntity: null,
     tenderNumber: null,
     proposalDeadline: null,

@@ -168,28 +168,8 @@ function sectionBlocksToChildren(section: GeneratedSection): DocChild[] {
   return out;
 }
 
-function missingSectionPlaceholder(title: string, readiness: string): Paragraph[] {
-  return [
-    new Paragraph({
-      text: title,
-      heading: HeadingLevel.HEADING_1,
-      spacing: { before: 280, after: 120 },
-    }),
-    new Paragraph({
-      children: [
-        new TextRun({
-          text:
-            readiness === 'NOT_READY'
-              ? `[${title} — not yet generated; information incomplete]`
-              : `[${title} — not yet generated]`,
-          italics: true,
-          color: 'B45309',
-          size: 20,
-        }),
-      ],
-      spacing: { after: 200 },
-    }),
-  ];
+function documentHasCover(assembled: AssembledRfp): boolean {
+  return assembled.sections.some((s) => s.sectionId === 'coverPage' && s.applicable && s.generated);
 }
 
 export function safeDocxFilename(meta: DocxDocumentMeta, documentKey: string): string {
@@ -202,7 +182,8 @@ export function safeDocxFilename(meta: DocxDocumentMeta, documentKey: string): s
 }
 
 /**
- * Build DOCX from assembled persisted RFP. Skips NOT_APPLICABLE. Marks missing.
+ * Build DOCX from assembled persisted RFP. Skips NOT_APPLICABLE and undrafted narrative.
+ * Does not emit internal generation diagnostic strings.
  */
 export async function buildRfpDocxBuffer(input: {
   assembled: AssembledRfp;
@@ -211,85 +192,37 @@ export async function buildRfpDocxBuffer(input: {
   const { assembled, documentMeta } = input;
   const title = documentMeta.documentTitle || 'Request for Proposal';
   const children: DocChild[] = [];
+  const hasCover = documentHasCover(assembled);
 
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: 'REQUEST FOR PROPOSAL',
-          bold: true,
-          size: 20,
-          color: '64748B',
-        }),
-      ],
-      spacing: { after: 80 },
-    }),
-    new Paragraph({
-      children: [new TextRun({ text: title, bold: true, size: 32 })],
-      spacing: { after: 120 },
-    }),
-  );
-
-  if (documentMeta.beneficiaryEntity) {
+  if (!hasCover) {
     children.push(
       new Paragraph({
         children: [
           new TextRun({
-            text: `Issued by: ${documentMeta.beneficiaryEntity}`,
-            size: 22,
+            text: 'REQUEST FOR PROPOSAL',
+            bold: true,
+            size: 20,
+            color: '64748B',
           }),
         ],
-        spacing: { after: 60 },
+        spacing: { after: 80 },
       }),
-    );
-  }
-
-  const metaLine = [
-    documentMeta.documentType,
-    documentMeta.engagementType,
-    documentMeta.engagementDuration,
-  ]
-    .filter(Boolean)
-    .join(' · ');
-  if (metaLine) {
-    children.push(
       new Paragraph({
-        children: [new TextRun({ text: metaLine, size: 20, color: '475569' })],
+        children: [new TextRun({ text: title, bold: true, size: 32 })],
         spacing: { after: 200 },
       }),
     );
   }
 
-  children.push(
-    new Paragraph({
-      children: [
-        new TextRun({
-          text: `Assembled from persisted ProjectSections · ${assembled.generatedApplicableCount}/${assembled.applicableSectionCount} applicable sections generated · ${assembled.approvedApplicableCount} approved`,
-          size: 18,
-          italics: true,
-          color: '64748B',
-        }),
-      ],
-      spacing: { after: 300 },
-      border: {
-        bottom: { style: BorderStyle.SINGLE, size: 6, color: 'CBD5E1', space: 12 },
-      },
-    }),
-  );
-
   let firstSection = true;
   for (const slot of assembled.sections) {
     if (!slot.applicable) continue;
+    if (!slot.generated) continue;
 
     if (!firstSection) {
       children.push(new Paragraph({ children: [new PageBreak()] }));
     }
     firstSection = false;
-
-    if (!slot.generated) {
-      children.push(...missingSectionPlaceholder(slot.title, slot.readiness));
-      continue;
-    }
 
     if (slot.approvalStatus === 'APPROVED') {
       children.push(
@@ -305,7 +238,7 @@ export async function buildRfpDocxBuffer(input: {
           spacing: { after: 80 },
         }),
       );
-    } else if (slot.approvalStatus === 'DRAFT') {
+    } else if (slot.approvalStatus === 'DRAFT' && slot.sectionId !== 'coverPage') {
       children.push(
         new Paragraph({
           children: [

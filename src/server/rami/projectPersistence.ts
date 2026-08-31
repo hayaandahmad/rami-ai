@@ -55,7 +55,10 @@ function applyDerivedContext(session: RamiServerSession): void {
 export async function hydrateProject(documentKey: string): Promise<RamiServerSession> {
   assertPersistenceConfigured();
   const cached = getSession(documentKey);
-  if (cached) return cached;
+  if (cached) {
+    applyDerivedContext(cached);
+    return cached;
+  }
 
   const project = await findProjectByDocumentKey(documentKey);
   if (!project) {

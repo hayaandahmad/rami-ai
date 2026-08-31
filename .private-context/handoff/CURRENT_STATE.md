@@ -1,6 +1,6 @@
 # Rami — Current Implementation State
 
-Last updated: 2026-08-31 (Phases 1–5 checkpoint — ready for Device 2 handoff)
+Last updated: 2026-08-31 (generic Golden corrective checkpoint)
 
 Authoritative HEAD: `origin/main` (`git log -1` after pull).
 
@@ -8,6 +8,7 @@ Authoritative HEAD: `origin/main` (`git log -1` after pull).
 
 ### Persistence
 - PostgreSQL is authoritative for live project state
+- Hydration does **not** silently reconcile or hide stored contradictions
 - Dashboard loads from `GET /api/rami/workspace`
 - Create document: `POST /api/rami/projects` → `/documents/{documentKey}/interview`
 - Delete document: `DELETE /api/rami/projects/{documentKey}` (CASCADE via existing FKs)
@@ -15,70 +16,88 @@ Authoritative HEAD: `origin/main` (`git log -1` after pull).
 - Private dumps: `.rami-db-backups/` (gitignored)
 
 ### Migrations
-Latest: **`007_project_generation_references.sql`** (7 migrations total).
+Latest: **`007_project_generation_references.sql`** (7 migrations total).  
+`issuerEntity` is a catalog row seeded from TypeScript (`npm run db:seed`), not a new DDL migration.
 
 ### Information model
 | Item | Count |
 |---|---:|
 | Sections | 20 |
-| Fields | 59 |
-| Questions | 69 |
-| QuestionFields | 66 |
-| SectionFields | 78 |
+| Fields | 60 |
+| Questions | 70 |
+| QuestionFields | 67 |
+| SectionFields | 87 |
+
+`issuerEntity` (Issuing / Procuring Entity) is a generic CORE field, distinct from `beneficiaryEntity`. Question **0.8** collects it. Mapped to Cover Page and Administrative Procedures. Same organization in both fields is valid. Missing issuer stays unresolved / Cover **Issued by: TBC**.
 
 ### Live DB inventory (snapshot metadata — 2026-08-31)
 See `dev/database/rami_ai_shared.metadata.json` for authoritative counts at checkpoint time.
 
 | Table / metric | Count (checkpoint) |
 |---|---:|
-| projects | 25 |
-| project_facts | 187 |
-| messages | 28 |
-| project_section_contents | 105 |
+| projects | 15 |
+| project_facts | 135 |
+| messages | 50 |
+| project_section_contents | 89 |
 | historical_knowledge_chunks | 732 |
 | historical_chunk_embeddings | 732 |
-| historical_field_proposals | 13 |
-| project_generation_references | 6 |
+| historical_field_proposals | 23 |
+| project_generation_references | 7 |
 
 Embeddings: `nomic-embed-text` / 768-d / `REAL[]`.
 
+Existing projects may have **no** `issuerEntity` fact until the BA states an issuer. That is expected. Do not SQL-backfill.
+
 ### Demo / proof projects
+- `rfp-system-implementation-78dcf4` — Golden conversational project (do not SQL-patch)
 - `rami-gen-core-demo` — generated RFP + DOCX; live Modal AI-edit verified (introduction v2)
-- `rami-model-expansion-demo` — 59-field conversational proof
+- `rami-model-expansion-demo` — information-model conversational proof (catalog now 60 fields)
 - `rami-gen-rag-demo` — generation-reference proof
 - `rami-rag-controlled-demo` — controlled chat RAG
 - `rami-rag-live-eval` — live Qwen generation-RAG A/B
 
-## Phases 1–5 (this checkpoint)
+## Generic Golden corrective (this checkpoint)
 
-### Phase 1 — Engine & chat polish
-- Thinking indicator visible during `thinking` / empty streaming
-- Unicode round-trip through Modal bridge (`utf8BridgeEnv`, `thinkStripper`)
-- Engine timers interpolate client-side (5s poll + 1s tick)
-- Stop Rami reassurance; generation disabled when engine OFF
+### Extraction / semantics
+- Natural BA language maps to canonical Fields (title, need, issuer, beneficiary, engagement type)
+- **Issuer ≠ beneficiary ≠ users ≠ audience / public**
+- PostgreSQL remains persistent authority
+- False conflicts are not hidden during hydration
+- True same-field conflicts still block
 
-### Phase 2 — Layout & understanding
-- Desktop sidebar collapse + `localStorage` persistence
-- Engine panel OFF vs ERROR distinction; performance disclosure
-- Project Understanding panel compact by default
+### Structural RFP behavior
+- Cover Page is deterministic (no Qwen); BA does not write Cover prose
+- Cover is built from authoritative metadata
+- `issuerEntity` drives **Issued by** when known; otherwise **TBC**
+- Beneficiary remains a separate Cover line
+- Table of Contents is deterministic
+- Introduction is AI-generated from foundational ProjectFacts (who / what / why)
+- BA does not supply Introduction prose; there is no `introductionText` field
+- Standard Annex pack is deterministic for ordinary full RFPs
+- Project-specific annexes append from `requiredAnnexes`
+- PQ / RFI / market-sounding do not force the standard pack unless extras exist
+- Actual standard Annex form bodies/files are **not** stored; placeholders must not claim an attachment
 
-### Phase 3 — Document workspace
-- Sidebar collapse icon at top (icon-only)
-- RFP Document panel layout polish; compact SectionProgress strip
-- Document-scoped `sessionStorage` for section/view mode
+### Standard Annex pack (titles only)
+1. Technical Proposal Response Format  
+2. Financial Proposal Response Format  
+3. Compliance Sheet  
+4. Confidentiality Undertaking  
+5. Joint Venture Agreement  
+6. Sample Agreement  
+7. Key RFP Dates and Deadlines  
 
-### Phase 4 — Edit with Rami
-- Separate AI edit pipeline (`aiEditRfpSection`) — not chat-routed
-- Creates new DRAFT version; ProjectFacts unchanged
-- Approved sections require reopen
-- Validator: `npm run validate:edit-with-rami`
+### Document output
+- Full RFP / DOCX must not emit raw internal `[section not generated]` strings
+- Missing narrative sections remain UI incompleteness, not fake document text
 
-### Phase 5 — Editor, history, delete
-- Engine panel: outside-click, Escape, header/chevron collapse (no `movedRef` bug)
-- Manual structured block editor + Advanced JSON disclosure
-- Version history UI; read-only preview; restore → new version
-- Dashboard kebab → Delete RFP with confirmation
-- Validators: `validate:ui-phase-b5`, `validate:manual-editor-versioning`, `validate:project-delete`
+### Metrics
+- AI drafted count (`generatedApplicableCount`) is distinct from automatic structural count (`structuralPreparedCount`)
+- Approval counts are unchanged
+
+## Phases 1–5 (still in this tree)
+
+Engine/chat polish, layout, document workspace, Edit with Rami, manual editor, version history, delete — see prior checkpoint. Invariants below still hold.
 
 ## Non-negotiable invariants (unchanged)
 
@@ -88,7 +107,8 @@ Embeddings: `nomic-embed-text` / 768-d / `REAL[]`.
 - No automatic historical retrieval during generation or AI edit
 - Drafting references never affect readiness
 - Section mode vs Full RFP mode remain distinct
-- DOCX assembles persisted PostgreSQL content
+- DOCX assembles persisted PostgreSQL content plus deterministic structural sections when applicable
+- Production source has no project-specific (Natiq) corrective logic
 
 ## Validation commands
 
@@ -96,12 +116,15 @@ Embeddings: `nomic-embed-text` / 768-d / `REAL[]`.
 npm run db:check
 npm run historical:check
 npm run validate:shared-dump
+npm run validate:golden-readiness-structural
+npm run validate:standard-annex-pack
+npm run validate:section-readiness
+npm run validate:phase1
 npm run validate:edit-with-rami
 npm run validate:manual-editor-versioning
 npm run validate:project-delete
-npm run validate:ui-phase-b5
 npx tsx scripts/final-handoff-integration.ts
 ```
 
 ## Next
-Golden End-to-End RFP evaluation. See `NEXT_STEPS.md`.
+Golden End-to-End RFP evaluation (BA journey). See `NEXT_STEPS.md`.

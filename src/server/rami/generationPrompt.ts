@@ -68,6 +68,9 @@ export function buildGenerationMessages(ctx: SectionGenerationContext): Array<{
     `For TBC items use block type "tbc" with label starting with "${TBC_MARKER_PREFIX}".`,
     'Start with a level-1 heading equal to the section title.',
     'Use subsection headings (level 2) where helpful.',
+    ctx.sectionId === 'introduction'
+      ? 'This Introduction is RAMI-authored narrative. Synthesize what the project is, who it is for, and why it exists from CURRENT_PROJECT_FACTS only. Do not copy chat. Do not ask the BA to supply Introduction prose. Do not invent missing facts.'
+      : '',
   ]
     .filter(Boolean)
     .join('\n');
@@ -101,7 +104,9 @@ export function buildGenerationMessages(ctx: SectionGenerationContext): Array<{
       note: 'Example only. Do not copy project-specific values.',
     })),
     instruction:
-      'Draft this section using CURRENT_PROJECT_FACTS as truth. Historical references may guide structure and wording only. Every tbcFields entry must appear as an explicit tbc block. Do not invent unresolved values. Do not copy historical numbers, names, or legal terms that are not in CURRENT_PROJECT_FACTS.',
+      ctx.sectionId === 'introduction'
+        ? 'Draft a professional RFP Introduction from CURRENT_PROJECT_FACTS. Cover purpose, beneficiary, and business need. Historical references may guide structure only. Every tbcFields entry must appear as an explicit tbc block. Do not invent unresolved values. Do not copy chat or historical project-specific values.'
+        : 'Draft this section using CURRENT_PROJECT_FACTS as truth. Historical references may guide structure and wording only. Every tbcFields entry must appear as an explicit tbc block. Do not invent unresolved values. Do not copy historical numbers, names, or legal terms that are not in CURRENT_PROJECT_FACTS.',
   };
 
   return [

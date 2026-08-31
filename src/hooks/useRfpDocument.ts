@@ -50,6 +50,7 @@ function deriveDocumentStatus(slot: AssembledRfpSectionSlot): DocumentStatus {
 export interface AssembledProgressSummary {
   approvedApplicableCount: number;
   generatedApplicableCount: number;
+  structuralPreparedCount: number;
   applicableSectionCount: number;
   complete: boolean;
   documentTitle?: string;
@@ -341,6 +342,9 @@ export function useRfpDocument(documentKey: string | undefined) {
   const hasGeneratedContent = Boolean(
     assembled && assembled.generatedApplicableCount > 0,
   );
+  const hasPreparedStructural = Boolean(
+    assembled && assembled.structuralPreparedCount > 0,
+  );
 
   const progressSummary = useMemo(() => {
     if (!assembled) return null;
@@ -354,6 +358,7 @@ export function useRfpDocument(documentKey: string | undefined) {
     return {
       approvedApplicableCount: assembled.approvedApplicableCount,
       generatedApplicableCount: assembled.generatedApplicableCount,
+      structuralPreparedCount: assembled.structuralPreparedCount,
       applicableSectionCount: assembled.applicableSectionCount,
       complete: assembled.complete,
       documentTitle: documentMeta.documentTitle,
@@ -384,6 +389,7 @@ export function useRfpDocument(documentKey: string | undefined) {
     draftingReferences,
     revokeDraftingReference,
     hasGeneratedContent,
+    hasPreparedStructural,
     progressSummary,
     sectionHistory,
     historyLoading,

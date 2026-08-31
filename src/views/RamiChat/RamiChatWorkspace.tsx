@@ -40,7 +40,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
 
   const onProgressSummary = useCallback((summary: AssembledProgressSummary | null) => {
     setAssembledProgress(summary);
-    if (summary && summary.generatedApplicableCount > 0) {
+    if (summary && (summary.generatedApplicableCount > 0 || summary.structuralPreparedCount > 0)) {
       setForceDocumentPane(true);
       setRightPaneVisible(true);
     }
@@ -55,7 +55,8 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
       .then((data) => {
         if (cancelled || !data?.ok) return;
         const generated = Number(data.assembled?.generatedApplicableCount ?? 0);
-        if (generated > 0) {
+        const structural = Number(data.assembled?.structuralPreparedCount ?? 0);
+        if (generated > 0 || structural > 0) {
           setForceDocumentPane(true);
           setRightPaneVisible(true);
         }
@@ -94,7 +95,10 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
   }, [composerValue, sendMessage]);
 
   const showSplit =
-    (rfpIntent === 'CREATE_RFP' || forceDocumentPane || Boolean(assembledProgress?.generatedApplicableCount)) &&
+    (rfpIntent === 'CREATE_RFP' ||
+      forceDocumentPane ||
+      Boolean(assembledProgress?.generatedApplicableCount) ||
+      Boolean(assembledProgress?.structuralPreparedCount)) &&
     rightPaneVisible;
   const isInitialState = messages.length === 0 && !isGenerating && !showSplit;
 
@@ -264,6 +268,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
                     completionPercent={completionPercent}
                     assembledApprovedCount={assembledProgress?.approvedApplicableCount}
                     assembledGeneratedCount={assembledProgress?.generatedApplicableCount}
+                    assembledStructuralCount={assembledProgress?.structuralPreparedCount}
                   />
                 </div>
 

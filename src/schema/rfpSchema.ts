@@ -13,6 +13,18 @@
 
 export type SectionClassification = 'mandatory' | 'conditional';
 
+/** Cover / TOC / standard Annexes: TypeScript-rendered. Abbreviations: derived, never Qwen-invented. */
+export const STRUCTURAL_SECTION_IDS = new Set([
+  'coverPage',
+  'tableOfContents',
+  'abbreviations',
+  'annexes',
+]);
+
+export function isStructuralSectionId(sectionId: string): boolean {
+  return STRUCTURAL_SECTION_IDS.has(sectionId);
+}
+
 /** Applicability context used by isSectionApplicable(). */
 export interface SectionApplicabilityContext {
   /** e.g. 'system-implementation' | 'framework-agreement' | 'consulting' | ... */
@@ -27,6 +39,12 @@ export interface SectionApplicabilityContext {
   hasSupportPeriod?: boolean;
   hasNamedRoles?: boolean;
   isLargeEngagement?: boolean;
+  /** True when requiredAnnexes has real project-specific annex/form/attachment material. */
+  hasAnnexRequirements?: boolean;
+  /** True when the organization standard RFP annex pack applies (not PQ/RFI). */
+  hasStandardAnnexPack?: boolean;
+  /** True when a derived glossary can be built from confirmed terminology. */
+  hasGlossaryTerms?: boolean;
 }
 
 export interface RfpSubsection {
@@ -113,7 +131,7 @@ export function isSectionApplicable(
 
   switch (section.sectionId) {
     case 'abbreviations':
-      return isSystem || isConnectivity;
+      return (isSystem || isConnectivity) && Boolean(ctx.hasGlossaryTerms);
 
     case 'functionalRequirements':
       return isSystem;
@@ -141,6 +159,9 @@ export function isSectionApplicable(
         packs.has('PMO')
       );
 
+    case 'annexes':
+      return Boolean(ctx.hasStandardAnnexPack) || Boolean(ctx.hasAnnexRequirements);
+
     default:
       return false;
   }
@@ -157,6 +178,7 @@ export const RFP_SECTIONS = [
     chapterGroup: undefined,
     representativeSubsections: [
       { id: 'title', title: 'Project / Service Title', alwaysIncluded: true },
+      { id: 'issuerEntity', title: 'Issuing / Procuring Entity', alwaysIncluded: true },
       { id: 'beneficiaryEntity', title: 'Beneficiary Entity', alwaysIncluded: true },
       { id: 'rfpNumber', title: 'RFP Number', alwaysIncluded: true },
       { id: 'deadline', title: 'Proposal Deadline', alwaysIncluded: true },
@@ -429,8 +451,9 @@ export const RFP_SECTIONS = [
     sectionId: 'annexes',
     title: 'Annexes',
     order: 20,
-    classification: 'mandatory',
-    applicableWhenNote: 'Always',
+    classification: 'conditional',
+    applicableWhenNote:
+      'Standard organization annex pack for ordinary RFPs; project-specific annexes appended when confirmed. Not forced for pre-qualification / RFI stages unless extra annex material exists',
     chapterGroup: 'Annexes',
     representativeSubsections: [
       { id: 'complianceSheet', title: 'Annex: Compliance Sheet', alwaysIncluded: false },

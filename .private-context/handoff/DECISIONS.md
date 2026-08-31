@@ -36,7 +36,7 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 
 ## #5 — Canonical information model is the memory definition
 **Decision**: `src/schema/projectMemoryFields.ts` `PROJECT_MEMORY_FIELDS` defines what can be stored in `ProjectMemory`. The LLM extraction schema validates against this set.
-**Status**: **Superseded count by #43** (52 → 59). The rule (Fields are the only memory keys) remains Active.
+**Status**: **Superseded count by #43** (52 → 59) **then #52** (59 → 60 with `issuerEntity`). The rule (Fields are the only memory keys) remains Active.
 
 ---
 
@@ -294,7 +294,7 @@ Second-laptop reproduce-and-run (not a behavior change): `.private-context/hando
 | Sections | Still 20 — no 21st section |
 
 Applicability: call-off only for FRAMEWORK / ASSIGNMENT / SOW; named personnel only when PMO / FRAMEWORK / SYSTEM packs apply; admin Fields are supporting + TBC; they must not block unrelated sections. Historical REFERENCE → PROPOSED → BA confirm is unchanged. Do not mass-infer historical mappings with Qwen.
-**Status**: Active. Binding until a later evidence pass.
+**Status**: Active for the 52→59 promotion. Current catalog count is **60 Fields / 70 Questions** after **#52** (`issuerEntity`). Binding until a later evidence pass.
 
 ---
 
@@ -315,7 +315,7 @@ Hard rules:
 - Prompt + deterministic leakage sanitizer: historical numbers/names that are not independently in ProjectFacts must not appear as current truth.
 - Drafting lineage is UI metadata, not official RFP citation, and is not written into DOCX.
 - Local and Modal stay behind `RamiModelProvider` — no provider-specific RAG generators.
-- pgvector remains deferred. Canonical model remains 59 / 69 / 20.
+- pgvector remains deferred. Canonical model is **60 Fields / 70 Questions / 20 Sections** (see #52).
 
 **Status**: Active. Binding.
 
@@ -374,4 +374,18 @@ Artifact: `resources/historical-rfps/derived/generation-rag-live-eval.json`. Bro
 **Decision**: Expanded Rami engine panel collapses on chevron, header click, outside pointer-down, and Escape. Inner action controls must not accidentally collapse. Drag uses threshold without sticky `movedRef` blocking subsequent collapse. Dismiss persists collapsed state to `localStorage`.
 
 **Status**: Active.
+
+---
+
+## #52 — Generic issuer vs beneficiary + structural RFP assembly
+**Decision**: `issuerEntity` (Issuing / Procuring Entity) is a generic canonical Field, distinct from `beneficiaryEntity`. Do not infer one from the other. Same organization in both fields is valid. Conflicts are field-specific. Cover **Issued by** uses `issuerEntity` when known and **TBC** otherwise; missing issuer must not block Cover rendering. Question **0.8** collects issuer; do not overload 0.3 / 3.1.
+
+Cover Page, Table of Contents, and the organization standard Annex pack are TypeScript-rendered (no Qwen). Introduction is AI-drafted from foundational who / what / why ProjectFacts; the BA does not supply Introduction prose. Standard Annex titles are automatic for ordinary full RFPs; project-specific annexes append from `requiredAnnexes`. The repository does **not** currently store reusable annex form files — placeholders must not claim a form is attached.
+
+PostgreSQL remains persistent authority. Hydration must not silently hide stored contradictions. Full RFP / DOCX must not emit internal generation diagnostic strings as document text. AI drafted counts must not include automatically prepared structural sections.
+
+Production source must remain generic — no project-specific (Natiq) corrective logic.
+
+**Status**: Active. Binding.
+
 

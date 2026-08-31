@@ -2,8 +2,8 @@
 /**
  * Phase 1 validation script.
  * Verifies:
- *   - Canonical schema has exactly 20 sections (12 mandatory, 8 conditional)
- *   - Canonical field list matches CANONICAL_FIELD_COUNT (59 after 2026-08 expansion)
+ *   - Canonical schema has exactly 20 sections (11 mandatory, 9 conditional)
+ *   - Canonical field list matches CANONICAL_FIELD_COUNT (60: 52 + 7 + issuerEntity)
  *   - No duplicate sectionIds or fieldIds
  *   - All fieldId targetSections reference valid section IDs
  *   - Section state machine transitions are internally consistent
@@ -23,6 +23,7 @@ import {
   PROJECT_MEMORY_FIELDS,
   CANONICAL_FIELD_COUNT,
   LEGACY_CANONICAL_FIELD_COUNT,
+  POST_EXPANSION_FIELD_IDS,
   PROMOTED_FIELD_IDS,
 } from '../src/schema/projectMemoryFields';
 import { createEmptyProjectMemory } from '../src/types/projectMemory';
@@ -67,14 +68,14 @@ check('Total section count = 20', () => {
   if (RFP_SECTIONS.length !== 20) throw new Error(`Got ${RFP_SECTIONS.length}`);
 });
 
-check('Mandatory section count = 12', () => {
+check('Mandatory section count = 11 (Annexes are conditional on the standard pack / extras)', () => {
   const n = getMandatorySections().length;
-  if (n !== 12) throw new Error(`Got ${n} mandatory sections`);
+  if (n !== 11) throw new Error(`Got ${n} mandatory sections`);
 });
 
-check('Conditional section count = 8', () => {
+check('Conditional section count = 9', () => {
   const n = getConditionalSections().length;
-  if (n !== 8) throw new Error(`Got ${n} conditional sections`);
+  if (n !== 9) throw new Error(`Got ${n} conditional sections`);
 });
 
 check('Sections are ordered 1–20 with no gaps', () => {
@@ -116,11 +117,17 @@ check('First section is coverPage at order 1', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 console.log('\n2. Canonical Information Requirements');
 
-check(`Total field count = ${LEGACY_CANONICAL_FIELD_COUNT + PROMOTED_FIELD_IDS.length} (legacy 52 + 7 promoted)`, () => {
-  if (CANONICAL_FIELD_COUNT !== LEGACY_CANONICAL_FIELD_COUNT + PROMOTED_FIELD_IDS.length) {
+check(`Total field count = ${LEGACY_CANONICAL_FIELD_COUNT + PROMOTED_FIELD_IDS.length + POST_EXPANSION_FIELD_IDS.length} (legacy 52 + 7 promoted + issuerEntity)`, () => {
+  if (
+    CANONICAL_FIELD_COUNT !==
+    LEGACY_CANONICAL_FIELD_COUNT + PROMOTED_FIELD_IDS.length + POST_EXPANSION_FIELD_IDS.length
+  ) {
     throw new Error(`CANONICAL_FIELD_COUNT = ${CANONICAL_FIELD_COUNT}`);
   }
-  if (CANONICAL_FIELD_COUNT !== 59) throw new Error(`Expected 59, got ${CANONICAL_FIELD_COUNT}`);
+  if (CANONICAL_FIELD_COUNT !== 60) throw new Error(`Expected 60, got ${CANONICAL_FIELD_COUNT}`);
+  if (!PROJECT_MEMORY_FIELDS.some((f) => f.fieldId === 'issuerEntity')) {
+    throw new Error('issuerEntity missing from PROJECT_MEMORY_FIELDS');
+  }
 });
 
 check('PROJECT_MEMORY_FIELDS.length matches CANONICAL_FIELD_COUNT', () => {

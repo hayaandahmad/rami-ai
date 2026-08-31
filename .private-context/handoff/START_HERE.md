@@ -21,10 +21,10 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-These must match. The checkpoint commit message begins with `feat(rami): complete AI-assisted RFP workspace checkpoint`.
+These must match. The current checkpoint commit message begins with `feat(rami): harden generic RFP extraction and document assembly`.
 
-**Historical base before Phases 1–5:** `0a79af4fb6e7317daa34100f8d1afa992cb8017f`  
-**Current tip:** see `git log -1` after pull (includes Phases 1–5 + refreshed shared DB snapshot).
+**Historical base before this corrective tree:** `dcc7f6baf6ab6af90d9c40ca9183c7bb154dbc58`  
+**Current tip:** see `git log -1` after pull.
 
 ## B. What RAMI is
 
@@ -32,15 +32,22 @@ RAMI is an AI-assisted BA/RFP workspace. **Qwen3 8B** handles language only. **T
 
 - **PostgreSQL** is authoritative for project state
 - **ProjectFacts** are business truth; document prose is separate
-- **Question ≠ Field** (69 Questions, 59 Fields, 20 Sections)
+- **Question ≠ Field** (70 Questions, 60 Fields, 20 Sections)
+- **`issuerEntity` is not `beneficiaryEntity`** — issuing / procuring organization vs beneficiary
 - **Local Ollama** and **Modal GPU** are interchangeable behind `RamiModelProvider`
 
-## C. Current product milestone (Phases 1–5 complete)
+## C. Current product milestone
 
 | Capability | Status |
 |---|---|
 | PostgreSQL persistence | **Yes** — migrations through `007` |
-| Canonical model | **20** Sections · **59** Fields · **69** Questions |
+| Canonical model | **20** Sections · **60** Fields · **70** Questions |
+| Generic extraction hardening | **Yes** — issuer / beneficiary / users / audience separated |
+| Deterministic Cover Page | **Yes** — metadata + TBC; `issuerEntity` drives Issued by |
+| Deterministic Table of Contents | **Yes** |
+| Standard Annex pack | **Yes** — titles + placeholders; form bodies not stored yet |
+| AI-generated Introduction | **Yes** — from who / what / why ProjectFacts |
+| Clean Full RFP / DOCX | **Yes** — no internal `[not generated]` document text |
 | Workspace dashboard (PostgreSQL-backed) | **Yes** |
 | Interview + Project Understanding | **Yes** — Phases A1–A2, B2 |
 | RFP generation + versioning | **Yes** |
@@ -48,7 +55,6 @@ RAMI is an AI-assisted BA/RFP workspace. **Qwen3 8B** handles language only. **T
 | Manual structured section editor | **Yes** — Phase 5 |
 | Section version history + restore-as-new-version | **Yes** — Phase 5 |
 | Delete RFP from dashboard | **Yes** — Phase 5 |
-| Full RFP preview + DOCX export | **Yes** |
 | Historical library + offline RAG (732 chunks) | **Yes** — `REAL[]`, pgvector deferred |
 | Controlled chat REFERENCE → PROPOSED → CONFIRM | **Yes** |
 | Generation-time drafting references | **Yes** — BA-approved, section-scoped only |
@@ -68,11 +74,13 @@ dev/database/rami_ai_shared.dump
 dev/database/rami_ai_shared.metadata.json
 ```
 
+The snapshot includes the seeded catalog: **20 Sections · 60 Fields · 70 Questions** including `issuerEntity`. Restore does not require a hidden manual SQL fix.
+
 ```bash
-# 1. Install PostgreSQL locally; create a role that can create databases
-# 2. Copy .env.example → .env.local; set RAMI_DB_* (loopback host; RAMI_DB_NAME=rami_ai)
-#    Password stays only in .env.local — never commit it
+git pull
 npm install
+# Copy .env.example → .env.local; set RAMI_DB_* (loopback host; RAMI_DB_NAME=rami_ai)
+# Password stays only in .env.local — never commit it
 npm run db:restore-shared -- --confirm-replace-local-rami-ai
 npm run db:check
 npm run historical:check
@@ -83,7 +91,7 @@ Then read `CURRENT_STATE.md` and `NEXT_STEPS.md`.
 
 Private backups (`npm run db:backup` → `.rami-db-backups/`) are **gitignored**.
 
-**Note:** Each machine may use a different PostgreSQL port — set `RAMI_DB_PORT` in `.env.local` accordingly.
+**Note:** Each machine may use a different PostgreSQL port — set `RAMI_DB_PORT` in `.env.local` accordingly. Do not hardcode port or password.
 
 ## E. Modal (machine-local, not in Git)
 
@@ -99,21 +107,23 @@ Existing deployed resources (reuse — do not redeploy unless required):
 | GPU | T4 |
 | Volume | `rami-qwen-poc-ollama` |
 
-Use product **Start Rami / Stop Rami** in the UI. Set `RAMI_MODEL_PROVIDER=modal` in `.env.local` when using Modal.
+Use product **Start Rami / Stop Rami** in the UI. Set `RAMI_MODEL_PROVIDER=modal` in `.env.local` when using Modal. Leave Modal **OFF** unless a live generation check needs it.
 
 ## F. Run and validate
 
 ```bash
 npm run dev          # single dev server only — avoid parallel dev+build on .next
-npm run validate:ui-phase-b1
-npm run validate:ui-phase-b2
-npm run validate:ui-phase-b3
+npm run db:check
+npm run historical:check
+npm run validate:golden-readiness-structural
+npm run validate:standard-annex-pack
+npm run validate:section-readiness
+npm run validate:phase1
+npm run validate:phase2-adaptive
+npm run validate:shared-dump
 npm run validate:edit-with-rami
-npm run validate:ui-phase-b5
 npm run validate:manual-editor-versioning
 npm run validate:project-delete
-npm run validate:document-experience
-npm run validate:rfp-generation
 npx tsx scripts/final-handoff-integration.ts
 ```
 
@@ -121,7 +131,9 @@ npx tsx scripts/final-handoff-integration.ts
 
 - pgvector not installed (corpus small; `REAL[]` acceptable)
 - No production auth / deployment
-- Golden End-to-End RFP evaluation **not yet run** — see `NEXT_STEPS.md`
+- Standard Annex **titles and placeholders** exist; reusable form **bodies/files are not stored**
+- Deterministic Cover/TOC/Annexes are assembled automatically; persisted structural version history remains deferred
+- Golden End-to-End RFP evaluation **not yet completed as a BA journey** — see `NEXT_STEPS.md`
 - Shared dump = development handoff checkpoint, **not** production backup
 
 ## H. Exact next task

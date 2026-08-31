@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 import {
   CANONICAL_FIELD_COUNT,
   LEGACY_CANONICAL_FIELD_COUNT,
+  POST_EXPANSION_FIELD_IDS,
   PROJECT_MEMORY_FIELDS,
   PROMOTED_FIELD_IDS,
 } from '../src/schema/projectMemoryFields';
@@ -107,15 +108,17 @@ console.log('\n=== Canonical information-model expansion ===\n');
 async function main() {
   loadLocalEnv();
 
-  await run('counts: 52→59 fields, 62→69 questions', () => {
+  await run('counts: 52 + 7 promoted + issuerEntity; 62 + 7 + issuer question', () => {
     assert.equal(LEGACY_CANONICAL_FIELD_COUNT, 52);
     assert.equal(PROMOTED_FIELD_IDS.length, 7);
-    assert.equal(CANONICAL_FIELD_COUNT, 59);
-    assert.equal(PROJECT_MEMORY_FIELDS.length, 59);
+    assert.equal(POST_EXPANSION_FIELD_IDS.length, 1);
+    assert.equal(CANONICAL_FIELD_COUNT, 60);
+    assert.equal(PROJECT_MEMORY_FIELDS.length, 60);
+    assert.ok(PROJECT_MEMORY_FIELDS.some((f) => f.fieldId === 'issuerEntity'));
     assert.equal(HISTORICAL_WORKBOOK_QUESTION_COUNT, 62);
     assert.equal(PROMOTED_QUESTION_IDS.length, 7);
-    assert.equal(CANONICAL_QUESTION_COUNT, 69);
-    assert.equal(QUESTION_SEEDS.length, 69);
+    assert.equal(CANONICAL_QUESTION_COUNT, 70);
+    assert.equal(QUESTION_SEEDS.length, 70);
     assert.equal(RFP_SECTIONS.length, 20);
   });
 
@@ -401,11 +404,11 @@ async function main() {
     const liveBefore = await countLiveProjectTables();
     const chunksBefore = await countChunks();
 
-    await run('seeded definitions are 59 fields / 69 questions', async () => {
+    await run('seeded definitions are 60 fields / 70 questions', async () => {
       const f = await query<{ n: string }>('SELECT COUNT(*)::text AS n FROM fields');
       const q = await query<{ n: string }>('SELECT COUNT(*)::text AS n FROM questions');
-      assert.equal(Number(f.rows[0].n), 59);
-      assert.equal(Number(q.rows[0].n), 69);
+      assert.equal(Number(f.rows[0].n), 60);
+      assert.equal(Number(q.rows[0].n), 70);
     });
 
     await run('historical mapping backfill + chunk metadata sync (no re-embed)', async () => {

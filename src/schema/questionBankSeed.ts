@@ -16,6 +16,7 @@ export const QUESTION_SEEDS: readonly QuestionSeed[] = [
   { questionId: '0.1', questionText: 'What type of RFP/document is this?', sectionId: 'coverPage', fieldIds: ['documentType'] },
   { questionId: '0.2', questionText: 'What is the document/RFP title?', sectionId: 'coverPage', fieldIds: ['documentTitle'] },
   { questionId: '0.3', questionText: 'What is the beneficiary entity / ministry?', sectionId: 'coverPage', fieldIds: ['beneficiaryEntity'] },
+  { questionId: '0.8', questionText: 'Which organization is formally issuing or procuring this RFP?', sectionId: 'coverPage', fieldIds: ['issuerEntity'] },
   { questionId: '0.4', questionText: 'What is the RFP or tender number (if any)?', sectionId: 'coverPage', fieldIds: ['tenderNumber'] },
   { questionId: '0.5', questionText: 'What is the deadline?', sectionId: 'coverPage', fieldIds: ['proposalDeadline'] },
   { questionId: '0.6', questionText: 'Language is English only for now (do not ask for Arabic/bilingual in Phase 1)', sectionId: 'coverPage', fieldIds: [] },

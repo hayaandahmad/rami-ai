@@ -112,7 +112,7 @@ async function main() {
       }
       if (missing.length === 0) {
         assert.equal(
-          assembled.generatedApplicableCount,
+          assembled.generatedApplicableCount + assembled.structuralPreparedCount,
           assembled.applicableSectionCount,
         );
       }

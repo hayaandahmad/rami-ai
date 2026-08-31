@@ -274,17 +274,17 @@ async function main() {
   loadLocalEnv();
   const evalOut: Record<string, unknown> = {
     generatedAt: new Date().toISOString(),
-    fieldCount: 59,
-    questionCount: 69,
+    fieldCount: 60,
+    questionCount: 70,
     sectionCount: 20,
     silentRetrieval: false,
     automaticFactPromotion: false,
     pgvector: 'not installed',
   };
 
-  await run('canonical counts remain 59 / 69 / 20', () => {
-    assert.equal(CANONICAL_FIELD_COUNT, 59);
-    assert.equal(CANONICAL_QUESTION_COUNT, 69);
+  await run('canonical counts remain 60 / 70 / 20', () => {
+    assert.equal(CANONICAL_FIELD_COUNT, 60);
+    assert.equal(CANONICAL_QUESTION_COUNT, 70);
     assert.equal(RFP_SECTIONS.length, 20);
   });
 

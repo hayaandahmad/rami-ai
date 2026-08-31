@@ -33,7 +33,7 @@ function deriveRole(fieldId: string, sectionId: string, sectionCount: number): S
 function naValidFor(fieldId: string): boolean {
   const def = getFieldDef(fieldId);
   if (!def) return true;
-  if (fieldId === 'riskNotes') return true;
+  if (fieldId === 'riskNotes' || fieldId === 'requiredAnnexes') return true;
   if (def.requirement === 'conditional') return true;
   return getFieldControlMeta(fieldId).materiality === 'LOW';
 }
@@ -64,6 +64,13 @@ export function getSectionFieldLinks(): SectionFieldLink[] {
     { sectionId: 'administrativeProcedures', fieldId: 'clarificationContact' },
     { sectionId: 'administrativeProcedures', fieldId: 'submissionChannel' },
     { sectionId: 'projectManagementGovernance', fieldId: 'governanceCadence' },
+    { sectionId: 'introduction', fieldId: 'documentTitle' },
+    { sectionId: 'introduction', fieldId: 'documentType' },
+    { sectionId: 'introduction', fieldId: 'engagementType' },
+    { sectionId: 'introduction', fieldId: 'currentSituation' },
+    { sectionId: 'introduction', fieldId: 'businessNeedRationale' },
+    { sectionId: 'introduction', fieldId: 'businessObjectives' },
+    { sectionId: 'introduction', fieldId: 'inScope' },
   ];
   for (const pair of extraPairs) {
     pairKeys.set(`${pair.sectionId}::${pair.fieldId}`, pair);
@@ -126,7 +133,7 @@ export const SECTION_COVERAGE_NOTES: Record<
   },
   abbreviations: {
     severity: 'OPTIONAL',
-    note: 'Glossary can be derived during generation; no dedicated field.',
+    note: 'Derived from confirmed project terminology only. Omitted when no glossary can be derived; never hallucinated.',
   },
   administrativeProcedures: {
     severity: 'OPTIONAL',

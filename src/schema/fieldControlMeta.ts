@@ -41,11 +41,17 @@ export const FIELD_CONTROL_META: Record<string, FieldControlMeta> = {
     relatedAskPeers: ['engagementType', 'beneficiaryEntity'],
   },
   documentTitle: { packs: ['CORE'], materiality: M.LOW, defaultDepth: D.SHORT },
+  issuerEntity: {
+    packs: ['CORE', 'PROCUREMENT'],
+    materiality: M.STANDARD,
+    defaultDepth: D.SHORT,
+    relatedAskPeers: ['beneficiaryEntity', 'documentType'],
+  },
   beneficiaryEntity: {
     packs: ['CORE'],
     materiality: M.CRITICAL,
     defaultDepth: D.STANDARD,
-    relatedAskPeers: ['documentType'],
+    relatedAskPeers: ['documentType', 'issuerEntity'],
   },
   tenderNumber: { packs: ['CORE', 'PROCUREMENT'], materiality: M.LOW, defaultDepth: D.SHORT },
   proposalDeadline: { packs: ['CORE', 'PROCUREMENT'], materiality: M.LOW, defaultDepth: D.SHORT },
@@ -278,7 +284,7 @@ export const FIELD_CONTROL_META: Record<string, FieldControlMeta> = {
   },
   requiredAnnexes: {
     packs: ['PROCUREMENT', 'PRE_QUALIFICATION'],
-    materiality: M.HIGH,
+    materiality: M.STANDARD,
     defaultDepth: D.STANDARD,
   },
 

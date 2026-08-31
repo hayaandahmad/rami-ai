@@ -94,13 +94,16 @@ run('NOT_APPLICABLE section reports no missing fields', () => {
   assert.equal(r.criticalBlockers.length, 0);
 });
 
-run('missing critical field → NOT_READY', () => {
+run('empty cover is structurally draftable (TBC metadata, not blocked)', () => {
   const memory = createEmptyProjectMemory();
   const ctx = createEmptyProjectContext();
-  const r = getSectionReadiness(memory, 'coverPage', ctx);
-  assert.equal(r.applicable, true);
-  assert.equal(r.readiness, 'NOT_READY');
-  assert.ok(r.criticalBlockers.includes('documentType') || r.criticalBlockers.includes('beneficiaryEntity'));
+  const cover = getSectionReadiness(memory, 'coverPage', ctx);
+  assert.equal(cover.applicable, true);
+  assert.ok(cover.readiness === 'READY_TO_DRAFT' || cover.readiness === 'DRAFTABLE_WITH_TBC');
+  const intro = getSectionReadiness(memory, 'introduction', ctx);
+  assert.equal(intro.applicable, true);
+  assert.equal(intro.readiness, 'NOT_READY');
+  assert.ok(intro.criticalBlockers.includes('beneficiaryEntity'));
 });
 
 run('DRAFTABLE_WITH_TBC when must-have is spoken TBC and others answered', () => {
@@ -142,7 +145,7 @@ run('DRAFTABLE_WITH_TBC when must-have is spoken TBC and others answered', () =>
   assert.equal(r.readiness, 'DRAFTABLE_WITH_TBC');
 });
 
-run('READY_TO_DRAFT when cover must-haves are answered', () => {
+run('cover is structurally draftable when must-haves are answered', () => {
   const memory = createEmptyProjectMemory();
   memory.documentType = createMemoryField('documentType', 'assessment', 'EXTRACTED', 'ba-message');
   memory.beneficiaryEntity = createMemoryField(
@@ -159,9 +162,10 @@ run('READY_TO_DRAFT when cover must-haves are answered', () => {
   );
   const ctx = createEmptyProjectContext();
   const r = getSectionReadiness(memory, 'coverPage', ctx);
-  assert.equal(r.readiness, 'READY_TO_DRAFT');
+  assert.ok(r.readiness === 'READY_TO_DRAFT' || r.readiness === 'DRAFTABLE_WITH_TBC');
   assert.equal(r.criticalBlockers.length, 0);
-  assert.equal(r.tbcFields.length, 0);
+  assert.ok(!r.missingFields.includes('documentType'));
+  assert.ok(!r.missingFields.includes('beneficiaryEntity'));
 });
 
 run('boilerplate section with no facts is READY_TO_DRAFT when applicable', () => {
@@ -178,11 +182,18 @@ run('one field maps to multiple sections', () => {
   assert.ok(sections.length >= 2);
 });
 
-run('mapping has unique pairs and stays within 59/20', () => {
+run('issuerEntity maps to Cover and Administrative Procedures, not Introduction', () => {
+  const sections = getSectionIdsForField('issuerEntity');
+  assert.ok(sections.includes('coverPage'));
+  assert.ok(sections.includes('administrativeProcedures'));
+  assert.ok(!sections.includes('introduction'));
+});
+
+run('mapping has unique pairs and stays within 60/20', () => {
   const links = getSectionFieldLinks();
   const keys = links.map((l) => `${l.sectionId}::${l.fieldId}`);
   assert.equal(new Set(keys).size, keys.length);
-  assert.equal(PROJECT_MEMORY_FIELDS.length, 59);
+  assert.equal(PROJECT_MEMORY_FIELDS.length, 60);
   assert.equal(RFP_SECTIONS.length, 20);
   for (const link of links) {
     assert.ok(PROJECT_MEMORY_FIELDS.some((f) => f.fieldId === link.fieldId));

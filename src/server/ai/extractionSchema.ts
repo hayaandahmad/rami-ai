@@ -117,9 +117,16 @@ ${fieldList}
 
 FIELD GUIDANCE:
 - documentType: one of system-implementation, framework-agreement, consulting, assessment, support, connectivity-telecom
+- engagementType: nature of the procured work for Engagement Definition (system implementation, consulting, assessment, support, framework, PoC, mixed). Distinct from documentType (RFP category) and from awardModel / pricing (commercial model). Do not copy documentType into engagementType. Do not extract fixed-price / T&M as engagementType.
+- documentTitle: the project / RFP name. Map phrases like "Project Name:" or "The project is called …".
 - Values for list fields (inScope, businessObjectives, etc.) should be arrays of concise strings
 - For simple text fields, use a plain string value
-- beneficiaryEntity: the ministry or government entity name
+- issuerEntity: the organization formally issuing or procuring the RFP (issuing entity, procuring entity, contracting authority, RFP issuer, entity issuing this tender, entity publishing the RFP). Distinct from beneficiaryEntity. Do not copy beneficiary into issuer. Do not copy issuer into beneficiary. If the BA says one organization is issuing the RFP on behalf of another, issuerEntity is the issuing organization and beneficiaryEntity is the organization it is on behalf of. If issuer is not stated, omit issuerEntity.
+- beneficiaryEntity: the entity the work is for — owning / overseeing beneficiary ministry or agency. Distinct from issuerEntity. NEVER the public, citizens, residents, journalists, media organizations, end users, or "indirect beneficiaries". Those are not beneficiaryEntity. Put them in users ONLY when the BA says they use the system; if they are indirect / not users, omit them.
+- Do not put the issuing/procuring authority on beneficiaryEntity unless the BA said that organization is also the beneficiary.
+- users: people or roles who operate or use the system (internal/external). Indirect beneficiaries and non-users do not belong here.
+- businessNeedRationale: why the project is needed now. If the BA clearly describes the business problem or need, extract it here even if they never say the words "business need".
+- currentSituation: the as-is environment (distinct from the need/rationale).
 - engagementDuration: e.g. "12 months", "2 years"
 - evaluationWeights: e.g. "70/30 technical/financial"
 - awardModel: object { model: "single-supplier"|"multi-supplier"|"ranked-panel"|"service-specific", supplierCount?: number } or a short string like "three suppliers on a framework"

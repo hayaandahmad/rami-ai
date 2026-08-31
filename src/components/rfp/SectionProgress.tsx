@@ -12,6 +12,7 @@ interface SectionProgressProps {
   applicableSectionCount?: number;
   assembledApprovedCount?: number;
   assembledGeneratedCount?: number;
+  assembledStructuralCount?: number;
 }
 
 export function SectionProgress({
@@ -19,10 +20,12 @@ export function SectionProgress({
   applicableSectionCount,
   assembledApprovedCount,
   assembledGeneratedCount,
+  assembledStructuralCount,
 }: SectionProgressProps) {
   const approved = assembledApprovedCount ?? 0;
   const total = applicableSectionCount ?? 0;
   const generated = assembledGeneratedCount;
+  const structural = assembledStructuralCount;
 
   return (
     <div
@@ -39,7 +42,17 @@ export function SectionProgress({
             ·
           </span>
           <span>
-            <span className="font-semibold text-text-primary">{generated}</span> generated
+            <span className="font-semibold text-text-primary">{generated}</span> drafted
+          </span>
+        </>
+      ) : null}
+      {structural != null && structural > 0 ? (
+        <>
+          <span className="text-text-muted" aria-hidden>
+            ·
+          </span>
+          <span>
+            <span className="font-semibold text-text-primary">{structural}</span> automatic
           </span>
         </>
       ) : null}

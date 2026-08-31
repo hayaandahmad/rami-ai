@@ -113,7 +113,10 @@ export interface AssembledRfp {
   assembledAt: string;
   sections: AssembledRfpSectionSlot[];
   applicableSectionCount: number;
+  /** Applicable narrative sections with Qwen (or persisted AI) drafts. Excludes deterministic Cover/TOC/Annexes/Abbreviations. */
   generatedApplicableCount: number;
+  /** Applicable structural/derived sections that RAMI prepared automatically. */
+  structuralPreparedCount: number;
   approvedApplicableCount: number;
   complete: boolean;
 }

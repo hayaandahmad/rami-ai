@@ -57,7 +57,9 @@
     "validate:ui-phase-b5": "npx tsx scripts/validate-ui-phase-b5.ts",
     "validate:manual-editor-versioning": "npx tsx scripts/validate-manual-editor-versioning.ts",
     "validate:project-delete": "npx tsx scripts/validate-project-delete.ts",
-    "validate:final-handoff": "npx tsx scripts/final-handoff-integration.ts"
+    "validate:final-handoff": "npx tsx scripts/final-handoff-integration.ts",
+    "validate:golden-readiness-structural": "npx tsx scripts/validate-golden-readiness-structural.ts",
+    "validate:standard-annex-pack": "npx tsx scripts/validate-standard-annex-pack.ts"
   },
   "dependencies": {
     "docx": "^9.7.1",
