@@ -3,17 +3,13 @@
 import { useCallback, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowLeft, Check, CheckCircle2, CircleDashed } from "lucide-react";
+import { AlertCircle, ArrowLeft, Check, CheckCircle2, CircleDashed, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PageHeader } from "@/components/ui/PageHeader";
-import {
-  DOCUMENT_TYPE_DEFINITIONS,
-  isDemoDocumentType,
-} from "@/data/documentTypes";
+import { DOCUMENT_TYPE_DEFINITIONS } from "@/data/documentTypes";
 import { useDocumentStore } from "@/hooks/useDocumentStore";
 import type { DocumentType } from "@/types/document";
-import { createMockDocument } from "@/utils/createDocument";
 
 const DOCUMENT_TYPE_IDS = DOCUMENT_TYPE_DEFINITIONS.map((definition) => definition.id);
 
@@ -33,6 +29,7 @@ export function DocumentTypeSelectionPage() {
   const { dispatch } = useDocumentStore();
   const [selectedType, setSelectedType] = useState<DocumentType | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
 
   const handleSelectType = useCallback((type: DocumentType) => {
     setSelectedType(type);
@@ -83,26 +80,53 @@ export function DocumentTypeSelectionPage() {
     [focusTypeOption, handleSelectType],
   );
 
-  function handleContinue() {
-    if (!selectedType) {
+  async function handleContinue() {
+    if (!selectedType || creating) {
       return;
     }
 
-    if (!isDemoDocumentType(selectedType)) {
-      const definition = DOCUMENT_TYPE_DEFINITIONS.find(
-        (item) => item.id === selectedType,
-      );
-      setFeedbackMessage(
-        definition?.unavailableMessage ??
-          "This document type is recognized by Rami but is not configured in this demo.",
-      );
-      return;
-    }
+    setCreating(true);
+    setFeedbackMessage(null);
 
-    const document = createMockDocument(selectedType);
-    dispatch({ type: "CREATE_DOCUMENT", document });
-    dispatch({ type: "SET_ACTIVE_DOCUMENT", documentId: document.id });
-    router.push(`/documents/${document.id}/interview`);
+    try {
+      const res = await fetch("/api/rami/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentType: selectedType }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        documentKey?: string;
+        error?: string;
+      };
+
+      if (!res.ok || !data.ok || !data.documentKey) {
+        setFeedbackMessage(data.error ?? "Failed to create project. Check database configuration.");
+        return;
+      }
+
+      const definition = DOCUMENT_TYPE_DEFINITIONS.find((item) => item.id === selectedType);
+      dispatch({
+        type: "CREATE_DOCUMENT",
+        document: {
+          id: data.documentKey,
+          title: definition?.label ?? "Untitled RFP",
+          documentType: selectedType,
+          beneficiary: "To be confirmed",
+          status: "not-started",
+          progressPercent: 0,
+          lastUpdated: "Just now",
+          nextAction: "continue-interview",
+          interviewCompleted: false,
+        },
+      });
+      dispatch({ type: "SET_ACTIVE_DOCUMENT", documentId: data.documentKey });
+      router.push(`/documents/${data.documentKey}/interview`);
+    } catch {
+      setFeedbackMessage("Failed to create project. Please try again.");
+    } finally {
+      setCreating(false);
+    }
   }
 
   return (
@@ -119,7 +143,7 @@ export function DocumentTypeSelectionPage() {
       >
         {DOCUMENT_TYPE_DEFINITIONS.map((definition) => {
           const isSelected = selectedType === definition.id;
-          const AvailabilityIcon = definition.demoEnabled ? CheckCircle2 : CircleDashed;
+          const AvailabilityIcon = definition.supported ? CheckCircle2 : CircleDashed;
 
           return (
             <button
@@ -161,9 +185,9 @@ export function DocumentTypeSelectionPage() {
                 <div className="mt-4">
                   <span
                     className={`inline-flex items-center gap-1.5 rounded-pill px-2.5 py-1 text-caption ${
-                      definition.demoEnabled
+                      definition.supported
                         ? "bg-[var(--color-success-100)] text-[var(--color-success-700)]"
-                        : "bg-surface-subtle text-text-secondary"
+                        : "border border-border bg-surface text-text-secondary"
                     }`}
                   >
                     <AvailabilityIcon
@@ -200,16 +224,23 @@ export function DocumentTypeSelectionPage() {
         </Link>
 
         <Button
-          onClick={handleContinue}
-          disabled={!selectedType}
-          aria-disabled={!selectedType}
+          onClick={() => void handleContinue()}
+          disabled={!selectedType || creating}
+          aria-disabled={!selectedType || creating}
           aria-label={
             selectedType
               ? `Continue with ${DOCUMENT_TYPE_DEFINITIONS.find((item) => item.id === selectedType)?.label ?? "selected document type"}`
               : "Continue with selected document type"
           }
         >
-          Continue
+          {creating ? (
+            <>
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" strokeWidth={1.75} />
+              Creating…
+            </>
+          ) : (
+            "Continue"
+          )}
         </Button>
       </div>
     </div>

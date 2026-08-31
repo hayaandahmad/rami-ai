@@ -8,7 +8,6 @@ import { join } from 'path';
 import { runModalBridge } from './modalBridge';
 import {
   getConfiguredProviderKind,
-  getDevCreditBudgetUsd,
   getExtendSessionSec,
   getIdleTimeoutSec,
   getMaxSessionSec,
@@ -333,9 +332,7 @@ export function buildStatusPayload(
   s: EngineStateFile = loadState(),
   extra?: Record<string, unknown>,
 ): Record<string, unknown> {
-  const u = loadUsage();
   const rate = getT4UsdPerSec();
-  const budget = getDevCreditBudgetUsd();
   const now = nowMs();
 
   let sessionDurationSec: number | null = null;
@@ -358,11 +355,8 @@ export function buildStatusPayload(
     maxRemainingSec = Math.max(0, (Date.parse(s.maxSessionExpiresAt) - now) / 1000);
   }
 
-  // Active session seconds counted live for display; persisted total only on stop
   const liveWarm = sessionDurationSec ?? 0;
-  const estimatedUsedUsd = (u.totalWarmGpuSeconds + liveWarm) * rate;
-  const estimatedRemainingUsd = Math.max(0, budget - estimatedUsedUsd);
-  const estimatedT4SecondsRemaining = rate > 0 ? estimatedRemainingUsd / rate : null;
+  const sessionEstimatedUsd = liveWarm * rate;
 
   return {
     LOCAL_TRACKED_STATE: s.localState,
@@ -391,19 +385,15 @@ export function buildStatusPayload(
     lastError: s.lastError,
     lastShutdownReason: s.lastShutdownReason,
     remoteMinContainersTracked: s.remoteMinContainers,
-    estimated: {
-      label: 'ESTIMATED — Modal billing is source of truth',
-      t4UsdPerSec: rate,
-      t4UsdPerHour: rate * 3600,
-      budgetUsd: budget,
-      usedUsd: Number(estimatedUsedUsd.toFixed(6)),
-      remainingUsd: Number(estimatedRemainingUsd.toFixed(6)),
-      t4SecondsRemaining: estimatedT4SecondsRemaining,
-      t4TimeRemainingHms: formatHms(estimatedT4SecondsRemaining),
-      totalWarmGpuSecondsPersisted: u.totalWarmGpuSeconds,
-      lifetimeRequestCount: u.lifetimeRequestCount,
-      coldStartCount: u.coldStartCount,
+    session: {
+      durationHms: formatHms(sessionDurationSec),
+      requestCount: s.requestCountSession,
+      estimatedCostUsd:
+        sessionEstimatedUsd > 0 ? Number(sessionEstimatedUsd.toFixed(6)) : null,
+      estimatedLabel: 'estimated session GPU time',
     },
+    billingNote:
+      'Account credits and workspace limits are managed by Modal and are not exposed through the current RAMI integration.',
     ...extra,
   };
 }

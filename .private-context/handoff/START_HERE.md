@@ -34,7 +34,9 @@ RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript o
 | Generation-time RAG | **Yes** — BA-approved, section-scoped only |
 | Silent retrieval on Generate / DOCX | **No** |
 | Auto ProjectFact from history | **No** |
+| Workspace dashboard (PostgreSQL-backed) | **Yes** — UI Phase A1 |
 
+Workspace: `http://localhost:3000/workspace`  
 Demo: `http://localhost:3000/documents/rami-gen-core-demo/interview`  
 Live RAG eval project: `rami-rag-live-eval` (see `generation-rag-live-eval.json`)
 

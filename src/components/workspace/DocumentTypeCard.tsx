@@ -7,7 +7,7 @@ interface DocumentTypeCardProps {
 }
 
 export function DocumentTypeCard({ definition }: DocumentTypeCardProps) {
-  const AvailabilityIcon = definition.demoEnabled ? CheckCircle2 : CircleDashed;
+  const AvailabilityIcon = definition.supported ? CheckCircle2 : CircleDashed;
   const TypeIcon = DOCUMENT_TYPE_ICONS[definition.id];
 
   return (
@@ -15,7 +15,7 @@ export function DocumentTypeCard({ definition }: DocumentTypeCardProps) {
       <div
         aria-hidden="true"
         className={`h-1 w-full ${
-          definition.demoEnabled
+          definition.supported
             ? "bg-[var(--color-primary-600)]"
             : "bg-[var(--color-primary-200)]"
         }`}
@@ -24,7 +24,7 @@ export function DocumentTypeCard({ definition }: DocumentTypeCardProps) {
         <div className="flex items-start gap-3">
           <div
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-control ${
-              definition.demoEnabled
+              definition.supported
                 ? "bg-[var(--color-primary-100)] text-[var(--color-primary-800)] ring-1 ring-[var(--color-primary-100)]"
                 : "bg-[var(--color-primary-50)] text-[var(--color-primary-700)] ring-1 ring-[var(--color-primary-100)]"
             }`}
@@ -41,7 +41,7 @@ export function DocumentTypeCard({ definition }: DocumentTypeCardProps) {
         <div className="mt-auto border-t border-border/70 pt-3">
           <span
             className={`inline-flex max-w-full items-center gap-1.5 rounded-pill px-2.5 py-0.5 text-caption font-medium ${
-              definition.demoEnabled
+              definition.supported
                 ? "bg-[var(--color-success-100)] text-[var(--color-success-700)]"
                 : "border border-border bg-surface text-text-secondary"
             }`}

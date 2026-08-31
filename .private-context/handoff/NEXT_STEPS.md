@@ -1,6 +1,6 @@
 # Rami — Next Steps
 
-Last updated: 2026-08-31 (GitHub consolidation + shared snapshot refresh)
+Last updated: 2026-08-31 (UI Phase A1 complete)
 
 Entrypoint: `.private-context/handoff/START_HERE.md`
 
@@ -15,6 +15,7 @@ Entrypoint: `.private-context/handoff/START_HERE.md`
 - BA-approved section-scoped generation references
 - Shared development snapshot refreshed and restore-tested
 - Handoff docs aligned to current HEAD
+- **UI Phase A1** — workspace truth, real project creation, engine control panel
 
 ```bash
 npm run db:restore-shared -- --confirm-replace-local-rami-ai
@@ -22,6 +23,7 @@ npm run db:check
 npm run validate:generation-rag
 npm run validate:controlled-rag
 npm run validate:shared-dump
+npm run validate:ui-phase-a1
 ```
 
 ## NEXT
@@ -32,6 +34,7 @@ Then, only if needed: **optional pgvector** when corpus/latency requires it.
 
 ## DONE (added 2026-08-31)
 
+- UI Phase A1 — PostgreSQL-backed workspace, real project creation, Rami engine panel truth (no mock frontend registry; no fake Modal billing in UI)
 - Live Qwen generation-RAG A/B validation harness (`validate:generation-rag-live`)
 - 4 live cases on `rami-rag-live-eval`: deliverables, scopeOfWork, background (TBC), evaluationCriteria (high-risk TBC)
 - ProjectFact + readiness isolation verified; revoke-reference flow verified; zero deterministic leakage in all cases

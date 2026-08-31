@@ -11,9 +11,11 @@ import { TypewriterText } from "./TypewriterText";
 
 interface WorkspaceHeroProps {
   continueDocument?: DocumentProject;
+  loading?: boolean;
 }
 
-export function WorkspaceHero({ continueDocument }: WorkspaceHeroProps) {
+export function WorkspaceHero({ continueDocument, loading }: WorkspaceHeroProps) {
+  const canContinue = Boolean(continueDocument);
   const continueHref = continueDocument
     ? getDocumentActionHref(continueDocument.id, continueDocument.nextAction)
     : "/workspace";
@@ -34,7 +36,7 @@ export function WorkspaceHero({ continueDocument }: WorkspaceHeroProps) {
             </div>
             <div className="inline-flex items-center gap-2 rounded-pill bg-[var(--color-success-100)]/95 px-2.5 py-1 text-caption font-medium text-[var(--color-success-700)] backdrop-blur-sm">
               <StatusPulseDot />
-              Ready to assist
+              Structured RFP analysis
             </div>
           </div>
 
@@ -58,18 +60,35 @@ export function WorkspaceHero({ continueDocument }: WorkspaceHeroProps) {
               Create New Document
             </Button>
           </Link>
-          <Link href={continueHref} className="w-full md:w-auto">
+          {canContinue ? (
+            <Link href={continueHref} className="w-full md:w-auto">
+              <Button
+                variant="secondary"
+                className="h-11 w-full whitespace-nowrap px-5 transition-elevate hover-elevate md:min-w-[12.5rem]"
+                aria-label={`Continue working on ${continueDocument?.title ?? "recent project"}`}
+              >
+                Continue Working
+                <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.75} />
+              </Button>
+            </Link>
+          ) : (
             <Button
               variant="secondary"
-              className="h-11 w-full whitespace-nowrap px-5 transition-elevate hover-elevate md:min-w-[12.5rem]"
-              aria-label="Continue Working on Digital Services Platform"
+              className="h-11 w-full whitespace-nowrap px-5 md:min-w-[12.5rem]"
+              disabled
+              aria-disabled
+              aria-label="Continue Working — no active project yet"
             >
               Continue Working
               <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0" strokeWidth={1.75} />
             </Button>
-          </Link>
+          )}
         </div>
       </div>
+
+      {loading ? (
+        <p className="relative z-10 mt-4 text-caption text-text-muted">Loading projects…</p>
+      ) : null}
     </section>
   );
 }

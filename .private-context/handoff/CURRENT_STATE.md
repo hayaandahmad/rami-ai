@@ -1,12 +1,14 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-31 (full GitHub consolidation + shared DB snapshot refresh)
+Last updated: 2026-08-31 (UI Phase A1 — workspace truth + engine control)
 
-Authoritative HEAD: `origin/main` (`git log -1`). Shared snapshot refresh: `ff11a1cb7fa84c07bca7c77067f7bcb6ca8f69c3`.
+Authoritative HEAD: `origin/main` (`git log -1`).
 
 ## Runtime truth
 
 ### Persistence
 - PostgreSQL is authoritative for live project state
+- **Dashboard / workspace UI** loads projects from `GET /api/rami/workspace` (no frontend mock registry)
+- **Create New Document** persists via `POST /api/rami/projects` → routes to `/documents/{documentKey}/interview`
 - Git tracks a **logical** development snapshot only:
   - `dev/database/rami_ai_shared.dump`
   - `dev/database/rami_ai_shared.metadata.json`
@@ -70,5 +72,13 @@ Embeddings: `nomic-embed-text` / `nomic-embed-text-v1.5-ollama-prefixed` / 768-d
 - `npm run validate:shared-dump` — TOC + metadata SHA
 - `npm run db:verify-shared-restore` — isolated restore into `rami_ai_shared_restore_test` (live `rami_ai` untouched)
 
+### Workspace / engine UI (Phase A1)
+- `/workspace` — hero, real metrics, Recent Documents, Supported Document Types (last)
+- Rami floating control — collapsed drag without opening panel; provider-aware panel
+- Local Ollama: health/reachability only; no Modal billing
+- Modal: Start/Stop/Extend; session telemetry only; account billing not exposed via API
+
+Validation: `npm run validate:ui-phase-a1`
+
 ## Next
-Optional pgvector when the corpus grows. Do not start productionization or training.
+Golden End-to-End RFP evaluation. Optional pgvector when the corpus grows.

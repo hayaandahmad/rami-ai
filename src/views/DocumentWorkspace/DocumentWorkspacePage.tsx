@@ -34,18 +34,19 @@ function matchesSearchQuery(
 }
 
 function DocumentWorkspaceContent() {
-  const { documents } = useDocumentStore();
+  const { documents, loading } = useDocumentStore();
   const { filter, setFilter, clearFilter } = useWorkspaceFilters();
   const [searchQuery, setSearchQuery] = useState("");
 
   const metrics = useMemo(() => deriveWorkspaceMetrics(documents), [documents]);
 
-  const continueDocument = useMemo(
-    () =>
+  const continueDocument = useMemo(() => {
+    if (documents.length === 0) return undefined;
+    return (
       documents.find((document) => document.nextAction === "continue-interview") ??
-      documents[0],
-    [documents],
-  );
+      documents[0]
+    );
+  }, [documents]);
 
   const filteredDocuments = useMemo(
     () =>
@@ -69,13 +70,13 @@ function DocumentWorkspaceContent() {
     setSearchQuery("");
   }
 
+  const showEmptyWorkspace = !loading && documents.length === 0;
+
   return (
     <div className="space-y-8 md:space-y-10">
-      <WorkspaceHero continueDocument={continueDocument} />
+      <WorkspaceHero continueDocument={continueDocument} loading={loading} />
 
       <WorkspaceSummary metrics={metrics} />
-
-      <DocumentTypeGrid />
 
       <RecentDocumentsPanel
         searchField={
@@ -85,7 +86,17 @@ function DocumentWorkspaceContent() {
           <DocumentFilterBar activeFilter={filter} onFilterChange={setFilter} />
         }
       >
-        {filteredDocuments.length > 0 ? (
+        {showEmptyWorkspace ? (
+          <EmptyState
+            title="No projects yet"
+            description="Create your first RFP project to begin structured AI-assisted analysis with Rami."
+            primaryAction={
+              <Link href="/documents/new">
+                <Button>Create New Document</Button>
+              </Link>
+            }
+          />
+        ) : filteredDocuments.length > 0 ? (
           <DocumentGrid documents={filteredDocuments} />
         ) : (
           <EmptyState
@@ -104,6 +115,8 @@ function DocumentWorkspaceContent() {
           />
         )}
       </RecentDocumentsPanel>
+
+      <DocumentTypeGrid />
     </div>
   );
 }

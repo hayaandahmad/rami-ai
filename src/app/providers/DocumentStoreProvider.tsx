@@ -3,15 +3,16 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
+  useState,
   type ReactNode,
 } from "react";
-import { mockDocuments } from "@/data/mockDocuments";
 import type { DocumentStoreAction, DocumentStoreState } from "@/types/store";
 
 const initialState: DocumentStoreState = {
-  documents: mockDocuments,
+  documents: [],
   activeDocumentId: null,
   answersByDocumentId: {},
   interviewProgressByDocumentId: {},
@@ -25,6 +26,9 @@ function documentStoreReducer(
   action: DocumentStoreAction,
 ): DocumentStoreState {
   switch (action.type) {
+    case "SET_DOCUMENTS":
+      return { ...state, documents: action.documents };
+
     case "SET_ACTIVE_DOCUMENT":
       return { ...state, activeDocumentId: action.documentId };
 
@@ -143,11 +147,38 @@ function documentStoreReducer(
 const DocumentStoreContext = createContext<{
   state: DocumentStoreState;
   dispatch: React.Dispatch<DocumentStoreAction>;
+  loading: boolean;
 } | null>(null);
 
 export function DocumentStoreProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(documentStoreReducer, initialState);
-  const value = useMemo(() => ({ state, dispatch }), [state]);
+  const [loading, setLoading] = useState(true);
+  const value = useMemo(() => ({ state, dispatch, loading }), [state, loading]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/rami/workspace", { cache: "no-store" });
+        const data = (await res.json()) as {
+          ok?: boolean;
+          documents?: DocumentStoreState["documents"];
+        };
+        if (!cancelled && data.ok && Array.isArray(data.documents)) {
+          dispatch({ type: "SET_DOCUMENTS", documents: data.documents });
+        }
+      } catch {
+        /* workspace unavailable — empty state */
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <DocumentStoreContext.Provider value={value}>

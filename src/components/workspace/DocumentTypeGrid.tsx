@@ -12,7 +12,8 @@ export function DocumentTypeGrid() {
           Supported Document Types
         </h2>
         <p className="document-types-description mt-2 text-small leading-relaxed text-text-secondary">
-          Rami supports multiple approved document workflows. System Implementation is demonstrated in the current prototype.
+          Rami supports multiple government document workflows through its adaptive RFP architecture.
+          All listed types can be created as PostgreSQL-backed projects.
         </p>
       </div>
 

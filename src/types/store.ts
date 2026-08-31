@@ -18,6 +18,7 @@ export interface DocumentStoreState {
 }
 
 export type DocumentStoreAction =
+  | { type: "SET_DOCUMENTS"; documents: DocumentProject[] }
   | { type: "SET_ACTIVE_DOCUMENT"; documentId: string }
   | { type: "CREATE_DOCUMENT"; document: DocumentProject }
   | { type: "SAVE_ANSWER"; documentId: string; answer: CapturedAnswer }

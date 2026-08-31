@@ -8,7 +8,7 @@ interface ReviewRouteProps {
 
 export default async function ReviewRoute({ params }: ReviewRouteProps) {
   const { documentId } = await params;
-  const documentTitle = getDocumentTitle(documentId);
+  const documentTitle = await getDocumentTitle(documentId);
 
   return (
     <AppLayout

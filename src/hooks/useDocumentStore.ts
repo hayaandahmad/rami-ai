@@ -14,11 +14,12 @@ import type { DocumentStoreAction } from "@/types/store";
 import { groupCapturedAnswersBySection } from "@/utils/capturedAnswers";
 
 export function useDocumentStore() {
-  const { state, dispatch } = useDocumentStoreContext();
+  const { state, dispatch, loading } = useDocumentStoreContext();
 
   return {
     state,
     dispatch,
+    loading,
     documents: state.documents,
     activeDocumentId: state.activeDocumentId,
     getDocument: (documentId: string): DocumentProject | undefined =>
