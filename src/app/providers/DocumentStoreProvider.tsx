@@ -139,6 +139,38 @@ function documentStoreReducer(
       return { ...state, attachmentByDocumentId: updated };
     }
 
+    case "REMOVE_DOCUMENT": {
+      const documents = state.documents.filter((d) => d.id !== action.documentId);
+      const activeDocumentId =
+        state.activeDocumentId === action.documentId ? null : state.activeDocumentId;
+
+      const answersByDocumentId = { ...state.answersByDocumentId };
+      delete answersByDocumentId[action.documentId];
+
+      const interviewProgressByDocumentId = { ...state.interviewProgressByDocumentId };
+      delete interviewProgressByDocumentId[action.documentId];
+
+      const attachmentByDocumentId = { ...state.attachmentByDocumentId };
+      delete attachmentByDocumentId[action.documentId];
+
+      const reviewConfirmedByDocumentId = { ...state.reviewConfirmedByDocumentId };
+      delete reviewConfirmedByDocumentId[action.documentId];
+
+      const reviewPageStateByDocumentId = { ...state.reviewPageStateByDocumentId };
+      delete reviewPageStateByDocumentId[action.documentId];
+
+      return {
+        ...state,
+        documents,
+        activeDocumentId,
+        answersByDocumentId,
+        interviewProgressByDocumentId,
+        attachmentByDocumentId,
+        reviewConfirmedByDocumentId,
+        reviewPageStateByDocumentId,
+      };
+    }
+
     default:
       return state;
   }

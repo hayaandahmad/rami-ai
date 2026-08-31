@@ -340,3 +340,38 @@ Artifact: `resources/historical-rfps/derived/generation-rag-live-eval.json`. Bro
 
 **Status**: Active. Binding for handoff until superseded by Golden End-to-End results.
 
+---
+
+## #47 — Manual document edit does not mutate ProjectFacts (Phase 5)
+**Decision**: BA manual section editing (`editRfpSection` / `ManualBlockEditor`) modifies `project_section_contents` only. It creates a new DRAFT version. It does not answer Fields, change readiness, or promote TBC to confirmed facts. TBC blocks are protected in the structured editor.
+
+**Status**: Active.
+
+---
+
+## #48 — Section version history is immutable; restore creates new version (Phase 5)
+**Decision**: `project_section_contents` rows are never overwritten. Restore copies historical `blocks` into a **new** current version with `model_used` suffix `restored-from-vN`. Historical rows remain queryable.
+
+**Status**: Active.
+
+---
+
+## #49 — AI Edit with Rami is a separate generation pipeline (Phase 4–5)
+**Decision**: `aiEditRfpSection` is not routed through chat extraction. It uses `SectionEditContext`, creates a new DRAFT version (`+ai-edit`), and must not mutate ProjectFacts. Approved sections require explicit reopen.
+
+**Status**: Active.
+
+---
+
+## #50 — Project deletion uses existing FK CASCADE (Phase 5)
+**Decision**: `DELETE FROM projects WHERE document_key = $1` cascades to all project-owned tables (facts, messages, runtime, section states/contents, proposals, generation references). No new migration required. Server clears `sessionStore` cache on delete. Dashboard uses kebab menu + confirmation.
+
+**Status**: Active.
+
+---
+
+## #51 — Engine panel dismiss interactions (Phase 5)
+**Decision**: Expanded Rami engine panel collapses on chevron, header click, outside pointer-down, and Escape. Inner action controls must not accidentally collapse. Drag uses threshold without sticky `movedRef` blocking subsequent collapse. Dismiss persists collapsed state to `localStorage`.
+
+**Status**: Active.
+

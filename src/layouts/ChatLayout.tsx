@@ -8,6 +8,7 @@
 
 import { Suspense, useState, type ReactNode } from 'react';
 import { Menu } from 'lucide-react';
+import { useDesktopSidebarCollapsed } from '@/hooks/useDesktopSidebarCollapsed';
 import { MobileNavigationDrawer } from '@/layouts/AppShell/MobileNavigationDrawer';
 import { Sidebar } from '@/layouts/AppShell/Sidebar';
 import { SidebarFallback } from '@/layouts/AppShell/SidebarFallback';
@@ -19,6 +20,12 @@ interface ChatLayoutProps {
 
 export function ChatLayout({ children }: ChatLayoutProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+  const { collapsed: desktopCollapsed, toggle: toggleDesktopSidebar, ready } =
+    useDesktopSidebarCollapsed();
+
+  const desktopSidebarWidth = desktopCollapsed
+    ? 'var(--spacing-sidebar-collapsed)'
+    : 'var(--spacing-sidebar-expanded)';
 
   return (
     <div className="h-screen overflow-hidden bg-page-background">
@@ -27,29 +34,33 @@ export function ChatLayout({ children }: ChatLayoutProps) {
       </a>
 
       <div className="flex h-screen overflow-hidden">
-        {/* Desktop sidebar */}
-        <div className="hidden h-screen shrink-0 overflow-hidden lg:block lg:w-[var(--spacing-sidebar-expanded)]">
-          <Suspense fallback={<SidebarFallback collapsed={false} />}>
-            <Sidebar collapsed={false} />
+        <div
+          className="hidden h-screen shrink-0 overflow-hidden transition-[width] duration-200 ease-out lg:block"
+          style={{
+            width: ready ? desktopSidebarWidth : 'var(--spacing-sidebar-expanded)',
+          }}
+        >
+          <Suspense fallback={<SidebarFallback collapsed={desktopCollapsed} />}>
+            <Sidebar
+              collapsed={desktopCollapsed}
+              onToggleCollapse={toggleDesktopSidebar}
+              showCollapseControl
+            />
           </Suspense>
         </div>
 
-        {/* Tablet sidebar */}
         <div className="hidden h-screen shrink-0 overflow-hidden md:block md:w-[var(--spacing-sidebar-collapsed)] lg:hidden">
           <Suspense fallback={<SidebarFallback collapsed />}>
             <Sidebar collapsed id="sidebar-navigation" />
           </Suspense>
         </div>
 
-        {/* Mobile drawer */}
         <MobileNavigationDrawer
           isOpen={isMobileNavOpen}
           onClose={() => setIsMobileNavOpen(false)}
         />
 
-        {/* Main content area — no padding, chat fills height */}
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-          {/* Mobile header */}
           <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border bg-surface px-4 py-3 md:hidden">
             <div className="flex items-center gap-3">
               <button
@@ -67,7 +78,6 @@ export function ChatLayout({ children }: ChatLayoutProps) {
             <UserIdentity compact />
           </div>
 
-          {/* Chat fills remaining height */}
           <main
             id="main-content"
             className="flex min-h-0 flex-1 flex-col overflow-hidden"

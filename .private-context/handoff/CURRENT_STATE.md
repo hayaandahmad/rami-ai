@@ -1,27 +1,23 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-31 (UI Phase A2 — project workspace BA UX)
 
-Authoritative HEAD: `origin/main` (`git log -1`).
+Last updated: 2026-08-31 (Phases 1–5 checkpoint — ready for Device 2 handoff)
+
+Authoritative HEAD: `origin/main` (`git log -1` after pull).
 
 ## Runtime truth
 
 ### Persistence
 - PostgreSQL is authoritative for live project state
-- **Dashboard / workspace UI** loads projects from `GET /api/rami/workspace` (no frontend mock registry)
-- **Create New Document** persists via `POST /api/rami/projects` → routes to `/documents/{documentKey}/interview`
-- Git tracks a **logical** development snapshot only:
-  - `dev/database/rami_ai_shared.dump`
-  - `dev/database/rami_ai_shared.metadata.json`
-- Git does **not** contain the live PostgreSQL server or passwords
-- Each machine runs PostgreSQL locally and restores the shared dump
-- Private dumps: `npm run db:backup` → `.rami-db-backups/` (gitignored)
+- Dashboard loads from `GET /api/rami/workspace`
+- Create document: `POST /api/rami/projects` → `/documents/{documentKey}/interview`
+- Delete document: `DELETE /api/rami/projects/{documentKey}` (CASCADE via existing FKs)
+- Shared snapshot: `dev/database/rami_ai_shared.dump` + `rami_ai_shared.metadata.json`
+- Private dumps: `.rami-db-backups/` (gitignored)
 
 ### Migrations
-Latest: **`007_project_generation_references.sql`**
+Latest: **`007_project_generation_references.sql`** (7 migrations total).
 
-Applied set: `001` … `007` (7 migrations).
-
-### Information model (DB + code)
+### Information model
 | Item | Count |
 |---|---:|
 | Sections | 20 |
@@ -30,66 +26,82 @@ Applied set: `001` … `007` (7 migrations).
 | QuestionFields | 66 |
 | SectionFields | 78 |
 
-### Live development DB inventory (safe counts at snapshot time)
-| Table / metric | Count |
+### Live DB inventory (snapshot metadata — 2026-08-31)
+See `dev/database/rami_ai_shared.metadata.json` for authoritative counts at checkpoint time.
+
+| Table / metric | Count (checkpoint) |
 |---|---:|
-| projects | 7 |
-| project_facts | 61 |
-| messages | 14 |
-| project_section_contents | 39 |
-| historical_rfp_documents | 7 |
-| historical_question_answers | 561 |
+| projects | 25 |
+| project_facts | 187 |
+| messages | 28 |
+| project_section_contents | 105 |
 | historical_knowledge_chunks | 732 |
 | historical_chunk_embeddings | 732 |
-| historical_rag_runtime | 1 |
-| historical_field_proposals | 7 (6 ACCEPTED, 1 REJECTED) |
-| project_generation_references | 2 (1 ACTIVE, 1 REVOKED) |
+| historical_field_proposals | 13 |
+| project_generation_references | 6 |
 
-Embeddings: `nomic-embed-text` / `nomic-embed-text-v1.5-ollama-prefixed` / 768-d / `REAL[]`.
+Embeddings: `nomic-embed-text` / 768-d / `REAL[]`.
 
 ### Demo / proof projects
-- `rami-gen-core-demo` — generated RFP + DOCX
+- `rami-gen-core-demo` — generated RFP + DOCX; live Modal AI-edit verified (introduction v2)
 - `rami-model-expansion-demo` — 59-field conversational proof
-- `rami-gen-rag-demo` — generation-reference proof (Deliverables)
+- `rami-gen-rag-demo` — generation-reference proof
 - `rami-rag-controlled-demo` — controlled chat RAG
-- `rami-persist-accept-20260830` — persistence acceptance fixture
-- `rami-rag-live-eval` — live Qwen A/B generation-RAG quality validation (4 cases)
+- `rami-rag-live-eval` — live Qwen generation-RAG A/B
 
-### Controlled RAG (live chat)
-- Policy-gated retrieval only
-- REFERENCE → PROPOSED (`historical_field_proposals`) → BA CONFIRM → ProjectFact
-- Pending proposals never write `project_facts`
+## Phases 1–5 (this checkpoint)
 
-### Generation-time RAG
-- BA **Use as drafting reference** → `project_generation_references`
-- Section-scoped; never auto-retrieve on Generate / assemble / DOCX
-- Never writes ProjectFacts; never changes readiness/gap semantics
-- **Mock safety**: `npm run validate:generation-rag` (14/14)
-- **Live Qwen quality** (2026-08-31): `npm run validate:generation-rag-live` — 4 A/B cases, ollama-local / qwen3:8b, decision gate **B** (safe; quality benefit unclear). Artifact: `resources/historical-rfps/derived/generation-rag-live-eval.json`
-- Eval project: `rami-rag-live-eval` (separate from `rami-gen-core-demo`)
+### Phase 1 — Engine & chat polish
+- Thinking indicator visible during `thinking` / empty streaming
+- Unicode round-trip through Modal bridge (`utf8BridgeEnv`, `thinkStripper`)
+- Engine timers interpolate client-side (5s poll + 1s tick)
+- Stop Rami reassurance; generation disabled when engine OFF
 
-### Shared snapshot validation
-- `npm run validate:shared-dump` — TOC + metadata SHA
-- `npm run db:verify-shared-restore` — isolated restore into `rami_ai_shared_restore_test` (live `rami_ai` untouched)
+### Phase 2 — Layout & understanding
+- Desktop sidebar collapse + `localStorage` persistence
+- Engine panel OFF vs ERROR distinction; performance disclosure
+- Project Understanding panel compact by default
 
-### Workspace / engine UI (Phase A1)
-- `/workspace` — hero, real metrics, Recent Documents, Supported Document Types (last)
-- Rami floating control — collapsed drag without opening panel; provider-aware panel
-- Local Ollama: health/reachability only; no Modal billing
-- Modal: Start/Stop/Extend; session telemetry only; account billing not exposed via API
+### Phase 3 — Document workspace
+- Sidebar collapse icon at top (icon-only)
+- RFP Document panel layout polish; compact SectionProgress strip
+- Document-scoped `sessionStorage` for section/view mode
 
-Validation: `npm run validate:ui-phase-a1`
+### Phase 4 — Edit with Rami
+- Separate AI edit pipeline (`aiEditRfpSection`) — not chat-routed
+- Creates new DRAFT version; ProjectFacts unchanged
+- Approved sections require reopen
+- Validator: `npm run validate:edit-with-rami`
 
-### Project workspace BA UX (Phase A2)
-- Section progress uses assembled PostgreSQL document state (approved / generated counts)
-- Readiness blockers use canonical Field labels, not raw field IDs
-- Compact Project Understanding panel on the conversation workspace
-- Approve confirmation; Word export distinguishes working draft vs all-sections-approved
-- Historical actions grouped: project information vs drafting help
-- Pending proposals shown as human-readable cards
-- Continue / Open from dashboard routes into `/documents/{key}/interview` (legacy `/review` is a pointer only)
+### Phase 5 — Editor, history, delete
+- Engine panel: outside-click, Escape, header/chevron collapse (no `movedRef` bug)
+- Manual structured block editor + Advanced JSON disclosure
+- Version history UI; read-only preview; restore → new version
+- Dashboard kebab → Delete RFP with confirmation
+- Validators: `validate:ui-phase-b5`, `validate:manual-editor-versioning`, `validate:project-delete`
 
-Validation: `npm run validate:ui-phase-a2`
+## Non-negotiable invariants (unchanged)
+
+- ProjectFacts authoritative; manual/AI document edits do not mutate facts
+- TBC blocks protected in manual editor
+- Section version history immutable; restore creates new version
+- No automatic historical retrieval during generation or AI edit
+- Drafting references never affect readiness
+- Section mode vs Full RFP mode remain distinct
+- DOCX assembles persisted PostgreSQL content
+
+## Validation commands
+
+```bash
+npm run db:check
+npm run historical:check
+npm run validate:shared-dump
+npm run validate:edit-with-rami
+npm run validate:manual-editor-versioning
+npm run validate:project-delete
+npm run validate:ui-phase-b5
+npx tsx scripts/final-handoff-integration.ts
+```
 
 ## Next
-Golden End-to-End RFP evaluation. Rich section editor and version comparison remain later UI work. Optional pgvector when the corpus grows.
+Golden End-to-End RFP evaluation. See `NEXT_STEPS.md`.

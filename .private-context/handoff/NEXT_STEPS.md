@@ -1,46 +1,35 @@
 # Rami — Next Steps
 
-Last updated: 2026-08-31 (UI Phase A2 complete)
+Last updated: 2026-08-31 (Phases 1–5 checkpoint published)
 
 Entrypoint: `.private-context/handoff/START_HERE.md`
 
-## DONE
+## DONE (this checkpoint)
 
-- PostgreSQL persistence + migrations through `007`
-- Demo RFP generation + DOCX
-- Historical library (7) + structured import
-- Offline RAG (732 chunks + embeddings, `REAL[]`)
-- Controlled chat REFERENCE → PROPOSED → CONFIRM
-- Canonical model 59 Fields / 69 Questions / 20 Sections
-- BA-approved section-scoped generation references
-- Shared development snapshot refreshed and restore-tested
-- Handoff docs aligned to current HEAD
-- **UI Phase A1** — workspace truth, real project creation, engine control panel
-- **UI Phase A2** — BA workspace: real section progress, human blockers, project understanding, truthful export/approval copy
+- Phases 1–5 UI/engine/document workspace (see `CURRENT_STATE.md`)
+- Edit with Rami + manual structured editor + version history + Delete RFP
+- Live PostgreSQL integration verified (`final-handoff-integration.ts`, delete test)
+- Live Modal qwen3:8b Edit-with-Rami on `rami-gen-core-demo` (introduction v1→v2)
+- Shared development snapshot refreshed (`dev/database/rami_ai_shared.dump`)
+- Handoff docs updated for Device 2
 
 ```bash
 npm run db:restore-shared -- --confirm-replace-local-rami-ai
 npm run db:check
-npm run validate:generation-rag
-npm run validate:controlled-rag
 npm run validate:shared-dump
-npm run validate:ui-phase-a1
-npm run validate:ui-phase-a2
+npm run validate:edit-with-rami
+npm run validate:manual-editor-versioning
+npm run validate:project-delete
+npx tsx scripts/final-handoff-integration.ts
 ```
 
-## NEXT
+## NEXT (do not start automatically)
 
-**Golden End-to-End RFP evaluation** — only after live generation-RAG safety is accepted (live Qwen run completed 2026-08-31; gate B: safe, quality benefit unclear — see `generation-rag-live-eval.json`).
+**Golden End-to-End RFP evaluation** — full BA journey through interview, generation, edit, approve, export. Use existing demo projects; do not mutate production-like data without PO approval.
 
-Then, only if needed: **optional pgvector** when corpus/latency requires it.
-
-## DONE (added 2026-08-31)
-
-- UI Phase A2 — interview workspace uses assembled document truth; Field labels in blockers; Project Understanding; proposal cards; draft vs approved export copy
-- UI Phase A1 — PostgreSQL-backed workspace, real project creation, Rami engine panel truth (no mock frontend registry; no fake Modal billing in UI)
-- Live Qwen generation-RAG A/B validation harness (`validate:generation-rag-live`)
-- 4 live cases on `rami-rag-live-eval`: deliverables, scopeOfWork, background (TBC), evaluationCriteria (high-risk TBC)
-- ProjectFact + readiness isolation verified; revoke-reference flow verified; zero deterministic leakage in all cases
+Then, only if measured need:
+- Optional **pgvector** when corpus/latency requires it
+- Broader two-column workspace redesign (deferred)
 
 ## LATER
 
@@ -52,4 +41,4 @@ Then, only if needed: **optional pgvector** when corpus/latency requires it.
 
 ## Do not start automatically
 
-Silent retrieval on Generate · automatic ProjectFact filling · productionization · training · Field expansion · pgvector unless measured need.
+Silent retrieval on Generate · automatic ProjectFact filling · productionization · training · Field expansion · pgvector unless measured need · Modal redeploy unless required.

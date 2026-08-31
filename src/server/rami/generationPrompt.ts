@@ -2,7 +2,7 @@
  * Generation prompts + JSON schema for structured GeneratedSection blocks.
  */
 
-import type { SectionGenerationContext } from '@/types/generatedSection';
+import type { SectionEditContext, SectionGenerationContext } from '@/types/generatedSection';
 import { TBC_MARKER_PREFIX } from '@/types/generatedSection';
 import { HIGH_RISK_GENERATION_SECTIONS } from '@/types/generationReference';
 
@@ -102,6 +102,66 @@ export function buildGenerationMessages(ctx: SectionGenerationContext): Array<{
     })),
     instruction:
       'Draft this section using CURRENT_PROJECT_FACTS as truth. Historical references may guide structure and wording only. Every tbcFields entry must appear as an explicit tbc block. Do not invent unresolved values. Do not copy historical numbers, names, or legal terms that are not in CURRENT_PROJECT_FACTS.',
+  };
+
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: JSON.stringify(userPayload, null, 2) },
+  ];
+}
+
+export function buildEditMessages(ctx: SectionEditContext): Array<{
+  role: 'system' | 'user';
+  content: string;
+}> {
+  const highRisk = HIGH_RISK_GENERATION_SECTIONS.has(ctx.sectionId);
+  const system = [
+    'You are Rami, revising one existing RFP section draft in professional English.',
+    'Return JSON only that matches the provided schema (blocks array).',
+    'This is a CONTROLLED EDIT — not a full regeneration and not fact extraction.',
+    '',
+    'HIERARCHY (strict):',
+    '1. CURRENT PROJECT FACTS are authoritative — do not add, remove, or resolve facts.',
+    '2. CURRENT_SECTION_BLOCKS are the draft to revise per the BA edit instruction.',
+    '3. APPROVED HISTORICAL REFERENCES are style/structure examples only.',
+    '4. UNRESOLVED tbcFields must remain explicit TBC blocks — never invent values.',
+    'Anti-hallucination rules:',
+    ...ctx.antiHallucinationRules.map((r) => `- ${r}`),
+    highRisk
+      ? 'High-risk section: do not introduce percentages, penalties, legal terms, or numbers not in CURRENT PROJECT FACTS.'
+      : '',
+    `For TBC items use block type "tbc" with label starting with "${TBC_MARKER_PREFIX}".`,
+    'Preserve section structure unless the instruction asks to reorganize.',
+    'Do not treat the edit instruction as a source of new project facts.',
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const userPayload = {
+    sectionId: ctx.sectionId,
+    title: ctx.title,
+    currentVersion: ctx.currentVersion,
+    editInstruction: ctx.editInstruction,
+    CURRENT_SECTION_BLOCKS: ctx.currentBlocks,
+    CURRENT_PROJECT_FACTS: {
+      documentMeta: ctx.documentMeta,
+      answeredFacts: ctx.answeredFacts,
+      sharedFacts: ctx.sharedFacts,
+    },
+    UNRESOLVED: {
+      tbcFields: ctx.tbcFields,
+      notApplicableFields: ctx.notApplicableFields,
+    },
+    APPROVED_HISTORICAL_REFERENCES: ctx.approvedHistoricalReferences.map((r) => ({
+      generationReferenceId: r.generationReferenceId,
+      chunkId: r.chunkId,
+      historicalRfpId: r.historicalRfpId,
+      historicalRfpTitle: r.historicalRfpTitle,
+      excerpt: r.excerpt,
+      note: 'Example only. Do not copy project-specific values.',
+    })),
+    instruction:
+      'Revise CURRENT_SECTION_BLOCKS according to editInstruction. Keep confirmed facts unchanged. Do not invent unresolved values. Every tbcFields entry must remain an explicit tbc block.',
   };
 
   return [

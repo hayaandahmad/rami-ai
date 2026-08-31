@@ -22,6 +22,7 @@ import {
   setBusy,
 } from './modalEngineControl';
 import { MODAL_MODEL_TAG } from './providerConfig';
+import { ThinkStripper } from './thinkStripper';
 
 export class ModalNotReadyError extends Error {
   constructor(message = 'Start Rami to begin chatting.') {
@@ -135,6 +136,7 @@ export class ModalModelProvider implements RamiModelProvider {
     let ttft: number | null = null;
     let tokensPerSec: number | null = null;
     try {
+      const stripper = new ThinkStripper();
       for await (const event of runModalBridgeStream(
         {
           op: 'chat_stream',
@@ -145,7 +147,8 @@ export class ModalModelProvider implements RamiModelProvider {
       )) {
         if (event.type === 'chunk' && typeof event.text === 'string' && event.text) {
           if (ttft == null) ttft = (Date.now() - start) / 1000;
-          yield event.text;
+          const chunk = stripper.process(event.text);
+          if (chunk) yield chunk;
         } else if (event.type === 'done') {
           if (typeof event.ttft_seconds === 'number') ttft = event.ttft_seconds;
           if (typeof event.tokens_per_sec === 'number') tokensPerSec = event.tokens_per_sec;
@@ -161,6 +164,8 @@ export class ModalModelProvider implements RamiModelProvider {
           throw new Error(String(event.message ?? 'modal stream error'));
         }
       }
+      const remaining = stripper.flush();
+      if (remaining) yield remaining;
     } finally {
       setBusy(false);
     }

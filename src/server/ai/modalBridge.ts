@@ -5,6 +5,7 @@
 import { spawn } from 'child_process';
 import { join } from 'path';
 import { getModalBridgeScript, getModalPythonPath } from './providerConfig';
+import { buildModalBridgeEnv } from './utf8BridgeEnv';
 
 export type BridgeRequest = Record<string, unknown> & { op: string };
 
@@ -31,7 +32,7 @@ export async function runModalBridge<T = Record<string, unknown>>(
   return new Promise<T>((resolve, reject) => {
     const child = spawn(python, [script], {
       cwd: process.cwd(),
-      env: { ...process.env },
+      env: buildModalBridgeEnv(),
       windowsHide: true,
     });
 
@@ -78,7 +79,7 @@ export async function runModalBridge<T = Record<string, unknown>>(
       }
     });
 
-    child.stdin.write(payload);
+    child.stdin.write(Buffer.from(payload, 'utf8'));
     child.stdin.end();
   });
 }
@@ -96,7 +97,7 @@ export async function* runModalBridgeStream(
 
   const child = spawn(python, [script], {
     cwd: process.cwd(),
-    env: { ...process.env },
+    env: buildModalBridgeEnv(),
     windowsHide: true,
   });
 
@@ -104,22 +105,25 @@ export async function* runModalBridgeStream(
     child.kill();
   }, timeoutMs);
 
-  child.stdin.write(payload);
+  child.stdin.write(Buffer.from(payload, 'utf8'));
   child.stdin.end();
 
-  let buffer = '';
+  const decoder = new TextDecoder('utf-8');
+  let lineBuffer = '';
   try {
     for await (const chunk of child.stdout) {
-      buffer += chunk.toString('utf8');
-      const parts = buffer.split('\n');
-      buffer = parts.pop() ?? '';
+      const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+      lineBuffer += decoder.decode(buf, { stream: true });
+      const parts = lineBuffer.split('\n');
+      lineBuffer = parts.pop() ?? '';
       for (const line of parts) {
         if (!line.trim()) continue;
         yield JSON.parse(line) as Record<string, unknown>;
       }
     }
-    if (buffer.trim()) {
-      yield JSON.parse(buffer) as Record<string, unknown>;
+    lineBuffer += decoder.decode();
+    if (lineBuffer.trim()) {
+      yield JSON.parse(lineBuffer) as Record<string, unknown>;
     }
   } finally {
     clearTimeout(timer);

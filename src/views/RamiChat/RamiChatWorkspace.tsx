@@ -13,6 +13,7 @@ import { ProjectUnderstandingPanel } from '@/components/chat/ProjectUnderstandin
 import { SectionProgress } from '@/components/rfp/SectionProgress';
 import { RfpDocumentPanel } from '@/components/rfp/RfpDocumentPanel';
 import type { AssembledProgressSummary } from '@/hooks/useRfpDocument';
+import { useRamiEngineStatus } from '@/providers/RamiEngineStatusProvider';
 import type { RfpIntent } from '@/types/conversation';
 
 interface RamiChatWorkspaceProps {
@@ -81,6 +82,8 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
     clearError,
   } = useRamiChat({ sessionId, documentId, onIntentChange, onFactsExtracted });
 
+  const { isModalEngineUnavailable } = useRamiEngineStatus();
+
   const completionPercent =
     understanding?.completionPercent ?? applicabilityContext.completionPercent ?? 0;
 
@@ -94,17 +97,6 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
     (rfpIntent === 'CREATE_RFP' || forceDocumentPane || Boolean(assembledProgress?.generatedApplicableCount)) &&
     rightPaneVisible;
   const isInitialState = messages.length === 0 && !isGenerating && !showSplit;
-
-  const sectionApplicabilityCtx = {
-    documentType: applicabilityContext.documentType ?? '',
-    engagementType: applicabilityContext.engagementType ?? '',
-    hasDeliveryMilestone: applicabilityContext.documentType === 'system-implementation',
-    hasSupportPeriod: ['system-implementation', 'support'].includes(
-      applicabilityContext.documentType ?? '',
-    ),
-    hasNamedRoles: false,
-    isLargeEngagement: applicabilityContext.documentType === 'system-implementation',
-  };
 
   const projectTitle =
     understanding?.documentTitle ||
@@ -213,6 +205,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
               onChange={setComposerValue}
               onSubmit={handleSubmit}
               status={status}
+              engineOff={isModalEngineUnavailable}
               placeholder="e.g. I need an RFP for a digital licensing platform for the Ministry of Industry…"
             />
           </div>
@@ -240,13 +233,13 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
                 documentKey={documentId || sessionId}
                 pendingProposals={pendingProposals}
                 onProposalChanged={() => void refreshProposals()}
-                currentlyClarifying={understanding?.currentlyClarifying}
               />
               <ChatComposer
                 value={composerValue}
                 onChange={setComposerValue}
                 onSubmit={handleSubmit}
                 status={status}
+                engineOff={isModalEngineUnavailable}
               />
             </div>
 
@@ -262,9 +255,8 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
                   mobileTab === 'document' ? 'flex w-full md:w-1/2' : 'hidden md:flex md:w-1/2'
                 }`}
               >
-                <div className="shrink-0 p-3">
+                <div className="shrink-0 border-b border-border px-2 py-1.5">
                   <SectionProgress
-                    applicabilityContext={sectionApplicabilityCtx}
                     applicableSectionCount={
                       assembledProgress?.applicableSectionCount ??
                       applicabilityContext.applicableSectionCount
@@ -272,7 +264,6 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
                     completionPercent={completionPercent}
                     assembledApprovedCount={assembledProgress?.approvedApplicableCount}
                     assembledGeneratedCount={assembledProgress?.generatedApplicableCount}
-                    sectionDocumentStatus={assembledProgress?.sectionDocumentStatus}
                   />
                 </div>
 

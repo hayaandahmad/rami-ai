@@ -18,6 +18,8 @@ import {
   Download,
 } from 'lucide-react';
 import { GeneratedSectionBlocks } from '@/components/rfp/GeneratedSectionBlocks';
+import { ManualBlockEditor } from '@/components/rfp/ManualBlockEditor';
+import { SectionVersionHistory } from '@/components/rfp/SectionVersionHistory';
 import {
   useRfpDocument,
   type AssembledProgressSummary,
@@ -27,6 +29,10 @@ import {
 import type { GeneratedBlock, GeneratedSection } from '@/types/generatedSection';
 import type { SectionInformationReadiness } from '@/types/sectionReadiness';
 import { describeBlocker, exportStatusCopy } from '@/utils/fieldDisplay';
+import { useRamiEngineStatus } from '@/providers/RamiEngineStatusProvider';
+
+const ENGINE_OFF_GENERATION_MSG =
+  'Rami AI Engine is off. Start Rami to use AI generation. Your project and RFP are safely saved.';
 
 interface RfpDocumentPanelProps {
   documentKey: string;
@@ -57,11 +63,16 @@ function canGenerate(row: SectionUiRow): boolean {
 
 export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocumentPanelProps) {
   const doc = useRfpDocument(documentKey);
+  const { isModalEngineUnavailable } = useRamiEngineStatus();
   const [editing, setEditing] = useState(false);
-  const [editText, setEditText] = useState('');
   const [confirmReopen, setConfirmReopen] = useState(false);
   const [confirmApprove, setConfirmApprove] = useState(false);
   const [busyElapsed, setBusyElapsed] = useState(0);
+  const [aiEditOpen, setAiEditOpen] = useState(false);
+  const [aiEditInstruction, setAiEditInstruction] = useState('');
+  const [aiEditAfterReopen, setAiEditAfterReopen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [pendingRestoreVersion, setPendingRestoreVersion] = useState<number | null>(null);
 
   const selected = doc.selected;
 
@@ -94,37 +105,107 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
 
   const startEdit = () => {
     if (!selected?.generated) return;
+    setAiEditOpen(false);
+    doc.setPreviewVersion(null);
     if (selected.documentStatus === 'APPROVED') {
       setConfirmReopen(true);
       return;
     }
-    setEditText(JSON.stringify(selected.generated.blocks, null, 2));
     setEditing(true);
   };
 
-  const saveEdit = async () => {
+  const saveManualEdit = async (blocks: GeneratedBlock[]) => {
     if (!selected) return;
-    let blocks: GeneratedBlock[];
-    try {
-      blocks = JSON.parse(editText) as GeneratedBlock[];
-      if (!Array.isArray(blocks)) throw new Error('blocks must be an array');
-    } catch (err) {
-      doc.setError(err instanceof Error ? err.message : 'Invalid JSON blocks');
-      return;
-    }
     try {
       await doc.saveEdit(selected.sectionId, blocks, {
         reopenApproved: selected.documentStatus === 'APPROVED',
       });
       setEditing(false);
       setConfirmReopen(false);
+      if (historyOpen) {
+        await doc.fetchSectionHistory(selected.sectionId);
+      }
     } catch {
       /* error set in hook */
     }
   };
 
+  const toggleHistory = async () => {
+    if (!selected?.generated) return;
+    const next = !historyOpen;
+    setHistoryOpen(next);
+    if (next) {
+      await doc.fetchSectionHistory(selected.sectionId);
+    } else {
+      doc.setPreviewVersion(null);
+    }
+  };
+
+  const handleRestoreVersion = async (version: number) => {
+    if (!selected) return;
+    const needsReopen = selected.documentStatus === 'APPROVED';
+    if (needsReopen && !confirmReopen) {
+      setPendingRestoreVersion(version);
+      setConfirmReopen(true);
+      return;
+    }
+    try {
+      await doc.restoreSectionVersion(selected.sectionId, version, {
+        reopenApproved: needsReopen,
+      });
+      setConfirmReopen(false);
+      setPendingRestoreVersion(null);
+    } catch {
+      /* error set in hook */
+    }
+  };
+
+  const viewingHistorical = doc.previewVersion != null;
+
+  const openAiEdit = () => {
+    if (!selected?.generated) return;
+    setEditing(false);
+    if (selected.documentStatus === 'APPROVED') {
+      setAiEditAfterReopen(true);
+      setConfirmReopen(true);
+      return;
+    }
+    setAiEditInstruction('');
+    setAiEditOpen(true);
+  };
+
+  const submitAiEdit = async () => {
+    if (!selected?.generated) return;
+    const instruction = aiEditInstruction.trim();
+    if (!instruction) {
+      doc.setError('Enter an edit instruction for Rami.');
+      return;
+    }
+    if (isModalEngineUnavailable) {
+      doc.setError(ENGINE_OFF_GENERATION_MSG);
+      return;
+    }
+    const needsReopen = selected.documentStatus === 'APPROVED';
+    try {
+      await doc.aiEdit(selected.sectionId, instruction, {
+        reopenApproved: needsReopen,
+      });
+      setAiEditOpen(false);
+      setAiEditInstruction('');
+      setConfirmReopen(false);
+      setAiEditAfterReopen(false);
+    } catch {
+      /* error set in hook */
+    }
+  };
+
+
   const onGenerate = async (regenerate: boolean) => {
     if (!selected) return;
+    if (isModalEngineUnavailable) {
+      doc.setError(ENGINE_OFF_GENERATION_MSG);
+      return;
+    }
     const needsReopen =
       regenerate && selected.documentStatus === 'APPROVED';
     if (needsReopen && !confirmReopen) {
@@ -138,6 +219,7 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
       });
       setConfirmReopen(false);
       setEditing(false);
+      setAiEditOpen(false);
     } catch {
       /* error set in hook */
     }
@@ -168,15 +250,15 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-surface">
       {/* Toolbar */}
-      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
-        <div className="flex items-center gap-2">
-          <FileText className="h-4 w-4 text-text-muted" strokeWidth={1.75} aria-hidden />
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1.5 border-b border-border px-2.5 py-1.5">
+        <div className="flex min-w-0 items-center gap-2">
+          <FileText className="h-4 w-4 shrink-0 text-text-muted" strokeWidth={1.75} aria-hidden />
           <span className="text-small font-semibold text-text-primary">RFP Document</span>
-          <span className="rounded border border-border bg-[var(--color-neutral-50)] px-2 py-0.5 text-caption text-text-secondary">
+          <span className="hidden rounded border border-border bg-[var(--color-neutral-50)] px-1.5 py-0.5 text-[10px] text-text-secondary sm:inline">
             {headerBadge}
           </span>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex flex-wrap items-center gap-1">
           <button
             type="button"
             className={`rounded px-2 py-1 text-caption font-medium ${
@@ -220,19 +302,15 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
           </button>
         </div>
       </div>
-      <p className="border-b border-border px-3 py-1 text-[10px] text-text-muted">{exportCopy.helper}</p>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Section navigation */}
         <nav
-          className="flex w-[11.5rem] shrink-0 flex-col overflow-y-auto border-r border-border bg-[var(--color-neutral-50)]"
+          className="flex w-[10rem] shrink-0 flex-col overflow-y-auto border-r border-border bg-[var(--color-neutral-50)]"
           aria-label="RFP sections"
         >
-          <p className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+          <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
             Sections
-          </p>
-          <p className="px-2 pb-2 text-[10px] leading-snug text-text-muted">
-            Info chip = facts ready to draft. Doc chip = generated / approved.
           </p>
           <ul className="flex flex-col gap-0.5 px-1 pb-3">
             {doc.rows.map((row) => (
@@ -243,7 +321,10 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                     doc.setSelectedSectionId(row.sectionId);
                     doc.setViewMode('section');
                     setEditing(false);
+                    setAiEditOpen(false);
                     setConfirmReopen(false);
+                    setHistoryOpen(false);
+                    doc.setPreviewVersion(null);
                   }}
                   className={`flex w-full flex-col items-start rounded-md px-2 py-1.5 text-left transition-colors ${
                     row.sectionId === doc.selectedSectionId
@@ -275,26 +356,86 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
         {/* Preview + actions */}
         <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
           {selected && doc.viewMode === 'section' && (
-            <div className="flex shrink-0 flex-wrap items-center gap-2 border-b border-border px-3 py-2">
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-small font-semibold text-text-primary">
-                  {selected.title}
-                </p>
-                <p className="text-caption text-text-muted">
-                  Info: {READINESS_LABEL[selected.readiness]} · Doc:{' '}
-                  {DOC_STATUS_LABEL[selected.documentStatus]}
-                  {selected.generated ? ` · v${selected.generated.version}` : ''}
-                </p>
+            <div className="shrink-0 border-b border-border px-2.5 py-2">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-small font-semibold text-text-primary">
+                    {selected.title}
+                  </p>
+                  <p className="text-[11px] text-text-muted">
+                    Info: {READINESS_LABEL[selected.readiness]} · Doc:{' '}
+                    {DOC_STATUS_LABEL[selected.documentStatus]}
+                    {selected.generated ? ` · v${selected.generated.version}` : ''}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {!selected.applicable && (
+                    <span className="inline-flex items-center gap-1 text-caption text-text-muted">
+                      <Ban className="h-3.5 w-3.5" /> Not applicable
+                    </span>
+                  )}
+
+                  {canGenerate(selected) && !selected.generated && (
+                    <ActionButton
+                      disabled={doc.busy || isModalEngineUnavailable}
+                      onClick={() => void onGenerate(false)}
+                      label={
+                        selected.readiness === 'DRAFTABLE_WITH_TBC'
+                          ? 'Generate (with TBC)'
+                          : 'Generate'
+                      }
+                      primary
+                    />
+                  )}
+
+                  {selected.generated && selected.documentStatus === 'DRAFT' && !viewingHistorical && (
+                    <>
+                      <ActionButton
+                        disabled={doc.busy}
+                        onClick={() => void onApprove()}
+                        label="Approve section"
+                        icon={<Check className="h-3.5 w-3.5" />}
+                        primary
+                      />
+                      <ActionButton
+                        disabled={doc.busy || isModalEngineUnavailable}
+                        onClick={() => void onGenerate(true)}
+                        label="Regenerate"
+                      />
+                      <ActionButton
+                        disabled={doc.busy || editing}
+                        onClick={startEdit}
+                        label="Edit manually"
+                        icon={<Pencil className="h-3.5 w-3.5" />}
+                      />
+                      <ActionButton
+                        disabled={doc.busy || isModalEngineUnavailable || editing}
+                        onClick={openAiEdit}
+                        label="Edit with Rami"
+                      />
+                    </>
+                  )}
+
+                  {selected.documentStatus === 'APPROVED' && !viewingHistorical && (
+                    <>
+                      <ActionButton
+                        disabled={doc.busy || isModalEngineUnavailable}
+                        onClick={() => setConfirmReopen(true)}
+                        label="Reopen / Regenerate"
+                      />
+                      <ActionButton
+                        disabled={doc.busy || isModalEngineUnavailable}
+                        onClick={openAiEdit}
+                        label="Edit with Rami"
+                      />
+                    </>
+                  )}
+                </div>
               </div>
 
-              {!selected.applicable && (
-                <span className="inline-flex items-center gap-1 text-caption text-text-muted">
-                  <Ban className="h-3.5 w-3.5" /> Not applicable
-                </span>
-              )}
-
               {selected.applicable && selected.readiness === 'NOT_READY' && (
-                <div className="w-full rounded-md border border-[var(--color-warning-100)] bg-[var(--color-warning-100)]/60 px-2.5 py-2 text-caption text-[var(--color-warning-700)]">
+                <div className="mt-2 rounded-md border border-[var(--color-warning-100)] bg-[var(--color-warning-100)]/60 px-2.5 py-2 text-caption text-[var(--color-warning-700)]">
                   <p className="mb-1 inline-flex items-center gap-1 font-medium">
                     <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                     This section needs {blockers.length || 'more'}{' '}
@@ -313,43 +454,9 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                 </div>
               )}
 
-              {canGenerate(selected) && !selected.generated && (
-                <ActionButton
-                  disabled={doc.busy}
-                  onClick={() => void onGenerate(false)}
-                  label={
-                    selected.readiness === 'DRAFTABLE_WITH_TBC'
-                      ? 'Generate (with TBC)'
-                      : 'Generate'
-                  }
-                />
-              )}
-
-              {selected.generated && selected.documentStatus === 'DRAFT' && (
-                <>
-                  <ActionButton
-                    disabled={doc.busy}
-                    onClick={() => void onGenerate(true)}
-                    label="Regenerate"
-                  />
-                  <ActionButton
-                    disabled={doc.busy}
-                    onClick={() => void onApprove()}
-                    label="Approve section"
-                    icon={<Check className="h-3.5 w-3.5" />}
-                  />
-                  <ActionButton
-                    disabled={doc.busy || editing}
-                    onClick={startEdit}
-                    label="Edit"
-                    icon={<Pencil className="h-3.5 w-3.5" />}
-                  />
-                </>
-              )}
-
               {doc.draftingReferences.filter((r) => r.sectionId === selected.sectionId).length >
                 0 && (
-                <div className="w-full text-caption text-text-muted">
+                <div className="mt-2 text-caption text-text-muted">
                   Active drafting references (do not add facts; do not auto-regenerate APPROVED
                   content):
                   {doc.draftingReferences
@@ -370,12 +477,10 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                 </div>
               )}
 
-              {selected.documentStatus === 'APPROVED' && (
-                <ActionButton
-                  disabled={doc.busy}
-                  onClick={() => setConfirmReopen(true)}
-                  label="Reopen / Regenerate"
-                />
+              {isModalEngineUnavailable && selected.applicable && (
+                <p className="mt-2 text-caption text-[var(--color-warning-700)]">
+                  {ENGINE_OFF_GENERATION_MSG}
+                </p>
               )}
             </div>
           )}
@@ -409,7 +514,7 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                 This section is approved. Regenerating or editing will create a new draft
                 version. Previous versions remain stored.
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <ActionButton
                   disabled={doc.busy}
                   onClick={() => void onGenerate(true)}
@@ -418,18 +523,74 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                 <ActionButton
                   disabled={doc.busy}
                   onClick={() => {
-                    setEditText(
-                      JSON.stringify(selected.generated?.blocks ?? [], null, 2),
-                    );
                     setEditing(true);
                     setConfirmReopen(false);
+                    setAiEditAfterReopen(false);
                   }}
-                  label="Edit into new draft"
+                  label="Edit manually"
+                />
+                {aiEditAfterReopen ? (
+                  <ActionButton
+                    disabled={doc.busy || isModalEngineUnavailable}
+                    onClick={() => {
+                      setConfirmReopen(false);
+                      setAiEditInstruction('');
+                      setAiEditOpen(true);
+                    }}
+                    label="Continue with AI edit"
+                  />
+                ) : null}
+                {pendingRestoreVersion != null ? (
+                  <ActionButton
+                    disabled={doc.busy}
+                    onClick={() => void handleRestoreVersion(pendingRestoreVersion)}
+                    label={`Confirm restore v${pendingRestoreVersion}`}
+                  />
+                ) : null}
+                <button
+                  type="button"
+                  className="rounded border border-border px-2 py-1 text-caption"
+                  onClick={() => {
+                    setConfirmReopen(false);
+                    setAiEditAfterReopen(false);
+                    setPendingRestoreVersion(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {aiEditOpen && selected && doc.viewMode === 'section' && (
+            <div className="shrink-0 border-b border-border bg-[var(--color-primary-50)] px-3 py-2">
+              <p className="mb-1 text-small font-semibold text-text-primary">Edit with Rami</p>
+              <p className="mb-2 text-caption text-text-secondary">
+                Describe how to revise this section. Rami will not change confirmed project
+                information or resolve TBC items.
+              </p>
+              <textarea
+                className="mb-2 min-h-[72px] w-full rounded border border-border bg-white p-2 text-small text-text-primary"
+                value={aiEditInstruction}
+                onChange={(e) => setAiEditInstruction(e.target.value)}
+                placeholder="e.g. Make this section shorter and emphasize the business need."
+                disabled={doc.busy}
+              />
+              <div className="flex flex-wrap gap-2">
+                <ActionButton
+                  disabled={doc.busy || !aiEditInstruction.trim() || isModalEngineUnavailable}
+                  onClick={() => void submitAiEdit()}
+                  label="Update section"
+                  primary
                 />
                 <button
                   type="button"
                   className="rounded border border-border px-2 py-1 text-caption"
-                  onClick={() => setConfirmReopen(false)}
+                  onClick={() => {
+                    setAiEditOpen(false);
+                    setAiEditInstruction('');
+                  }}
+                  disabled={doc.busy}
                 >
                   Cancel
                 </button>
@@ -443,33 +604,32 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
             </div>
           )}
 
-          {editing && selected && (
-            <div className="flex shrink-0 flex-col gap-2 border-b border-border px-3 py-2">
-              <p className="text-caption text-text-secondary">
-                Advanced structured editor (JSON). For technical correction of this draft only.
-                Save creates a new draft version and does not change confirmed project
-                information. A richer editor is planned later.
-              </p>
-              <textarea
-                className="h-40 w-full rounded border border-border bg-white p-2 font-mono text-[11px] text-text-primary"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-              />
-              <div className="flex gap-2">
-                <ActionButton disabled={doc.busy} onClick={() => void saveEdit()} label="Save edit" />
-                <button
-                  type="button"
-                  className="rounded border border-border px-2 py-1 text-caption"
-                  onClick={() => setEditing(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+          {selected?.generated && doc.viewMode === 'section' && (
+            <SectionVersionHistory
+              open={historyOpen}
+              onToggle={() => void toggleHistory()}
+              loading={doc.historyLoading}
+              versions={doc.sectionHistory}
+              previewVersion={doc.previewVersion}
+              onPreview={doc.setPreviewVersion}
+              onRestore={(version) => void handleRestoreVersion(version)}
+              busy={doc.busy}
+              canRestore={!viewingHistorical && !editing && !aiEditOpen}
+            />
+          )}
+
+          {editing && selected?.generated && (
+            <ManualBlockEditor
+              initialBlocks={selected.generated.blocks}
+              disabled={doc.busy}
+              saving={doc.busy}
+              onSave={saveManualEdit}
+              onCancel={() => setEditing(false)}
+            />
           )}
 
           {/* A4 paper */}
-          <div className="flex-1 overflow-y-auto bg-[var(--color-neutral-100)] p-4">
+          <div className="min-h-0 flex-1 overflow-y-auto bg-[var(--color-neutral-100)] p-3">
             {doc.loading && !doc.assembled ? (
               <div className="flex h-40 items-center justify-center text-text-muted">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading document…
@@ -500,7 +660,16 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
                 {doc.viewMode === 'full' ? (
                   <FullDocumentView rows={doc.rows} />
                 ) : selected ? (
-                  <SectionPreview row={selected} />
+                  <SectionPreview
+                    row={selected}
+                    historicalPreview={
+                      doc.previewVersion != null
+                        ? doc.sectionHistory.find((v) => v.version === doc.previewVersion)
+                            ?.generated ?? null
+                        : null
+                    }
+                    onExitHistorical={() => doc.setPreviewVersion(null)}
+                  />
                 ) : (
                   <p className="rfp-p text-text-muted">Select a section.</p>
                 )}
@@ -513,8 +682,10 @@ export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocument
               <span className="inline-flex max-w-xs items-start gap-2 rounded-md bg-[var(--color-primary-800)] px-3 py-1.5 text-caption text-white shadow-lg">
                 <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin" />
                 <span>
-                  Generating section… {busyElapsed}s elapsed. Existing drafts stay intact if
-                  this fails. Do not resubmit.
+                  {aiEditOpen || doc.lastAction?.includes('ai-edit')
+                    ? `Rami is updating this section… ${busyElapsed}s elapsed.`
+                    : `Generating section… ${busyElapsed}s elapsed.`}{' '}
+                  Existing drafts stay intact if this fails. Do not resubmit.
                 </span>
               </span>
             </div>
@@ -552,18 +723,24 @@ function ActionButton({
   onClick,
   disabled,
   icon,
+  primary = false,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
   icon?: ReactNode;
+  primary?: boolean;
 }) {
   return (
     <button
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="inline-flex items-center gap-1 rounded border border-[var(--color-primary-200)] bg-white px-2.5 py-1 text-caption font-medium text-[var(--color-primary-800)] hover:bg-[var(--color-primary-50)] disabled:opacity-50"
+      className={`inline-flex items-center gap-1 rounded px-2.5 py-1 text-caption font-medium disabled:opacity-50 ${
+        primary
+          ? 'border border-[var(--color-primary-600)] bg-[var(--color-primary-700)] text-white hover:bg-[var(--color-primary-800)]'
+          : 'border border-[var(--color-primary-200)] bg-white text-[var(--color-primary-800)] hover:bg-[var(--color-primary-50)]'
+      }`}
     >
       {icon}
       {label}
@@ -595,7 +772,35 @@ function DraftingLineage({ section }: { section: GeneratedSection }) {
   );
 }
 
-function SectionPreview({ row }: { row: SectionUiRow }) {
+function SectionPreview({
+  row,
+  historicalPreview,
+  onExitHistorical,
+}: {
+  row: SectionUiRow;
+  historicalPreview?: GeneratedSection | null;
+  onExitHistorical?: () => void;
+}) {
+  if (historicalPreview) {
+    return (
+      <section className="rfp-section-slot" data-approval="historical-preview">
+        <div className="mb-3 rounded border border-[var(--color-primary-200)] bg-[var(--color-primary-50)] px-3 py-2 text-caption text-[var(--color-primary-800)]">
+          <p className="font-medium">
+            Viewing version {historicalPreview.version} — read only
+          </p>
+          <button
+            type="button"
+            className="mt-1 rounded border border-border bg-white px-2 py-0.5"
+            onClick={onExitHistorical}
+          >
+            Back to current version
+          </button>
+        </div>
+        <GeneratedSectionBlocks section={historicalPreview} />
+      </section>
+    );
+  }
+
   if (!row.applicable) {
     return (
       <section className="rfp-section-slot">

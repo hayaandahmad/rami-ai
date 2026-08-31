@@ -1,49 +1,19 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-
-type EngineState =
-  | 'OFF'
-  | 'STARTING'
-  | 'LOADING'
-  | 'WARMING_UP'
-  | 'READY'
-  | 'BUSY'
-  | 'SHUTTING_DOWN'
-  | 'ERROR';
-
-interface EngineStatus {
-  state?: EngineState;
-  LOCAL_TRACKED_STATE?: EngineState;
-  provider?: string;
-  modelLabel?: string;
-  model?: string;
-  gpu?: string | null;
-  sessionDurationHms?: string | null;
-  idleRemainingHms?: string | null;
-  lastInferenceAt?: string | null;
-  idleSec?: number | null;
-  lastColdStartSeconds?: number | null;
-  lastTtftSeconds?: number | null;
-  lastResponseSeconds?: number | null;
-  lastTokensPerSec?: number | null;
-  lastError?: string | null;
-  requestCountSession?: number;
-  endpointReachable?: boolean;
-  defaultModelAvailable?: boolean;
-  runtimeNote?: string | null;
-  session?: {
-    durationHms?: string | null;
-    requestCount?: number;
-    estimatedCostUsd?: number | null;
-    estimatedLabel?: string;
-  };
-  billingNote?: string | null;
-}
+import { ChevronDown } from 'lucide-react';
+import {
+  useRamiEngineStatus,
+  type EngineState,
+  type EngineStatusPayload,
+} from '@/providers/RamiEngineStatusProvider';
 
 const POS_KEY = 'rami-engine-panel-pos-v1';
 const EXPANDED_KEY = 'rami-engine-panel-expanded-v1';
 const DRAG_THRESHOLD_PX = 5;
+
+const MODAL_OFF_MESSAGE =
+  'Rami AI Engine is off. Your project and RFP are safely saved. Start Rami to continue AI-assisted work.';
 
 function stateLabel(s: EngineState | undefined): string {
   switch (s) {
@@ -60,20 +30,6 @@ function stateLabel(s: EngineState | undefined): string {
   }
 }
 
-function formatAgo(iso: string | null | undefined, idleSec?: number | null): string {
-  if (idleSec != null && Number.isFinite(idleSec)) {
-    const sec = Math.floor(idleSec);
-    if (sec < 60) return `${sec}s ago`;
-    if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
-    return `${Math.floor(sec / 3600)}h ago`;
-  }
-  if (!iso) return '—';
-  const sec = Math.max(0, Math.floor((Date.now() - Date.parse(iso)) / 1000));
-  if (sec < 60) return `${sec}s ago`;
-  if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
-  return `${Math.floor(sec / 3600)}h ago`;
-}
-
 function formatUsd(value: number | null | undefined): string {
   if (value == null || !Number.isFinite(value)) return '—';
   return `$${value.toFixed(4)}`;
@@ -88,41 +44,57 @@ function clampPos(x: number, y: number, w: number, h: number) {
   };
 }
 
-function isModalProvider(provider?: string): boolean {
-  return provider === 'modal';
-}
-
 export function RamiEngineControl() {
-  const [status, setStatus] = useState<EngineStatus>({ state: 'OFF' });
+  const {
+    status,
+    displayTimers,
+    state,
+    isModalProvider,
+    isModalStopped,
+    isModalError,
+    refresh,
+    mergeStatus,
+  } = useRamiEngineStatus();
   const [expanded, setExpanded] = useState(false);
   const [pos, setPos] = useState({ x: 24, y: 24 });
   const [busyAction, setBusyAction] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  const [showPerformance, setShowPerformance] = useState(false);
+  const [showErrorDetails, setShowErrorDetails] = useState(false);
   const dragRef = useRef<{ ox: number; oy: number; px: number; py: number } | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const movedRef = useRef(false);
   const posRef = useRef(pos);
-
-  const state = (status.state || status.LOCAL_TRACKED_STATE || 'OFF') as EngineState;
-  const modal = isModalProvider(status.provider);
+  const expandedRef = useRef(expanded);
+  const draggingRef = useRef(false);
 
   useEffect(() => {
     posRef.current = pos;
   }, [pos]);
 
-  const refresh = useCallback(async () => {
+  useEffect(() => {
+    expandedRef.current = expanded;
+  }, [expanded]);
+
+  const persistExpanded = useCallback((value: boolean) => {
     try {
-      const res = await fetch('/api/ai/status', { cache: 'no-store' });
-      const data = (await res.json()) as EngineStatus;
-      setStatus(data);
+      localStorage.setItem(EXPANDED_KEY, value ? '1' : '0');
     } catch {
-      setStatus((prev) => ({
-        ...prev,
-        state: prev.state ?? 'ERROR',
-        lastError: 'Status unavailable',
-      }));
+      /* ignore */
     }
   }, []);
+
+  const collapsePanel = useCallback(() => {
+    movedRef.current = false;
+    draggingRef.current = false;
+    setExpanded(false);
+    persistExpanded(false);
+  }, [persistExpanded]);
+
+  const expandPanel = useCallback(() => {
+    movedRef.current = false;
+    setExpanded(true);
+    persistExpanded(true);
+  }, [persistExpanded]);
 
   useEffect(() => {
     try {
@@ -136,10 +108,7 @@ export function RamiEngineControl() {
     } catch {
       /* ignore */
     }
-    void refresh();
-    const id = window.setInterval(() => void refresh(), 5000);
-    return () => window.clearInterval(id);
-  }, [refresh]);
+  }, []);
 
   useEffect(() => {
     const onResize = () => {
@@ -156,8 +125,31 @@ export function RamiEngineControl() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  useEffect(() => {
+    if (!expanded) return;
+
+    const onPointerDown = (event: PointerEvent) => {
+      const el = panelRef.current;
+      if (!el || el.contains(event.target as Node)) return;
+      if (draggingRef.current) return;
+      collapsePanel();
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') collapsePanel();
+    };
+
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [expanded, collapsePanel]);
+
   const beginDrag = (clientX: number, clientY: number) => {
     movedRef.current = false;
+    draggingRef.current = false;
     dragRef.current = { ox: clientX, oy: clientY, px: posRef.current.x, py: posRef.current.y };
   };
 
@@ -165,7 +157,10 @@ export function RamiEngineControl() {
     if (!dragRef.current) return;
     const dx = clientX - dragRef.current.ox;
     const dy = clientY - dragRef.current.oy;
-    if (Math.abs(dx) + Math.abs(dy) > DRAG_THRESHOLD_PX) movedRef.current = true;
+    if (Math.abs(dx) + Math.abs(dy) > DRAG_THRESHOLD_PX) {
+      movedRef.current = true;
+      draggingRef.current = true;
+    }
     const el = panelRef.current;
     const w = el?.offsetWidth ?? 220;
     const h = el?.offsetHeight ?? 48;
@@ -178,10 +173,13 @@ export function RamiEngineControl() {
       localStorage.setItem(POS_KEY, JSON.stringify(posRef.current));
     }
     dragRef.current = null;
+    window.setTimeout(() => {
+      draggingRef.current = false;
+    }, 0);
   };
 
   const onShellPointerDown = (e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest('button,a,input')) return;
+    if ((e.target as HTMLElement).closest('button,a,input,textarea,select')) return;
     beginDrag(e.clientX, e.clientY);
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
@@ -211,36 +209,30 @@ export function RamiEngineControl() {
     e.stopPropagation();
     endDrag();
     if (!movedRef.current) {
-      setExpanded((v) => {
-        const next = !v;
-        localStorage.setItem(EXPANDED_KEY, next ? '1' : '0');
-        return next;
-      });
+      expandPanel();
     }
+    movedRef.current = false;
   };
 
-  const toggleExpand = () => {
-    if (movedRef.current) return;
-    setExpanded((v) => {
-      const next = !v;
-      localStorage.setItem(EXPANDED_KEY, next ? '1' : '0');
-      return next;
-    });
-  };
+  const applyActionResponse = useCallback(
+    (data: EngineStatusPayload) => {
+      mergeStatus(data);
+    },
+    [mergeStatus],
+  );
 
   const start = async () => {
     setBusyAction(true);
-    setStatus((s) => ({ ...s, state: 'STARTING' }));
+    mergeStatus({ state: 'STARTING' });
     try {
       const res = await fetch('/api/ai/start', { method: 'POST' });
-      const data = await res.json();
-      setStatus(data);
+      const data = (await res.json()) as EngineStatusPayload;
+      applyActionResponse(data);
     } catch (err) {
-      setStatus((s) => ({
-        ...s,
+      mergeStatus({
         state: 'ERROR',
         lastError: err instanceof Error ? err.message : 'Start failed',
-      }));
+      });
     } finally {
       setBusyAction(false);
       void refresh();
@@ -249,17 +241,16 @@ export function RamiEngineControl() {
 
   const stop = async () => {
     setBusyAction(true);
-    setStatus((s) => ({ ...s, state: 'SHUTTING_DOWN' }));
+    mergeStatus({ state: 'SHUTTING_DOWN' });
     try {
       const res = await fetch('/api/ai/stop', { method: 'POST' });
-      const data = await res.json();
-      setStatus(data);
+      const data = (await res.json()) as EngineStatusPayload;
+      applyActionResponse(data);
     } catch (err) {
-      setStatus((s) => ({
-        ...s,
+      mergeStatus({
         state: 'ERROR',
         lastError: err instanceof Error ? err.message : 'Stop failed',
-      }));
+      });
     } finally {
       setBusyAction(false);
       void refresh();
@@ -270,8 +261,8 @@ export function RamiEngineControl() {
     setBusyAction(true);
     try {
       const res = await fetch('/api/ai/extend', { method: 'POST' });
-      const data = await res.json();
-      setStatus(data);
+      const data = (await res.json()) as EngineStatusPayload;
+      applyActionResponse(data);
     } finally {
       setBusyAction(false);
       void refresh();
@@ -286,19 +277,15 @@ export function RamiEngineControl() {
     state === 'WARMING_UP' ||
     state === 'SHUTTING_DOWN';
 
-  const showPerformance =
+  const hasPerformanceMetrics =
     status.lastColdStartSeconds != null ||
     status.lastTtftSeconds != null ||
     status.lastResponseSeconds != null ||
     status.lastTokensPerSec != null;
 
-  const showModalSession =
-    modal &&
-    (status.sessionDurationHms ||
-      status.requestCountSession != null ||
-      status.session?.estimatedCostUsd != null);
-
-  const showLocalRuntime = !modal;
+  const sessionDurationLabel = displayTimers.sessionDurationHms ?? '—';
+  const idleRemainingLabel = displayTimers.idleRemainingHms ?? '—';
+  const maxSessionRemainingLabel = displayTimers.maxSessionRemainingHms ?? '—';
 
   return (
     <div
@@ -326,149 +313,175 @@ export function RamiEngineControl() {
           <span className="rami-engine-pill-text">Rami · {stateLabel(state)}</span>
         </button>
       ) : (
-        <div className="rami-engine-panel">
+        <div
+          className="rami-engine-panel"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
           <div className="rami-engine-panel-head">
-            <button type="button" className="rami-engine-panel-title" onClick={toggleExpand}>
-              <span className={`rami-engine-dot rami-engine-dot--${state.toLowerCase()}`} aria-hidden />
+            <button
+              type="button"
+              className="rami-engine-panel-title"
+              onClick={collapsePanel}
+              aria-label="Collapse Rami AI Engine"
+            >
               Rami AI Engine
             </button>
-            <button type="button" className="rami-engine-icon-btn" onClick={toggleExpand} aria-label="Collapse">
-              −
+            <button
+              type="button"
+              className="rami-engine-icon-btn"
+              onClick={collapsePanel}
+              aria-label="Collapse Rami AI Engine"
+            >
+              <ChevronDown aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
             </button>
           </div>
 
-          <dl className="rami-engine-meta">
-            <div>
-              <dt>State</dt>
-              <dd>{stateLabel(state)}</dd>
-            </div>
-            <div>
-              <dt>Provider</dt>
-              <dd>{modal ? 'Modal' : 'Local Ollama'}</dd>
-            </div>
-            <div>
-              <dt>Model</dt>
-              <dd>{status.modelLabel || status.model || '—'}</dd>
-            </div>
-            <div>
-              <dt>{modal ? 'GPU' : 'Runtime'}</dt>
-              <dd>{modal ? status.gpu || '—' : 'Local'}</dd>
-            </div>
-          </dl>
+          <div className="rami-engine-panel--state">
+            <span className={`rami-engine-dot rami-engine-dot--${state.toLowerCase()}`} aria-hidden />
+            {stateLabel(state)}
+          </div>
 
-          {showLocalRuntime && (
-            <dl className="rami-engine-meta">
-              <div>
-                <dt>Ollama reachable</dt>
-                <dd>{status.endpointReachable ? 'Yes' : 'No'}</dd>
-              </div>
-              <div>
-                <dt>Model installed</dt>
-                <dd>{status.defaultModelAvailable ? 'Yes' : 'No'}</dd>
-              </div>
-            </dl>
+          {isModalStopped && <p className="rami-engine-off-note">{MODAL_OFF_MESSAGE}</p>}
+
+          {isModalError && (
+            <div className="rami-engine-error-note" role="alert">
+              <strong>Engine error.</strong> Rami could not run as expected. Your project and RFP
+              data remain safely saved.
+              {status.lastError ? (
+                <div className="mt-1 text-[0.68rem] opacity-90">{status.lastError}</div>
+              ) : null}
+            </div>
           )}
 
-          {modal && (
-            <dl className="rami-engine-meta">
-              <div>
-                <dt>Session</dt>
-                <dd>{status.sessionDurationHms || '—'}</dd>
-              </div>
-              <div>
-                <dt>Last activity</dt>
-                <dd>{formatAgo(status.lastInferenceAt, status.idleSec)}</dd>
-              </div>
-              <div>
-                <dt>Idle auto-shutdown</dt>
-                <dd>{status.idleRemainingHms || '—'}</dd>
-              </div>
-            </dl>
+          {!isModalProvider && state === 'ERROR' && (
+            <div className="rami-engine-error-note" role="alert">
+              <strong>Ollama is not ready.</strong> Your project data is safely saved.
+              {status.lastError ? (
+                <div className="mt-1 text-[0.68rem] opacity-90">{status.lastError}</div>
+              ) : null}
+            </div>
           )}
 
-          {showModalSession && (
-            <div className="rami-engine-est">
-              <div className="rami-engine-est-title">Current RAMI session</div>
-              {status.sessionDurationHms && <div>Duration: {status.sessionDurationHms}</div>}
-              {status.requestCountSession != null && (
-                <div>Requests: {status.requestCountSession}</div>
-              )}
-              {status.session?.estimatedCostUsd != null && (
+          <div className="rami-engine-section">
+            <p className="rami-engine-section-title">Engine</p>
+            <dl className="rami-engine-meta">
+              <div>
+                <dt>Provider</dt>
+                <dd>{isModalProvider ? 'Modal' : 'Local Ollama'}</dd>
+              </div>
+              <div>
+                <dt>Model</dt>
+                <dd>{status.modelLabel || status.model || '—'}</dd>
+              </div>
+              <div>
+                <dt>{isModalProvider ? 'GPU' : 'Runtime'}</dt>
+                <dd>{isModalProvider ? status.gpu || '—' : 'Local'}</dd>
+              </div>
+              {!isModalProvider && (
                 <div>
-                  Session cost ({status.session.estimatedLabel ?? 'estimated'}):{' '}
+                  <dt>Ollama</dt>
+                  <dd>{status.endpointReachable ? 'Reachable' : 'Unreachable'}</dd>
+                </div>
+              )}
+            </dl>
+          </div>
+
+          {isModalProvider && isWarm && (
+            <div className="rami-engine-section">
+              <p className="rami-engine-section-title">Session</p>
+              <dl className="rami-engine-meta">
+                <div>
+                  <dt>Duration</dt>
+                  <dd>{sessionDurationLabel}</dd>
+                </div>
+                <div>
+                  <dt>Idle remaining</dt>
+                  <dd>{idleRemainingLabel}</dd>
+                </div>
+                {maxSessionRemainingLabel !== '—' && (
+                  <div>
+                    <dt>Max remaining</dt>
+                    <dd>{maxSessionRemainingLabel}</dd>
+                  </div>
+                )}
+                <div>
+                  <dt>Last activity</dt>
+                  <dd>{displayTimers.lastActivityLabel}</dd>
+                </div>
+              </dl>
+              {status.session?.estimatedCostUsd != null && (
+                <p className="rami-engine-est-note">
+                  Estimated session cost ({status.session.estimatedLabel ?? 'estimated'}):{' '}
                   {formatUsd(status.session.estimatedCostUsd)}
+                  {status.requestCountSession != null ? ` · ${status.requestCountSession} requests` : ''}
+                </p>
+              )}
+            </div>
+          )}
+
+          {isModalProvider && status.billingNote && (
+            <p className="rami-engine-est-note">{status.billingNote}</p>
+          )}
+
+          {!isModalProvider && status.runtimeNote && state !== 'ERROR' && (
+            <p className="rami-engine-est-note">{status.runtimeNote}</p>
+          )}
+
+          {hasPerformanceMetrics && (
+            <div className="rami-engine-disclosure">
+              <button
+                type="button"
+                className="rami-engine-disclosure-toggle"
+                onClick={() => setShowPerformance((v) => !v)}
+                aria-expanded={showPerformance}
+              >
+                <ChevronDown
+                  aria-hidden="true"
+                  className={`h-3.5 w-3.5 transition-transform ${showPerformance ? 'rotate-180' : ''}`}
+                  strokeWidth={2}
+                />
+                Performance
+              </button>
+              {showPerformance && (
+                <div className="rami-engine-perf">
+                  <div>
+                    Cold start:{' '}
+                    {status.lastColdStartSeconds != null
+                      ? `${status.lastColdStartSeconds.toFixed(1)}s`
+                      : '—'}
+                  </div>
+                  <div>
+                    TTFT:{' '}
+                    {status.lastTtftSeconds != null ? `${status.lastTtftSeconds.toFixed(2)}s` : '—'}
+                  </div>
+                  <div>
+                    Last response:{' '}
+                    {status.lastResponseSeconds != null
+                      ? `${status.lastResponseSeconds.toFixed(2)}s`
+                      : '—'}
+                  </div>
+                  <div>
+                    Tokens/sec:{' '}
+                    {status.lastTokensPerSec != null ? status.lastTokensPerSec.toFixed(1) : '—'}
+                  </div>
                 </div>
               )}
             </div>
           )}
 
-          {modal && status.billingNote && (
-            <p className="rami-engine-est-note">{status.billingNote}</p>
-          )}
-
-          {showPerformance && (
-            <div className="rami-engine-perf">
-              <div className="rami-engine-est-title">Performance</div>
-              <div>
-                Cold start:{' '}
-                {status.lastColdStartSeconds != null
-                  ? `${status.lastColdStartSeconds.toFixed(1)}s`
-                  : '—'}
-              </div>
-              <div>
-                TTFT:{' '}
-                {status.lastTtftSeconds != null ? `${status.lastTtftSeconds.toFixed(2)}s` : '—'}
-              </div>
-              <div>
-                Last response:{' '}
-                {status.lastResponseSeconds != null
-                  ? `${status.lastResponseSeconds.toFixed(2)}s`
-                  : '—'}
-              </div>
-              <div>
-                Tokens/sec:{' '}
-                {status.lastTokensPerSec != null ? status.lastTokensPerSec.toFixed(1) : '—'}
-              </div>
-            </div>
-          )}
-
-          {state === 'ERROR' && (
-            <div className="rami-engine-error">
-              <div>{modal ? 'Rami failed to start' : 'Ollama is not ready'}</div>
-              {showDetails && status.lastError && <pre>{status.lastError}</pre>}
-              <div className="rami-engine-actions">
-                {modal ? (
-                  <button type="button" onClick={() => void start()} disabled={busyAction}>
-                    Retry
-                  </button>
-                ) : (
-                  <button type="button" onClick={() => void refresh()} disabled={busyAction}>
-                    Refresh
-                  </button>
-                )}
-                <button type="button" onClick={() => setShowDetails((v) => !v)}>
-                  Details
-                </button>
-              </div>
-            </div>
-          )}
-
-          {!modal && status.runtimeNote && state !== 'ERROR' && (
-            <p className="rami-engine-est-note">{status.runtimeNote}</p>
-          )}
-
           <div className="rami-engine-actions">
-            {modal && (state === 'OFF' || state === 'ERROR') && (
+            {isModalProvider && (isModalStopped || isModalError) && (
               <button
                 type="button"
                 className="rami-engine-btn-primary"
                 onClick={() => void start()}
                 disabled={busyAction}
               >
-                Start Rami
+                {isModalError ? 'Retry start' : 'Start Rami'}
               </button>
             )}
-            {modal && isWarm && (
+            {isModalProvider && isWarm && (
               <button
                 type="button"
                 className="rami-engine-btn-danger"
@@ -478,17 +491,28 @@ export function RamiEngineControl() {
                 Stop Rami
               </button>
             )}
-            {modal && (state === 'READY' || state === 'BUSY') && (
+            {isModalProvider && (state === 'READY' || state === 'BUSY') && (
               <button type="button" onClick={() => void extend()} disabled={busyAction}>
                 Extend +1 hour
               </button>
             )}
-            {!modal && (
+            {!isModalProvider && (
               <button type="button" onClick={() => void refresh()} disabled={busyAction}>
                 Refresh status
               </button>
             )}
+            {(isModalError || (!isModalProvider && state === 'ERROR')) && (
+              <button type="button" onClick={() => setShowErrorDetails((v) => !v)}>
+                {showErrorDetails ? 'Hide details' : 'Details'}
+              </button>
+            )}
           </div>
+
+          {showErrorDetails && status.lastError && (isModalError || state === 'ERROR') && (
+            <pre className="rami-engine-error mt-1 max-h-24 overflow-auto text-[0.65rem]">
+              {status.lastError}
+            </pre>
+          )}
         </div>
       )}
     </div>

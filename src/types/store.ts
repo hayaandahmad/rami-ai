@@ -32,7 +32,8 @@ export type DocumentStoreAction =
   | { type: "SET_REVIEW_STATE"; documentId: string; state: ReviewPageState }
   | { type: "UPDATE_DOCUMENT"; documentId: string; updates: Partial<DocumentProject> }
   | { type: "SET_ATTACHMENT"; documentId: string; attachment: MockAttachment }
-  | { type: "REMOVE_ATTACHMENT"; documentId: string };
+  | { type: "REMOVE_ATTACHMENT"; documentId: string }
+  | { type: "REMOVE_DOCUMENT"; documentId: string };
 
 export interface DocumentStoreContextValue {
   state: DocumentStoreState;

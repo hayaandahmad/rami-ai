@@ -67,6 +67,17 @@ export async function ensureProject(
   return r.rows[0];
 }
 
+export async function deleteProjectByDocumentKey(
+  documentKey: string,
+  client?: PoolClient,
+): Promise<boolean> {
+  const sql = `DELETE FROM projects WHERE document_key = $1 RETURNING project_id`;
+  const r = client
+    ? await client.query<{ project_id: string }>(sql, [documentKey])
+    : await query<{ project_id: string }>(sql, [documentKey]);
+  return (r.rowCount ?? 0) > 0;
+}
+
 export async function updateProjectDerived(
   projectId: string,
   patch: { name?: string; budgetJod?: number | null; durationMonths?: number | null; status?: string },

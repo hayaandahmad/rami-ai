@@ -16,6 +16,8 @@ interface ChatComposerProps {
   status: ChatStatus;
   placeholder?: string;
   disabled?: boolean;
+  engineOff?: boolean;
+  engineOffMessage?: string;
 }
 
 export function ChatComposer({
@@ -25,10 +27,13 @@ export function ChatComposer({
   status,
   placeholder = 'Message Rami…',
   disabled = false,
+  engineOff = false,
+  engineOffMessage = 'Rami AI Engine is off. Start Rami to continue the conversation. Your project is saved.',
 }: ChatComposerProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const isGenerating = status === 'thinking' || status === 'streaming';
-  const canSubmit = value.trim().length > 0 && !isGenerating && !disabled;
+  const inputDisabled = isGenerating || disabled || engineOff;
+  const canSubmit = value.trim().length > 0 && !isGenerating && !disabled && !engineOff;
 
   // Auto-grow textarea
   useEffect(() => {
@@ -71,7 +76,7 @@ export function ChatComposer({
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            disabled={isGenerating || disabled}
+            disabled={inputDisabled}
             rows={1}
             aria-label="Message to Rami"
             className="flex-1 resize-none bg-transparent text-body text-text-primary placeholder:text-text-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
@@ -95,7 +100,9 @@ export function ChatComposer({
         </div>
 
         <p className="mt-1.5 text-center text-caption text-text-muted">
-          {isGenerating ? (
+          {engineOff ? (
+            <span className="text-[var(--color-warning-700)]">{engineOffMessage}</span>
+          ) : isGenerating ? (
             <span className="text-[var(--color-primary-700)]">
               {status === 'thinking' ? 'Processing your message…' : 'Rami is responding…'}
             </span>

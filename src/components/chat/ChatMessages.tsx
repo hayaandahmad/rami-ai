@@ -26,7 +26,6 @@ interface ChatMessagesProps {
   documentKey?: string;
   pendingProposals?: HistoricalFieldProposal[];
   onProposalChanged?: () => void;
-  currentlyClarifying?: string | null;
 }
 
 const SCROLL_THRESHOLD = 80;
@@ -41,7 +40,6 @@ export function ChatMessages({
   documentKey,
   pendingProposals = [],
   onProposalChanged,
-  currentlyClarifying,
 }: ChatMessagesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -71,7 +69,13 @@ export function ChatMessages({
 
   const isThinking = status === 'thinking';
   const lastMessage = messages[messages.length - 1];
-  const isStreamingLast = lastMessage?.role === 'assistant' && lastMessage?.isStreaming;
+  const lastAssistantEmpty = Boolean(
+    lastMessage?.role === 'assistant' &&
+      lastMessage.isStreaming &&
+      !lastMessage.content?.trim(),
+  );
+  const showThinking =
+    status === 'thinking' || (status === 'streaming' && lastAssistantEmpty);
   const visibleRefs = historicalReferences.filter((r) => !dismissed.has(r.chunkId));
 
   return (
@@ -91,20 +95,25 @@ export function ChatMessages({
           )}
 
           <div className="flex flex-col gap-6">
-            {currentlyClarifying && messages.length > 0 && (
-              <p className="rounded-md border border-[var(--color-primary-100)] bg-[var(--color-primary-50)] px-3 py-2 text-caption text-[var(--color-primary-800)]">
-                {currentlyClarifying}
-              </p>
-            )}
-            {messages.map((msg) => (
-              <div key={msg.id}>
-                {msg.role === 'assistant' ? (
-                  <RamiMessage message={msg} />
-                ) : (
-                  <UserMessage message={msg} />
-                )}
-              </div>
-            ))}
+            {messages.map((msg) => {
+              if (
+                msg.role === 'assistant' &&
+                msg.isStreaming &&
+                !msg.content?.trim() &&
+                showThinking
+              ) {
+                return null;
+              }
+              return (
+                <div key={msg.id}>
+                  {msg.role === 'assistant' ? (
+                    <RamiMessage message={msg} />
+                  ) : (
+                    <UserMessage message={msg} />
+                  )}
+                </div>
+              );
+            })}
 
             {documentKey && visibleRefs.length > 0 && !isThinking && (
               <div className="flex flex-col gap-3">
@@ -140,7 +149,7 @@ export function ChatMessages({
               </div>
             )}
 
-            <ThinkingIndicator visible={isThinking && !isStreamingLast} />
+            <ThinkingIndicator visible={showThinking} />
 
             {errorMessage && status === 'error' && (
               <div className="flex items-start gap-3">

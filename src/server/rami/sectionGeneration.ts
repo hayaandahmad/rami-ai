@@ -15,7 +15,7 @@ import {
   type ProjectSectionContentRow,
 } from '@/server/repositories/ProjectSectionContentRepository';
 import { hydrateProject, persistRuntimeState } from '@/server/rami/projectPersistence';
-import { buildSectionGenerationContext } from '@/server/rami/sectionGenerationContext';
+import { buildSectionGenerationContext, buildSectionEditContext } from '@/server/rami/sectionGenerationContext';
 import {
   assertApprovedReferencesForSection,
   loadApprovedGenerationReferences,
@@ -25,6 +25,7 @@ import { sanitizeHistoricalLeakage } from '@/server/rami/generationReferenceLeak
 import { projectMemoryToFactRows } from '@/server/db/factMapper';
 import {
   buildGenerationMessages,
+  buildEditMessages,
   GENERATED_SECTION_JSON_SCHEMA,
 } from '@/server/rami/generationPrompt';
 import { getSectionReadiness, getAllSectionReadiness } from '@/server/rami/sectionReadiness';
@@ -39,6 +40,7 @@ import type {
   AssembledRfp,
   GeneratedBlock,
   GeneratedSection,
+  SectionEditContext,
   SectionGenerationContext,
 } from '@/types/generatedSection';
 import {
@@ -197,6 +199,22 @@ async function draftBlocks(
   provider: RamiModelProvider,
 ): Promise<{ blocks: GeneratedBlock[]; modelUsed: string }> {
   const messages = buildGenerationMessages(ctx);
+  return draftBlocksFromMessages(ctx, messages, provider);
+}
+
+async function draftEditBlocks(
+  ctx: SectionEditContext,
+  provider: RamiModelProvider,
+): Promise<{ blocks: GeneratedBlock[]; modelUsed: string }> {
+  const messages = buildEditMessages(ctx);
+  return draftBlocksFromMessages(ctx, messages, provider);
+}
+
+async function draftBlocksFromMessages(
+  ctx: SectionGenerationContext,
+  messages: Array<{ role: 'system' | 'user'; content: string }>,
+  provider: RamiModelProvider,
+): Promise<{ blocks: GeneratedBlock[]; modelUsed: string }> {
   try {
     const result = await provider.extractStructured<{ blocks: unknown }>(
       messages,
@@ -377,6 +395,8 @@ export async function editRfpSection(input: {
   sectionId: string;
   blocks: GeneratedBlock[];
   reopenApproved?: boolean;
+  /** Suffix appended to modelUsed, e.g. manual-edit or restored-from-v2 */
+  versionLabel?: string;
 }): Promise<ProjectSectionContentRow> {
   const project = await resolveProject(input.documentKey);
   const session = await hydrateProject(input.documentKey);
@@ -405,7 +425,7 @@ export async function editRfpSection(input: {
     version: 0,
     approvalStatus: 'DRAFT',
     generatedAt: new Date().toISOString(),
-    modelUsed: `${base.modelUsed || 'unknown'}+manual-edit`,
+    modelUsed: `${base.modelUsed || 'unknown'}+${input.versionLabel ?? 'manual-edit'}`,
     blocks,
   };
 
@@ -420,16 +440,126 @@ export async function editRfpSection(input: {
     );
   });
 
+  const reopenReason =
+    input.versionLabel?.startsWith('restored-from-v') ? 'restore' : 'manual';
   const prior =
     session.sectionStates[input.sectionId] ?? createSectionStateRecord(input.sectionId);
   session.sectionStates[input.sectionId] = advanceLifecycleTowardReview(
     prior.state === 'APPROVED'
-      ? advanceSectionState(prior, 'REOPENED', { reopenReason: 'manual' })
+      ? advanceSectionState(prior, 'REOPENED', { reopenReason })
       : prior,
     edited.sourceFieldIds,
   );
   await persistRuntimeState(session);
   return content;
+}
+
+/**
+ * AI-assisted edit of an existing generated section.
+ * Creates a new DRAFT version; ProjectFacts unchanged; no chat extraction.
+ */
+export async function aiEditRfpSection(input: {
+  documentKey: string;
+  sectionId: string;
+  editInstruction: string;
+  provider?: RamiModelProvider;
+  reopenApproved?: boolean;
+}): Promise<GenerateSectionResult> {
+  const project = await resolveProject(input.documentKey);
+  const session = await hydrateProject(input.documentKey);
+
+  const existing = await getCurrentSectionContent(project.project_id, input.sectionId);
+  if (!existing) {
+    throw new GenerationError(
+      'CONTENT_NOT_FOUND',
+      `No generated content for section ${input.sectionId}. Generate first.`,
+    );
+  }
+  if (existing.approval_status === 'APPROVED' && !input.reopenApproved) {
+    throw new GenerationError(
+      'APPROVED_CONTENT_PROTECTED',
+      `Section ${input.sectionId} is APPROVED. Pass reopenApproved=true to create a new DRAFT version (history kept).`,
+    );
+  }
+
+  const factsBefore = JSON.stringify(projectMemoryToFactRows(session.memory));
+  const approvedRefs = await loadApprovedGenerationReferences(
+    project.project_id,
+    input.sectionId,
+  );
+  assertApprovedReferencesForSection(approvedRefs, input.sectionId);
+
+  const base = existing.content_json;
+  const ctx = buildSectionEditContext({
+    projectId: project.project_id,
+    documentKey: input.documentKey,
+    sectionId: input.sectionId,
+    memory: session.memory,
+    projectContext: session.projectContext,
+    approvedHistoricalReferences: approvedRefs,
+    currentSection: base.blocks,
+    currentVersion: base.version,
+    readinessAtGeneration: base.readinessAtGeneration,
+    editInstruction: input.editInstruction,
+  });
+
+  const provider = input.provider ?? getDefaultProvider();
+  const drafted = await draftEditBlocks(ctx, provider);
+  const sanitized = sanitizeHistoricalLeakage(drafted.blocks, ctx);
+
+  const factsAfter = JSON.stringify(projectMemoryToFactRows(session.memory));
+  if (factsAfter !== factsBefore) {
+    throw new GenerationError(
+      'PROVIDER_FAILED',
+      'AI edit mutated ProjectFacts — aborted.',
+    );
+  }
+
+  const generated: GeneratedSection = {
+    sectionId: ctx.sectionId,
+    title: ctx.title,
+    version: 0,
+    approvalStatus: 'DRAFT',
+    generatedAt: new Date().toISOString(),
+    readinessAtGeneration: ctx.readiness,
+    modelUsed: `${drafted.modelUsed}+ai-edit`,
+    blocks: sanitized.blocks,
+    sourceFieldIds: [
+      ...ctx.answeredFacts.map((f) => f.fieldId),
+      ...ctx.sharedFacts.map((f) => f.fieldId),
+    ],
+    tbcFieldIds: ctx.tbcFields.map((f) => f.fieldId),
+    historicalReferenceIds: approvedRefs.map((r) => r.chunkId),
+    generationReferenceIds: approvedRefs.map((r) => r.generationReferenceId),
+    draftingReferencesUsed: toLineage(approvedRefs),
+  };
+
+  const content = await withTransaction(async (client) => {
+    return insertSectionContentVersion(
+      {
+        projectId: project.project_id,
+        sectionId: input.sectionId,
+        content: generated,
+      },
+      client,
+    );
+  });
+
+  const prior =
+    session.sectionStates[input.sectionId] ?? createSectionStateRecord(input.sectionId);
+  session.sectionStates[input.sectionId] = advanceLifecycleTowardReview(
+    prior.state === 'APPROVED'
+      ? advanceSectionState(prior, 'REOPENED', { reopenReason: 'ai-edit' })
+      : prior,
+    generated.sourceFieldIds,
+  );
+  await persistRuntimeState(session);
+
+  return {
+    context: ctx,
+    content,
+    generated: content.content_json,
+  };
 }
 
 export async function getGeneratedSection(input: {

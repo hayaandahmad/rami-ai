@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import type { Metadata } from "next";
 import { DocumentStoreProvider } from "@/app/providers/DocumentStoreProvider";
+import { RamiEngineStatusProvider } from "@/providers/RamiEngineStatusProvider";
 import { RamiEngineControl } from "@/components/ai/RamiEngineControl";
 import "@/styles/globals.css";
 import "@/styles/utilities.css";
@@ -25,8 +26,10 @@ export default function RootLayout({
     <html lang="en" className={inter.variable}>
       <body className="font-sans">
         <DocumentStoreProvider>
-          {children}
-          <RamiEngineControl />
+          <RamiEngineStatusProvider>
+            {children}
+            <RamiEngineControl />
+          </RamiEngineStatusProvider>
         </DocumentStoreProvider>
       </body>
     </html>

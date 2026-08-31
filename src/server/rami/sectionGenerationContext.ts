@@ -6,8 +6,10 @@
 import type { ProjectMemory } from '@/types/projectMemory';
 import type { ProjectContext } from '@/types/projectContext';
 import type {
+  GeneratedBlock,
   GenerationFactSnapshot,
   GenerationTbcSnapshot,
+  SectionEditContext,
   SectionGenerationContext,
 } from '@/types/generatedSection';
 import type { GenerationHistoricalReference } from '@/types/generationReference';
@@ -95,6 +97,54 @@ export function buildSectionGenerationContext(input: {
     );
   }
 
+  const facts = assembleSectionFacts(input, readiness);
+
+  return {
+    projectId: input.projectId,
+    documentKey: input.documentKey,
+    sectionId: section.sectionId,
+    title: section.title,
+    subsections: section.representativeSubsections.map((s) => ({
+      id: s.id,
+      title: s.title,
+    })),
+    applicable: true,
+    readiness: facts.readiness,
+    answeredFacts: facts.answeredFacts,
+    sharedFacts: facts.sharedFacts,
+    tbcFields: facts.tbcFields,
+    notApplicableFields: facts.notApplicableFields,
+    approvedHistoricalReferences: [...(input.approvedHistoricalReferences ?? [])],
+    documentMeta: facts.documentMeta,
+    antiHallucinationRules: [...ANTI_HALLUCINATION_RULES],
+  };
+}
+
+/** Field IDs that entered answered/shared context (for tests / audit). */
+export function contextFactFieldIds(ctx: SectionGenerationContext): string[] {
+  return [
+    ...ctx.answeredFacts.map((f) => f.fieldId),
+    ...ctx.sharedFacts.map((f) => f.fieldId),
+  ];
+}
+
+function assembleSectionFacts(
+  input: {
+    sectionId: string;
+    memory: ProjectMemory;
+    projectContext?: ProjectContext;
+    approvedHistoricalReferences?: GenerationHistoricalReference[];
+  },
+  readiness: ReturnType<typeof getSectionReadiness>,
+): Pick<
+  SectionGenerationContext,
+  | 'answeredFacts'
+  | 'sharedFacts'
+  | 'tbcFields'
+  | 'notApplicableFields'
+  | 'documentMeta'
+  | 'readiness'
+> {
   const links = getSectionFieldLinks().filter((l) => l.sectionId === input.sectionId);
   const answeredFacts: GenerationFactSnapshot[] = [];
   const sharedFacts: GenerationFactSnapshot[] = [];
@@ -128,7 +178,6 @@ export function buildSectionGenerationContext(input: {
     else answeredFacts.push(snap);
   }
 
-  // Document-level consistency meta (only if answered) — not a dump of all facts.
   const metaFields = [
     'documentTitle',
     'beneficiaryEntity',
@@ -145,6 +194,64 @@ export function buildSectionGenerationContext(input: {
     }
   }
 
+  const readinessAtGen =
+    readiness.readiness === 'READY_TO_DRAFT' || readiness.readiness === 'DRAFTABLE_WITH_TBC'
+      ? readiness.readiness
+      : 'DRAFTABLE_WITH_TBC';
+
+  return {
+    readiness: readinessAtGen,
+    answeredFacts,
+    sharedFacts,
+    tbcFields,
+    notApplicableFields: [...readiness.notApplicableFields],
+    documentMeta,
+  };
+}
+
+/**
+ * Build edit context for an existing generated section.
+ * Does not require NOT_READY gate — content already exists.
+ * Does not retrieve historical references; uses pre-approved refs only.
+ */
+export function buildSectionEditContext(input: {
+  projectId: string;
+  documentKey: string;
+  sectionId: string;
+  memory: ProjectMemory;
+  projectContext?: ProjectContext;
+  approvedHistoricalReferences?: GenerationHistoricalReference[];
+  currentSection: GeneratedBlock[];
+  currentVersion: number;
+  readinessAtGeneration: 'READY_TO_DRAFT' | 'DRAFTABLE_WITH_TBC';
+  editInstruction: string;
+}): SectionEditContext {
+  const section = getRfpSection(input.sectionId);
+  if (!section) {
+    throw new GenerationError('SECTION_UNKNOWN', `Unknown sectionId: ${input.sectionId}`);
+  }
+
+  const readiness = getSectionReadiness(
+    input.memory,
+    input.sectionId,
+    input.projectContext,
+  );
+
+  if (!readiness.applicable || readiness.readiness === 'NOT_APPLICABLE') {
+    throw new GenerationError(
+      'NOT_APPLICABLE',
+      `Section ${input.sectionId} is not applicable; AI edit blocked.`,
+      readiness,
+    );
+  }
+
+  const instruction = input.editInstruction.trim();
+  if (!instruction) {
+    throw new GenerationError('INVALID_MODEL_OUTPUT', 'Edit instruction is required.');
+  }
+
+  const facts = assembleSectionFacts(input, readiness);
+
   return {
     projectId: input.projectId,
     documentKey: input.documentKey,
@@ -155,21 +262,16 @@ export function buildSectionGenerationContext(input: {
       title: s.title,
     })),
     applicable: true,
-    readiness: readiness.readiness,
-    answeredFacts,
-    sharedFacts,
-    tbcFields,
-    notApplicableFields: [...readiness.notApplicableFields],
+    readiness: input.readinessAtGeneration,
+    answeredFacts: facts.answeredFacts,
+    sharedFacts: facts.sharedFacts,
+    tbcFields: facts.tbcFields,
+    notApplicableFields: facts.notApplicableFields,
     approvedHistoricalReferences: [...(input.approvedHistoricalReferences ?? [])],
-    documentMeta,
+    documentMeta: facts.documentMeta,
     antiHallucinationRules: [...ANTI_HALLUCINATION_RULES],
+    currentBlocks: input.currentSection,
+    currentVersion: input.currentVersion,
+    editInstruction: instruction,
   };
-}
-
-/** Field IDs that entered answered/shared context (for tests / audit). */
-export function contextFactFieldIds(ctx: SectionGenerationContext): string[] {
-  return [
-    ...ctx.answeredFacts.map((f) => f.fieldId),
-    ...ctx.sharedFacts.map((f) => f.fieldId),
-  ];
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-30T23:54:13.582Z",
+  "generatedAt": "2026-08-31T09:26:16.620Z",
   "fieldCount": 59,
   "questionCount": 69,
   "sectionCount": 20,
@@ -10,8 +10,8 @@
   "generationReferenceId": "gr_1dc1889a-7c84-410d-9c08-f494bce60236",
   "baselineHeadings": 1,
   "assistedHeadings": 3,
-  "baselineMs": 30,
-  "assistedMs": 27,
+  "baselineMs": 14,
+  "assistedMs": 11,
   "approvedRefs": 1,
   "excerptChars": 850,
   "ngramOverlap5": 0,

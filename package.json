@@ -48,7 +48,16 @@
     "db:verify-shared-restore": "npx tsx scripts/db-verify-shared-restore.ts",
     "validate:shared-dump": "npx tsx scripts/validate-shared-dump.ts",
     "validate:ui-phase-a1": "npx tsx scripts/validate-ui-phase-a1.ts",
-    "validate:ui-phase-a2": "npx tsx scripts/validate-ui-phase-a2.ts"
+    "validate:ui-phase-a2": "npx tsx scripts/validate-ui-phase-a2.ts",
+    "validate:ui-phase-b1": "npx tsx scripts/validate-ui-phase-b1.ts",
+    "validate:ui-phase-b2": "npx tsx scripts/validate-ui-phase-b2.ts",
+    "validate:ui-phase-b3": "npx tsx scripts/validate-ui-phase-b3.ts",
+    "validate:edit-with-rami": "npx tsx scripts/validate-edit-with-rami.ts",
+    "validate:unicode-roundtrip": "npx tsx scripts/validate-unicode-roundtrip.ts",
+    "validate:ui-phase-b5": "npx tsx scripts/validate-ui-phase-b5.ts",
+    "validate:manual-editor-versioning": "npx tsx scripts/validate-manual-editor-versioning.ts",
+    "validate:project-delete": "npx tsx scripts/validate-project-delete.ts",
+    "validate:final-handoff": "npx tsx scripts/final-handoff-integration.ts"
   },
   "dependencies": {
     "docx": "^9.7.1",

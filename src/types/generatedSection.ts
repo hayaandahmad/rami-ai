@@ -89,6 +89,13 @@ export interface SectionGenerationContext {
   antiHallucinationRules: string[];
 }
 
+/** Controlled context for AI-assisted section editing (not full regeneration). */
+export interface SectionEditContext extends SectionGenerationContext {
+  currentBlocks: GeneratedBlock[];
+  currentVersion: number;
+  editInstruction: string;
+}
+
 export interface AssembledRfpSectionSlot {
   sectionId: string;
   title: string;
@@ -109,6 +116,15 @@ export interface AssembledRfp {
   generatedApplicableCount: number;
   approvedApplicableCount: number;
   complete: boolean;
+}
+
+export interface SectionVersionSummary {
+  version: number;
+  approvalStatus: string;
+  modelUsed: string | null;
+  createdAt: string;
+  isCurrent: boolean;
+  generated: GeneratedSection;
 }
 
 export type GenerationErrorCode =

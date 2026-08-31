@@ -10,7 +10,13 @@ import { query } from '@/server/db/connection';
 import { factRowsToProjectMemory } from '@/server/db/factMapper';
 import { withTransaction } from '@/server/db/connection';
 import { analyzeGaps } from '@/server/rami/gapEngine';
-import { ensureProject, type ProjectRow } from '@/server/repositories/ProjectRepository';
+import {
+  deleteProjectByDocumentKey,
+  ensureProject,
+  findProjectByDocumentKey,
+  type ProjectRow,
+} from '@/server/repositories/ProjectRepository';
+import { clearSessionCache } from '@/server/rami/sessionStore';
 import { listProjectFacts } from '@/server/repositories/ProjectFactsRepository';
 import { loadProjectRuntime } from '@/server/repositories/ProjectRuntimeRepository';
 import { upsertSystemUser } from '@/server/repositories/UserRepository';
@@ -337,4 +343,29 @@ export async function createWorkspaceProject(
   });
 
   return { documentKey, project };
+}
+
+export async function deleteWorkspaceProject(documentKey: string): Promise<boolean> {
+  if (!isDatabaseConfigured()) {
+    throw new PersistenceError(
+      'NOT_CONFIGURED',
+      'PostgreSQL is not configured. Set RAMI_DB_URL or RAMI_DB_HOST in .env.local.',
+    );
+  }
+
+  const key = documentKey.trim();
+  if (!key) {
+    return false;
+  }
+
+  const existing = await findProjectByDocumentKey(key);
+  if (!existing) {
+    return false;
+  }
+
+  const deleted = await deleteProjectByDocumentKey(key);
+  if (deleted) {
+    clearSessionCache(key);
+  }
+  return deleted;
 }

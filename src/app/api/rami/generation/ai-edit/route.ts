@@ -1,8 +1,9 @@
-import { editRfpSection } from '@/server/rami/sectionGeneration';
+import { aiEditRfpSection } from '@/server/rami/sectionGeneration';
 import { PersistenceError } from '@/server/rami/projectPersistence';
-import { GenerationError, type GeneratedBlock } from '@/types/generatedSection';
+import { GenerationError } from '@/types/generatedSection';
 
 export const runtime = 'nodejs';
+export const maxDuration = 300;
 
 function errorResponse(err: unknown) {
   if (err instanceof GenerationError) {
@@ -11,9 +12,11 @@ function errorResponse(err: unknown) {
         ? 409
         : err.code === 'CONTENT_NOT_FOUND' || err.code === 'PROJECT_NOT_FOUND'
           ? 404
-          : err.code === 'INVALID_MODEL_OUTPUT'
-            ? 400
-            : 500;
+          : err.code === 'NOT_APPLICABLE'
+            ? 409
+            : err.code === 'INVALID_MODEL_OUTPUT'
+              ? 400
+              : 500;
     return Response.json(
       { ok: false, code: err.code, error: err.message, details: err.details ?? null },
       { status },
@@ -32,42 +35,50 @@ function errorResponse(err: unknown) {
 }
 
 /**
- * POST { documentKey, sectionId, blocks, reopenApproved? }
- * Persist a manual edit as a new DRAFT version. Does not change ProjectFacts.
+ * POST { documentKey, sectionId, editInstruction, reopenApproved? }
+ * AI-assisted edit of existing section content. ProjectFacts unchanged.
  */
 export async function POST(req: Request) {
   try {
     const body = (await req.json()) as {
       documentKey?: string;
       sectionId?: string;
-      blocks?: GeneratedBlock[];
+      editInstruction?: string;
       reopenApproved?: boolean;
-      versionLabel?: string;
     };
     const documentKey = body.documentKey?.trim();
     const sectionId = body.sectionId?.trim();
-    if (!documentKey || !sectionId || !Array.isArray(body.blocks)) {
+    const editInstruction = body.editInstruction?.trim();
+    if (!documentKey || !sectionId || !editInstruction) {
       return Response.json(
-        { ok: false, error: 'documentKey, sectionId, and blocks[] are required' },
+        { ok: false, error: 'documentKey, sectionId, and editInstruction are required' },
         { status: 400 },
       );
     }
-    const row = await editRfpSection({
+
+    const result = await aiEditRfpSection({
       documentKey,
       sectionId,
-      blocks: body.blocks,
+      editInstruction,
       reopenApproved: Boolean(body.reopenApproved),
-      versionLabel: body.versionLabel?.trim() || undefined,
     });
+
     return Response.json({
       ok: true,
       documentKey,
       sectionId,
+      readiness: result.context.readiness,
+      contextAudit: {
+        answeredFieldIds: result.context.answeredFacts.map((f) => f.fieldId),
+        sharedFieldIds: result.context.sharedFacts.map((f) => f.fieldId),
+        tbcFieldIds: result.context.tbcFields.map((f) => f.fieldId),
+        generationReferenceIds: result.generated.generationReferenceIds ?? [],
+      },
       content: {
-        contentId: row.content_id,
-        version: row.version,
-        approvalStatus: row.approval_status,
-        generated: row.content_json,
+        contentId: result.content.content_id,
+        version: result.content.version,
+        approvalStatus: result.content.approval_status,
+        generated: result.generated,
       },
     });
   } catch (err) {

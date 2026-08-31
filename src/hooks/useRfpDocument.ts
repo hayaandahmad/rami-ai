@@ -14,6 +14,7 @@ import type {
   SectionApprovalStatus,
 } from '@/types/generatedSection';
 import type { SectionInformationReadiness, SectionReadinessResult } from '@/types/sectionReadiness';
+import type { SectionVersionSummary } from '@/types/generatedSection';
 
 export type DocumentStatus = 'NOT_GENERATED' | 'DRAFT' | 'APPROVED' | 'NOT_APPLICABLE';
 
@@ -56,6 +57,27 @@ export interface AssembledProgressSummary {
   sectionDocumentStatus: Record<string, DocumentStatus>;
 }
 
+function rfpUiStorageKey(documentKey: string, part: 'section' | 'view') {
+  return `rami-rfp-ui-v1:${documentKey}:${part}`;
+}
+
+function readStoredView(documentKey: string): 'section' | 'full' | null {
+  try {
+    const value = sessionStorage.getItem(rfpUiStorageKey(documentKey, 'view'));
+    return value === 'full' || value === 'section' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function readStoredSection(documentKey: string): string | null {
+  try {
+    return sessionStorage.getItem(rfpUiStorageKey(documentKey, 'section'));
+  } catch {
+    return null;
+  }
+}
+
 export function useRfpDocument(documentKey: string | undefined) {
   const [assembled, setAssembled] = useState<AssembledRfp | null>(null);
   const [readiness, setReadiness] = useState<SectionReadinessResult[]>([]);
@@ -67,6 +89,9 @@ export function useRfpDocument(documentKey: string | undefined) {
   const [error, setError] = useState<string | null>(null);
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [draftingReferences, setDraftingReferences] = useState<DraftingReferenceRow[]>([]);
+  const [sectionHistory, setSectionHistory] = useState<SectionVersionSummary[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [previewVersion, setPreviewVersion] = useState<number | null>(null);
 
   const refresh = useCallback(async () => {
     if (!documentKey) return null;
@@ -94,16 +119,42 @@ export function useRfpDocument(documentKey: string | undefined) {
   }, [documentKey]);
 
   useEffect(() => {
+    if (!documentKey) return;
+    const storedView = readStoredView(documentKey);
+    if (storedView) setViewMode(storedView);
+  }, [documentKey]);
+
+  useEffect(() => {
     void refresh().then((asm) => {
       if (!asm) return;
       setSelectedSectionId((prev) => {
+        const stored = documentKey ? readStoredSection(documentKey) : null;
+        if (stored && asm.sections.some((s) => s.sectionId === stored)) return stored;
         if (prev && asm.sections.some((s) => s.sectionId === prev)) return prev;
         const firstGenerated = asm.sections.find((s) => s.applicable && s.generated);
         const firstApplicable = asm.sections.find((s) => s.applicable);
         return firstGenerated?.sectionId ?? firstApplicable?.sectionId ?? null;
       });
     });
-  }, [refresh]);
+  }, [refresh, documentKey]);
+
+  useEffect(() => {
+    if (!documentKey || !selectedSectionId) return;
+    try {
+      sessionStorage.setItem(rfpUiStorageKey(documentKey, 'section'), selectedSectionId);
+    } catch {
+      /* ignore */
+    }
+  }, [documentKey, selectedSectionId]);
+
+  useEffect(() => {
+    if (!documentKey) return;
+    try {
+      sessionStorage.setItem(rfpUiStorageKey(documentKey, 'view'), viewMode);
+    } catch {
+      /* ignore */
+    }
+  }, [documentKey, viewMode]);
 
   const readinessById = useMemo(() => {
     const m = new Map<string, SectionReadinessResult>();
@@ -182,11 +233,81 @@ export function useRfpDocument(documentKey: string | undefined) {
     async (
       sectionId: string,
       blocks: GeneratedBlock[],
-      opts?: { reopenApproved?: boolean },
+      opts?: { reopenApproved?: boolean; versionLabel?: string },
     ) => {
       return postJson('/api/rami/generation/edit', {
         sectionId,
         blocks,
+        reopenApproved: Boolean(opts?.reopenApproved),
+        versionLabel: opts?.versionLabel,
+      });
+    },
+    [postJson],
+  );
+
+  const fetchSectionHistory = useCallback(
+    async (sectionId: string) => {
+      if (!documentKey) return [];
+      setHistoryLoading(true);
+      setError(null);
+      try {
+        const res = await fetch(
+          `/api/rami/generation/section/history?documentKey=${encodeURIComponent(documentKey)}&sectionId=${encodeURIComponent(sectionId)}`,
+        );
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Failed to load version history');
+        const versions = (data.versions as SectionVersionSummary[]) ?? [];
+        setSectionHistory(versions);
+        return versions;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+        setSectionHistory([]);
+        return [];
+      } finally {
+        setHistoryLoading(false);
+      }
+    },
+    [documentKey],
+  );
+
+  const restoreSectionVersion = useCallback(
+    async (
+      sectionId: string,
+      sourceVersion: number,
+      opts?: { reopenApproved?: boolean },
+    ) => {
+      const versions =
+        sectionHistory.length > 0
+          ? sectionHistory
+          : await fetchSectionHistory(sectionId);
+      const source = versions.find((v) => v.version === sourceVersion);
+      if (!source) {
+        throw new Error(`Version ${sourceVersion} not found.`);
+      }
+      await saveEdit(sectionId, source.generated.blocks, {
+        reopenApproved: opts?.reopenApproved,
+        versionLabel: `restored-from-v${sourceVersion}`,
+      });
+      setPreviewVersion(null);
+      await fetchSectionHistory(sectionId);
+    },
+    [sectionHistory, fetchSectionHistory, saveEdit],
+  );
+
+  useEffect(() => {
+    setPreviewVersion(null);
+    setSectionHistory([]);
+  }, [selectedSectionId]);
+
+  const aiEdit = useCallback(
+    async (
+      sectionId: string,
+      editInstruction: string,
+      opts?: { reopenApproved?: boolean },
+    ) => {
+      return postJson('/api/rami/generation/ai-edit', {
+        sectionId,
+        editInstruction,
         reopenApproved: Boolean(opts?.reopenApproved),
       });
     },
@@ -259,10 +380,17 @@ export function useRfpDocument(documentKey: string | undefined) {
     generate,
     approve,
     saveEdit,
+    aiEdit,
     draftingReferences,
     revokeDraftingReference,
     hasGeneratedContent,
     progressSummary,
+    sectionHistory,
+    historyLoading,
+    previewVersion,
+    setPreviewVersion,
+    fetchSectionHistory,
+    restoreSectionVersion,
     readinessLabel: (r?: SectionInformationReadiness) => r ?? 'NOT_APPLICABLE',
     approvalLabel: (a?: SectionApprovalStatus | null) => a ?? null,
     currentGenerated: selected?.generated as GeneratedSection | null,

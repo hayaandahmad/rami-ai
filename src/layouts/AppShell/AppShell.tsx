@@ -1,13 +1,15 @@
 "use client";
 
-import { Suspense, useState, type ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Menu, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import type { BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { UserIdentity } from "@/components/ui/UserIdentity";
+import { useDesktopSidebarCollapsed } from "@/hooks/useDesktopSidebarCollapsed";
 import { MobileNavigationDrawer } from "./MobileNavigationDrawer";
 import { Sidebar } from "./Sidebar";
 import { SidebarFallback } from "./SidebarFallback";
 import { TopHeader } from "./TopHeader";
+import { useState } from "react";
 
 interface AppShellProps {
   breadcrumbs?: BreadcrumbItem[];
@@ -17,8 +19,14 @@ interface AppShellProps {
 export function AppShell({ breadcrumbs = [], children }: AppShellProps) {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isTabletSidebarCollapsed, setIsTabletSidebarCollapsed] = useState(false);
+  const { collapsed: desktopCollapsed, toggle: toggleDesktopSidebar, ready } =
+    useDesktopSidebarCollapsed();
 
   const tabletSidebarWidth = isTabletSidebarCollapsed
+    ? "var(--spacing-sidebar-collapsed)"
+    : "var(--spacing-sidebar-expanded)";
+
+  const desktopSidebarWidth = desktopCollapsed
     ? "var(--spacing-sidebar-collapsed)"
     : "var(--spacing-sidebar-expanded)";
 
@@ -29,9 +37,18 @@ export function AppShell({ breadcrumbs = [], children }: AppShellProps) {
       </a>
 
       <div className="flex h-screen overflow-hidden">
-        <div className="hidden h-screen shrink-0 overflow-hidden lg:block lg:w-[var(--spacing-sidebar-expanded)]">
-          <Suspense fallback={<SidebarFallback collapsed={false} />}>
-            <Sidebar collapsed={false} />
+        <div
+          className="hidden h-screen shrink-0 overflow-hidden transition-[width] duration-200 ease-out lg:block"
+          style={{
+            width: ready ? desktopSidebarWidth : "var(--spacing-sidebar-expanded)",
+          }}
+        >
+          <Suspense fallback={<SidebarFallback collapsed={desktopCollapsed} />}>
+            <Sidebar
+              collapsed={desktopCollapsed}
+              onToggleCollapse={toggleDesktopSidebar}
+              showCollapseControl
+            />
           </Suspense>
         </div>
 
