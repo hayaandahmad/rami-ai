@@ -2,8 +2,8 @@
   "sourceDatabaseName": "rami_ai",
   "postgresqlVersion": "PostgreSQL 18.6 on x86_64-windows",
   "snapshotFormat": "pg_dump -Fc --no-owner --no-privileges",
-  "createdAt": "2026-08-30T23:57:42.400Z",
-  "sourceCommitBeforeSnapshot": "d3f65c6515d931efd88bf8d25cc0e0a8206e449c",
+  "createdAt": "2026-08-31T01:09:06.785Z",
+  "sourceCommitBeforeSnapshot": null,
   "migrations": [
     "001_init.sql",
     "002_section_fields.sql",
@@ -22,19 +22,19 @@
     "sectionFields": 78
   },
   "safeCounts": {
-    "projects": 7,
-    "project_facts": 61,
+    "projects": 8,
+    "project_facts": 87,
     "messages": 14,
-    "project_runtime": 7,
-    "project_section_states": 140,
-    "project_section_contents": 39,
+    "project_runtime": 8,
+    "project_section_states": 160,
+    "project_section_contents": 64,
     "historical_rfp_documents": 7,
     "historical_question_answers": 561,
     "historical_knowledge_chunks": 732,
     "historical_chunk_embeddings": 732,
     "historical_rag_runtime": 1,
-    "historical_field_proposals": 7,
-    "project_generation_references": 2,
+    "historical_field_proposals": 11,
+    "project_generation_references": 6,
     "users": 1,
     "schema_migrations": 7
   },
@@ -46,16 +46,16 @@
     "storage": "REAL[] (pgvector not installed)"
   },
   "generationReferences": {
-    "REVOKED": 1,
-    "ACTIVE": 1
+    "REVOKED": 2,
+    "ACTIVE": 4
   },
   "historicalProposals": {
     "REJECTED": 1,
-    "ACCEPTED": 6
+    "ACCEPTED": 10
   },
   "snapshotRelativePath": "dev/database/rami_ai_shared.dump",
-  "snapshotBytes": 3150229,
-  "snapshotSha256": "604f658f942793963897f0c12e601a3981af549be372d56ffc91c398e175880f",
+  "snapshotBytes": 3156038,
+  "snapshotSha256": "0d238372ed53b9745d5bdb8915d6c95d59c3839fcc22cef307abd8075165805b",
   "notes": [
     "Development handoff artifact only — not a production backup.",
     "Git does not contain a live PostgreSQL server; each machine restores locally.",
