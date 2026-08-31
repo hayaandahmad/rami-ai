@@ -16,10 +16,10 @@ git rev-parse origin/main
 Expected after this consolidation:
 
 ```text
-ff11a1cb7fa84c07bca7c77067f7bcb6ca8f69c3
+4344dc4186b841e0621e5fc362e2b61b3c086bf5
 ```
 
-(`git log -1` on `origin/main` after pull.)
+(`git log -1` / `origin/main` after pull. Snapshot commit: `ff11a1cb7fa84c07bca7c77067f7bcb6ca8f69c3`.)
 
 ## B. Product goal
 
