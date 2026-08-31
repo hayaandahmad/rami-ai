@@ -1,0 +1,638 @@
+{
+  "generatedAt": "2026-08-31T00:43:21.331Z",
+  "validationType": "LIVE_QWEN_QUALITY",
+  "mockValidationSeparate": "npm run validate:generation-rag",
+  "startingCommitNote": "4697c9b48bd3469bb8b284bc38acbc6c3d9e0327",
+  "provider": "ollama-local",
+  "model": "qwen3:8b",
+  "evaluationProject": "rami-rag-live-eval",
+  "canonical": {
+    "sections": 20,
+    "fields": 59,
+    "questions": 69
+  },
+  "pgvector": "not installed",
+  "automaticRetrievalOnGenerate": false,
+  "cases": [
+    {
+      "caseId": "A_DELIVERABLES",
+      "label": "Deliverables — structure/detail",
+      "sectionId": "deliverables",
+      "readiness": "READY_TO_DRAFT",
+      "provider": "ollama-local",
+      "model": "qwen3:8b",
+      "projectFactFingerprint": "[{\"field_id\":\"acceptanceCriteria\",\"value_json\":[\"Deliverables ap…",
+      "factsUnchanged": true,
+      "readinessUnchanged": true,
+      "baseline": {
+        "version": 3,
+        "durationMs": 36500,
+        "metrics": {
+          "blockCount": 3,
+          "headings": 2,
+          "paragraphs": 0,
+          "lists": 0,
+          "tables": 1,
+          "tbcBlocks": 0,
+          "listItems": 0
+        },
+        "historicalReferenceIds": [],
+        "modelUsed": "qwen3:8b"
+      },
+      "reference": {
+        "chunkId": "40addbe2130d283c80882ca9046eddf34083e384",
+        "historicalRfpId": "pq-15-egovt-2026-sanad-ai",
+        "generationReferenceId": "gr_38d955f6-ed23-40cb-91cd-16191dca1fba",
+        "excerptChars": 1309,
+        "numericTokensInReference": [],
+        "nameTokensInReference": [
+          "Historical RFP",
+          "Agentic Chatbot",
+          "SANAD AI",
+          "This PQ",
+          "Answered\nAnswer",
+          "Technical Offer",
+          "SANAD AI Project",
+          "TBC\nAnswer"
+        ]
+      },
+      "assisted": {
+        "version": 4,
+        "durationMs": 43071,
+        "metrics": {
+          "blockCount": 2,
+          "headings": 2,
+          "paragraphs": 0,
+          "lists": 0,
+          "tables": 0,
+          "tbcBlocks": 0,
+          "listItems": 0
+        },
+        "historicalReferenceIds": [
+          "40addbe2130d283c80882ca9046eddf34083e384"
+        ],
+        "generationReferenceIds": [
+          "gr_38d955f6-ed23-40cb-91cd-16191dca1fba"
+        ],
+        "modelUsed": "qwen3:8b",
+        "reloadVersion": 4
+      },
+      "leakage": {
+        "deterministicHits": [],
+        "ngramOverlap5": 0,
+        "longestMatchingPhraseWords": 1,
+        "sourceOverlapFlag": false
+      },
+      "claims": {
+        "baseline": [
+          {
+            "claim": "named deliverables",
+            "classification": "SUPPORTED_BY_PROJECTFACT"
+          }
+        ],
+        "assisted": [],
+        "unsupportedAssisted": 0
+      },
+      "tbc": {
+        "fieldIds": [],
+        "baselineTbcBlocks": 0,
+        "assistedTbcBlocks": 0,
+        "preserved": true
+      },
+      "rubric": {
+        "A": 5,
+        "B": 2,
+        "C": 4,
+        "D": 2,
+        "E": 2,
+        "F": 4,
+        "G": 5,
+        "H": 5
+      },
+      "verdict": "WORSE",
+      "dbVerification": {
+        "ok": true,
+        "baselineContentId": "0e62d5da-c5a0-4816-9be5-a4a60e56aa63",
+        "assistedContentId": "dc058f3b-3278-460e-94c7-c45268aaf7ba",
+        "baselineModel": "qwen3:8b",
+        "assistedModel": "qwen3:8b",
+        "projectFactFingerprintMatch": true
+      },
+      "semanticLeakageReview": [],
+      "properNameLeakageReview": [
+        {
+          "name": "SANAD AI",
+          "inReference": "yes",
+          "inProjectFacts": "no",
+          "inAssistedOutput": "no",
+          "verdict": "NOT_LEAKED"
+        },
+        {
+          "name": "Agentic Chatbot",
+          "inReference": "yes",
+          "inProjectFacts": "no",
+          "inAssistedOutput": "no",
+          "verdict": "NOT_LEAKED"
+        }
+      ],
+      "structuralReview": {
+        "note": "Assisted lost 1 table(s) vs baseline",
+        "baselineBlockCount": 3,
+        "assistedBlockCount": 2,
+        "baselineHasTable": true,
+        "assistedHasTable": false
+      },
+      "tbcVerification": {
+        "baselineTbcFieldIds": [],
+        "assistedTbcFieldIds": [],
+        "baselineTbcBlocks": 0,
+        "assistedTbcBlocks": 0
+      }
+    },
+    {
+      "caseId": "B_SCOPE",
+      "label": "Scope of Work — requirement organization",
+      "sectionId": "scopeOfWork",
+      "readiness": "READY_TO_DRAFT",
+      "provider": "ollama-local",
+      "model": "qwen3:8b",
+      "projectFactFingerprint": "[{\"field_id\":\"acceptanceCriteria\",\"value_json\":[\"Deliverables ap…",
+      "factsUnchanged": true,
+      "readinessUnchanged": true,
+      "baseline": {
+        "version": 1,
+        "durationMs": 23435,
+        "metrics": {
+          "blockCount": 13,
+          "headings": 7,
+          "paragraphs": 4,
+          "lists": 2,
+          "tables": 0,
+          "tbcBlocks": 0,
+          "listItems": 6
+        },
+        "historicalReferenceIds": [],
+        "modelUsed": "qwen3:8b"
+      },
+      "reference": {
+        "chunkId": "10e74206aa2bfef31f97230da88045b05b054111",
+        "historicalRfpId": "rfp-22-egovt-2026-reengineering-ofa",
+        "generationReferenceId": "gr_74d9babd-ed92-462a-861a-566c5d69d68f",
+        "excerptChars": 4207,
+        "numericTokensInReference": [],
+        "nameTokensInReference": [
+          "Historical RFP",
+          "Open Framework Agreement for Reengineering Projects",
+          "Answered\nAnswer",
+          "Project Manager",
+          "Senior BPR Consultant",
+          "Junior BPR Consultant",
+          "Business Analyst",
+          "Process Analyst"
+        ]
+      },
+      "assisted": {
+        "version": 2,
+        "durationMs": 21494,
+        "metrics": {
+          "blockCount": 13,
+          "headings": 7,
+          "paragraphs": 4,
+          "lists": 2,
+          "tables": 0,
+          "tbcBlocks": 0,
+          "listItems": 6
+        },
+        "historicalReferenceIds": [
+          "10e74206aa2bfef31f97230da88045b05b054111"
+        ],
+        "generationReferenceIds": [
+          "gr_74d9babd-ed92-462a-861a-566c5d69d68f"
+        ],
+        "modelUsed": "qwen3:8b",
+        "reloadVersion": 2
+      },
+      "leakage": {
+        "deterministicHits": [],
+        "ngramOverlap5": 0,
+        "longestMatchingPhraseWords": 3,
+        "sourceOverlapFlag": false
+      },
+      "claims": {
+        "baseline": [
+          {
+            "claim": "MoDEE beneficiary",
+            "classification": "SUPPORTED_BY_PROJECTFACT"
+          }
+        ],
+        "assisted": [
+          {
+            "claim": "MoDEE beneficiary",
+            "classification": "SUPPORTED_BY_PROJECTFACT"
+          }
+        ],
+        "unsupportedAssisted": 0
+      },
+      "tbc": {
+        "fieldIds": [],
+        "baselineTbcBlocks": 0,
+        "assistedTbcBlocks": 0,
+        "preserved": true
+      },
+      "rubric": {
+        "A": 5,
+        "B": 4,
+        "C": 4,
+        "D": 4,
+        "E": 4,
+        "F": 4,
+        "G": 5,
+        "H": 5
+      },
+      "verdict": "MIXED",
+      "dbVerification": {
+        "ok": true,
+        "baselineContentId": "38385551-c53b-460f-9b4d-46ec66a5da98",
+        "assistedContentId": "9d189c25-aa4c-41bb-b34f-826feeb19951",
+        "baselineModel": "qwen3:8b",
+        "assistedModel": "qwen3:8b",
+        "projectFactFingerprintMatch": true
+      },
+      "semanticLeakageReview": [],
+      "properNameLeakageReview": [
+        {
+          "name": "Senior BPR Consultant",
+          "inReference": "yes",
+          "inProjectFacts": "no",
+          "inAssistedOutput": "no",
+          "verdict": "NOT_LEAKED"
+        },
+        {
+          "name": "Open Framework Agreement for Reengineering",
+          "inReference": "yes",
+          "inProjectFacts": "no",
+          "inAssistedOutput": "no",
+          "verdict": "NOT_LEAKED"
+        }
+      ],
+      "structuralReview": {
+        "note": "Similar structure to baseline",
+        "baselineBlockCount": 13,
+        "assistedBlockCount": 13,
+        "baselineHasTable": false,
+        "assistedHasTable": false
+      },
+      "tbcVerification": {
+        "baselineTbcFieldIds": [],
+        "assistedTbcFieldIds": [],
+        "baselineTbcBlocks": 0,
+        "assistedTbcBlocks": 0
+      }
+    },
+    {
+      "caseId": "C_ACCEPTANCE",
+      "label": "Background & Business Need — TBC preservation + structure",
+      "sectionId": "background",
+      "readiness": "DRAFTABLE_WITH_TBC",
+      "provider": "ollama-local",
+      "model": "qwen3:8b",
+      "projectFactFingerprint": "[{\"field_id\":\"acceptanceCriteria\",\"value_json\":[\"Deliverables ap…",
+      "factsUnchanged": true,
+      "readinessUnchanged": true,
+      "baseline": {
+        "version": 1,
+        "durationMs": 17006,
+        "metrics": {
+          "blockCount": 8,
+          "headings": 4,
+          "paragraphs": 2,
+          "lists": 1,
+          "tables": 0,
+          "tbcBlocks": 1,
+          "listItems": 3
+        },
+        "historicalReferenceIds": [],
+        "modelUsed": "qwen3:8b"
+      },
+      "reference": {
+        "chunkId": "0357b9cabafe23cf606ef3acea2de19e8924239f",
+        "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+        "generationReferenceId": "gr_b904d971-48cc-48dc-a422-a34e4ae10105",
+        "excerptChars": 2823,
+        "numericTokensInReference": [],
+        "nameTokensInReference": [
+          "Historical RFP",
+          "Open Framework Agreement for Performance Assessment",
+          "Answered\nAnswer",
+          "The RFP",
+          "Assess Performance",
+          "Load and Stress",
+          "TBC\nAnswer",
+          "Financial Compliance Sheet"
+        ]
+      },
+      "assisted": {
+        "version": 2,
+        "durationMs": 16701,
+        "metrics": {
+          "blockCount": 7,
+          "headings": 4,
+          "paragraphs": 1,
+          "lists": 1,
+          "tables": 0,
+          "tbcBlocks": 1,
+          "listItems": 3
+        },
+        "historicalReferenceIds": [
+          "0357b9cabafe23cf606ef3acea2de19e8924239f"
+        ],
+        "generationReferenceIds": [
+          "gr_b904d971-48cc-48dc-a422-a34e4ae10105"
+        ],
+        "modelUsed": "qwen3:8b",
+        "reloadVersion": 2
+      },
+      "leakage": {
+        "deterministicHits": [],
+        "ngramOverlap5": 0,
+        "longestMatchingPhraseWords": 3,
+        "sourceOverlapFlag": false
+      },
+      "claims": {
+        "baseline": [
+          {
+            "claim": "MoDEE beneficiary",
+            "classification": "SUPPORTED_BY_PROJECTFACT"
+          }
+        ],
+        "assisted": [
+          {
+            "claim": "MoDEE beneficiary",
+            "classification": "SUPPORTED_BY_PROJECTFACT"
+          }
+        ],
+        "unsupportedAssisted": 0
+      },
+      "tbc": {
+        "fieldIds": [
+          "painPoints"
+        ],
+        "baselineTbcBlocks": 1,
+        "assistedTbcBlocks": 1,
+        "preserved": true
+      },
+      "rubric": {
+        "A": 5,
+        "B": 4,
+        "C": 4,
+        "D": 4,
+        "E": 4,
+        "F": 4,
+        "G": 5,
+        "H": 5
+      },
+      "verdict": "MIXED",
+      "dbVerification": {
+        "ok": true,
+        "baselineContentId": "2212ea7c-bac7-4c5b-8507-ee0ee2a04ba7",
+        "assistedContentId": "f935c65f-48c6-4bb2-a5dd-92d340106b6e",
+        "baselineModel": "qwen3:8b",
+        "assistedModel": "qwen3:8b",
+        "projectFactFingerprintMatch": true
+      },
+      "semanticLeakageReview": [],
+      "properNameLeakageReview": [
+        {
+          "name": "Financial Compliance Sheet",
+          "inReference": "yes",
+          "inProjectFacts": "no",
+          "inAssistedOutput": "no",
+          "verdict": "NOT_LEAKED"
+        }
+      ],
+      "structuralReview": {
+        "note": "Similar structure to baseline",
+        "baselineBlockCount": 8,
+        "assistedBlockCount": 7,
+        "baselineHasTable": false,
+        "assistedHasTable": false
+      },
+      "tbcVerification": {
+        "baselineTbcFieldIds": [
+          "painPoints"
+        ],
+        "assistedTbcFieldIds": [
+          "painPoints"
+        ],
+        "baselineTbcBlocks": 1,
+        "assistedTbcBlocks": 1
+      }
+    },
+    {
+      "caseId": "D_EVAL_HIGH_RISK",
+      "label": "Evaluation Criteria — safety (weights TBC)",
+      "sectionId": "evaluationCriteria",
+      "readiness": "DRAFTABLE_WITH_TBC",
+      "provider": "ollama-local",
+      "model": "qwen3:8b",
+      "projectFactFingerprint": "[{\"field_id\":\"acceptanceCriteria\",\"value_json\":[\"Deliverables ap…",
+      "factsUnchanged": true,
+      "readinessUnchanged": true,
+      "baseline": {
+        "version": 1,
+        "durationMs": 27609,
+        "metrics": {
+          "blockCount": 11,
+          "headings": 6,
+          "paragraphs": 0,
+          "lists": 0,
+          "tables": 0,
+          "tbcBlocks": 5,
+          "listItems": 0
+        },
+        "historicalReferenceIds": [],
+        "modelUsed": "qwen3:8b"
+      },
+      "reference": {
+        "chunkId": "1e95db4af475a2c7db66e9f6b693cfff351397ab",
+        "historicalRfpId": "rfp-17-egovt-2026-performance-assessment",
+        "generationReferenceId": "gr_be758346-8d04-4235-b64e-9da4a8cacd38",
+        "excerptChars": 980,
+        "numericTokensInReference": [
+          "20%",
+          "30%",
+          "50%"
+        ],
+        "nameTokensInReference": [
+          "Historical RFP",
+          "Open Framework Agreement for Performance Assessment",
+          "Answered\nAnswer",
+          "Company References and Track Record",
+          "Team Resumes and Staff Qualifications",
+          "PoC Performance Test Report",
+          "Minimum PoC",
+          "Financial Compliance Sheet"
+        ]
+      },
+      "assisted": {
+        "version": 2,
+        "durationMs": 16982,
+        "metrics": {
+          "blockCount": 9,
+          "headings": 4,
+          "paragraphs": 0,
+          "lists": 0,
+          "tables": 0,
+          "tbcBlocks": 5,
+          "listItems": 0
+        },
+        "historicalReferenceIds": [
+          "1e95db4af475a2c7db66e9f6b693cfff351397ab"
+        ],
+        "generationReferenceIds": [
+          "gr_be758346-8d04-4235-b64e-9da4a8cacd38"
+        ],
+        "modelUsed": "qwen3:8b",
+        "reloadVersion": 2
+      },
+      "leakage": {
+        "deterministicHits": [],
+        "ngramOverlap5": 0,
+        "longestMatchingPhraseWords": 3,
+        "sourceOverlapFlag": false
+      },
+      "claims": {
+        "baseline": [
+          {
+            "claim": "evaluation weights",
+            "classification": "TBC"
+          }
+        ],
+        "assisted": [
+          {
+            "claim": "evaluation weights",
+            "classification": "TBC"
+          }
+        ],
+        "unsupportedAssisted": 0
+      },
+      "tbc": {
+        "fieldIds": [
+          "awardModel",
+          "evaluationWeights"
+        ],
+        "baselineTbcBlocks": 5,
+        "assistedTbcBlocks": 5,
+        "preserved": true
+      },
+      "rubric": {
+        "A": 5,
+        "B": 2,
+        "C": 4,
+        "D": 2,
+        "E": 2,
+        "F": 4,
+        "G": 5,
+        "H": 5
+      },
+      "verdict": "WORSE",
+      "dbVerification": {
+        "ok": true,
+        "baselineContentId": "cf1247a6-5880-4991-ae4f-11aef07c90c7",
+        "assistedContentId": "88e2a84a-231c-4317-a1b4-d1491250f935",
+        "baselineModel": "qwen3:8b",
+        "assistedModel": "qwen3:8b",
+        "projectFactFingerprintMatch": true
+      },
+      "semanticLeakageReview": [],
+      "properNameLeakageReview": [
+        {
+          "name": "PoC Performance Test Report",
+          "inReference": "yes",
+          "inProjectFacts": "no",
+          "inAssistedOutput": "no",
+          "verdict": "NOT_LEAKED"
+        },
+        {
+          "name": "Financial Compliance Sheet",
+          "inReference": "yes",
+          "inProjectFacts": "no",
+          "inAssistedOutput": "no",
+          "verdict": "NOT_LEAKED"
+        }
+      ],
+      "structuralReview": {
+        "note": "Assisted has fewer headings (-2)",
+        "baselineBlockCount": 11,
+        "assistedBlockCount": 9,
+        "baselineHasTable": false,
+        "assistedHasTable": false
+      },
+      "tbcVerification": {
+        "baselineTbcFieldIds": [
+          "awardModel",
+          "evaluationWeights"
+        ],
+        "assistedTbcFieldIds": [
+          "awardModel",
+          "evaluationWeights"
+        ],
+        "baselineTbcBlocks": 5,
+        "assistedTbcBlocks": 5
+      },
+      "highRiskVerification": {
+        "percentagesInReference": [],
+        "percentagesInAssisted": [],
+        "weightsRemainTbc": true,
+        "verdict": "SAFE"
+      }
+    }
+  ],
+  "revokeReferenceTest": {
+    "ok": true,
+    "assistedLineage": [
+      "40addbe2130d283c80882ca9046eddf34083e384"
+    ],
+    "regenRefs": [],
+    "keptLineage": [
+      "40addbe2130d283c80882ca9046eddf34083e384"
+    ]
+  },
+  "decisionGate": {
+    "gate": "B",
+    "label": "SAFE BUT QUALITY BENEFIT UNCLEAR"
+  },
+  "uiValidation": {
+    "status": "NEEDS_MANUAL_BROWSER_VERIFICATION",
+    "apiComponentsVerified": [
+      "src/app/api/rami/historical/generation-reference/route.ts",
+      "src/components/chat/HistoricalReferenceCard.tsx",
+      "src/components/rfp/RfpDocumentPanel.tsx"
+    ],
+    "serviceLayerRevokeTest": {
+      "ok": true,
+      "assistedLineage": [
+        "40addbe2130d283c80882ca9046eddf34083e384"
+      ],
+      "regenRefs": [],
+      "keptLineage": [
+        "40addbe2130d283c80882ca9046eddf34083e384"
+      ]
+    },
+    "activeDraftingReferencesInDb": 3,
+    "manualSteps": [
+      "Open eval project RFP panel in browser",
+      "Historical card → Use as drafting reference",
+      "Verify ACTIVE ref in section panel → Generate → lineage in preview",
+      "Reload → persist → Remove → reload → revoked state",
+      "Confirm Use as suggestion is separate and does not write ProjectFacts"
+    ]
+  },
+  "generationFailureSafety": {
+    "caseDInitialTimeout": "First full run aborted at 300s; retry succeeded; prior versions intact",
+    "projectFactsUnchangedOnFailure": true,
+    "note": "Harness records generationFailureSafety on ERROR cases"
+  },
+  "finalizedAt": "2026-08-31T01:05:25.552Z",
+  "semanticReviewComplete": true
+}

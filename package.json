@@ -32,6 +32,8 @@
     "validate:rag": "npx tsx scripts/validate-rag.ts",
     "validate:controlled-rag": "npx tsx scripts/validate-controlled-rag.ts",
     "validate:generation-rag": "npx tsx scripts/validate-generation-rag.ts",
+    "validate:generation-rag-live": "npx tsx scripts/validate-generation-rag-live.ts",
+    "finalize:generation-rag-live": "npx tsx scripts/finalize-generation-rag-live-eval.ts",
     "validate:model-expansion": "npx tsx scripts/validate-model-expansion.ts",
     "report:section-readiness": "npx tsx scripts/report-section-readiness.ts",
     "seed:generation-demo": "npx tsx scripts/seed-generation-demo.ts",

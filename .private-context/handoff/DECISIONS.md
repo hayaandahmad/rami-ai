@@ -326,3 +326,17 @@ Hard rules:
 
 **Status**: Active. Binding.
 
+---
+
+## #46 — Live Qwen generation-RAG quality validation (2026-08-31)
+**Decision**: Mock safety validation (`validate:generation-rag`) and live Qwen quality validation (`validate:generation-rag-live`) are **separate evidence layers**. Live validation uses real `qwen3:8b` via `RamiModelProvider` (ollama-local for the recorded run) with identical ProjectFacts ± approved drafting reference as the only A/B variable.
+
+Recorded outcome (4 cases on `rami-rag-live-eval`):
+- **Safety**: ProjectFact/readiness isolation passed; TBC preserved; deterministic + semantic/name leakage reviews found no material leaks; high-risk evaluation weights remained TBC.
+- **Quality**: **Inconsistent** — 0 CLEAR_IMPROVEMENT, 2 MIXED, 2 WORSE. Do **not** claim historical references generally improve drafting quality.
+- **Gate**: **B — SAFE BUT QUALITY BENEFIT UNCLEAR**. Safe to proceed to Golden End-to-End RFP evaluation; not safe to claim broad quality uplift.
+
+Artifact: `resources/historical-rfps/derived/generation-rag-live-eval.json`. Browser UI flow remains manually verifiable; service/API paths exist.
+
+**Status**: Active. Binding for handoff until superseded by Golden End-to-End results.
+

@@ -51,6 +51,7 @@ Embeddings: `nomic-embed-text` / `nomic-embed-text-v1.5-ollama-prefixed` / 768-d
 - `rami-gen-rag-demo` — generation-reference proof (Deliverables)
 - `rami-rag-controlled-demo` — controlled chat RAG
 - `rami-persist-accept-20260830` — persistence acceptance fixture
+- `rami-rag-live-eval` — live Qwen A/B generation-RAG quality validation (4 cases)
 
 ### Controlled RAG (live chat)
 - Policy-gated retrieval only
@@ -61,6 +62,9 @@ Embeddings: `nomic-embed-text` / `nomic-embed-text-v1.5-ollama-prefixed` / 768-d
 - BA **Use as drafting reference** → `project_generation_references`
 - Section-scoped; never auto-retrieve on Generate / assemble / DOCX
 - Never writes ProjectFacts; never changes readiness/gap semantics
+- **Mock safety**: `npm run validate:generation-rag` (14/14)
+- **Live Qwen quality** (2026-08-31): `npm run validate:generation-rag-live` — 4 A/B cases, ollama-local / qwen3:8b, decision gate **B** (safe; quality benefit unclear). Artifact: `resources/historical-rfps/derived/generation-rag-live-eval.json`
+- Eval project: `rami-rag-live-eval` (separate from `rami-gen-core-demo`)
 
 ### Shared snapshot validation
 - `npm run validate:shared-dump` — TOC + metadata SHA

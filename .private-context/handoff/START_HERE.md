@@ -35,7 +35,8 @@ RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript o
 | Silent retrieval on Generate / DOCX | **No** |
 | Auto ProjectFact from history | **No** |
 
-Demo: `http://localhost:3000/documents/rami-gen-core-demo/interview`
+Demo: `http://localhost:3000/documents/rami-gen-core-demo/interview`  
+Live RAG eval project: `rami-rag-live-eval` (see `generation-rag-live-eval.json`)
 
 ## D. Second-machine restore (required)
 
@@ -74,7 +75,7 @@ Private backups (`npm run db:backup` → `.rami-db-backups/`) are **gitignored**
 ## F. Known limitations
 
 - pgvector not installed (corpus small; `REAL[]` acceptable)
-- Live LLM “quality looks better” eval for generation-RAG is mock-validated; optional local Ollama compare later
+- Live generation-RAG **mock safety** validated (`npm run validate:generation-rag`); **live Qwen quality** validated separately (`npm run validate:generation-rag-live`, 2026-08-31, ollama-local / qwen3:8b, gate **B** — safe, quality benefit unclear)
 - No production auth / deployment
 - Historical Suggested Additions (127) remain REFERENCE unless a future evidence pass promotes them
 

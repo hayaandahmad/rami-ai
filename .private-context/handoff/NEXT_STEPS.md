@@ -26,9 +26,15 @@ npm run validate:shared-dump
 
 ## NEXT
 
-**Optional live local generation-RAG quality compare** (same ProjectFacts ± approved drafting reference) using already-running local Ollama — only if useful. Do **not** start Modal GPU for this.
+**Golden End-to-End RFP evaluation** — only after live generation-RAG safety is accepted (live Qwen run completed 2026-08-31; gate B: safe, quality benefit unclear — see `generation-rag-live-eval.json`).
 
 Then, only if needed: **optional pgvector** when corpus/latency requires it.
+
+## DONE (added 2026-08-31)
+
+- Live Qwen generation-RAG A/B validation harness (`validate:generation-rag-live`)
+- 4 live cases on `rami-rag-live-eval`: deliverables, scopeOfWork, background (TBC), evaluationCriteria (high-risk TBC)
+- ProjectFact + readiness isolation verified; revoke-reference flow verified; zero deterministic leakage in all cases
 
 ## LATER
 
