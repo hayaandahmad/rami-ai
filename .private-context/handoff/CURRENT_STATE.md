@@ -1,7 +1,7 @@
 # Rami — Current Implementation State
 Last updated: 2026-08-31 (full GitHub consolidation + shared DB snapshot refresh)
 
-Authoritative HEAD: `origin/main` (`git log -1`).
+Authoritative HEAD: `ff11a1cb7fa84c07bca7c77067f7bcb6ca8f69c3` (`origin/main`).
 
 ## Runtime truth
 

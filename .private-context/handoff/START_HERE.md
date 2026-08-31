@@ -13,7 +13,13 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected after this consolidation: commit that refreshes `dev/database/rami_ai_shared.dump` (see `git log -1`).
+Expected after this consolidation:
+
+```text
+ff11a1cb7fa84c07bca7c77067f7bcb6ca8f69c3
+```
+
+(`git log -1` on `origin/main` after pull.)
 
 ## B. Product goal
 
