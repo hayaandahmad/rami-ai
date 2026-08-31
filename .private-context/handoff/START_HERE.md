@@ -13,13 +13,8 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-Expected after this consolidation:
-
-```text
-4344dc4186b841e0621e5fc362e2b61b3c086bf5
-```
-
-(`git log -1` / `origin/main` after pull. Snapshot commit: `ff11a1cb7fa84c07bca7c77067f7bcb6ca8f69c3`.)
+Shared DB snapshot refresh commit: `ff11a1cb7fa84c07bca7c77067f7bcb6ca8f69c3`  
+(Current `origin/main` tip may include small handoff-doc follow-ups after that.)
 
 ## B. Product goal
 
