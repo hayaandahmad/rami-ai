@@ -13,54 +13,70 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
+Expected after this consolidation: commit that refreshes `dev/database/rami_ai_shared.dump` (see `git log -1`).
+
 ## B. Product goal
 
 RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript owns workflow, persistence, readiness, and generation gates.
 
-## C. Demo project (`rami-gen-core-demo`)
+## C. Current product milestone (2026-08-31)
 
-12/12 applicable sections generated · DOCX available · commercial/legal TBC-drafted · approval remains a BA action.
+| Capability | Status |
+|---|---|
+| PostgreSQL authoritative persistence | **Yes** — migrations through `007` |
+| Canonical model | **20** Sections · **59** Fields · **69** Questions |
+| RFP section generation + versioning | **Yes** |
+| Full RFP preview + DOCX export | **Yes** |
+| Historical library (7 Excel + 4 PDF) | **Yes** |
+| Offline RAG (732 chunks + embeddings) | **Yes** — `REAL[]`, pgvector **not** installed |
+| Controlled chat REFERENCE → PROPOSED → CONFIRM | **Yes** |
+| Generation-time RAG | **Yes** — BA-approved, section-scoped only |
+| Silent retrieval on Generate / DOCX | **No** |
+| Auto ProjectFact from history | **No** |
 
 Demo: `http://localhost:3000/documents/rami-gen-core-demo/interview`
 
-## D. Historical knowledge + controlled RAG
+## D. Second-machine restore (required)
 
-| Item | Status |
-|---|---|
-| Historical datasets | **7** Excel + **4** PDFs |
-| Structured import + chunks + embeddings | **Yes** |
-| Live chat retrieval | **Yes** — policy-gated only |
-| REFERENCE → PROPOSED → BA confirm | **Yes** |
-| Auto ProjectFact from history | **No** |
-| Generation-time RAG | **Yes — BA-approved, section-scoped drafting references only** |
-| Silent retrieval on Generate | **No** |
-| pgvector | **Not installed** (`REAL[]` interim) |
+Git contains a **portable development snapshot**, not a live PostgreSQL server.
+
+```text
+dev/database/rami_ai_shared.dump
+dev/database/rami_ai_shared.metadata.json
+```
 
 ```bash
-npm run db:migrate
-npm run validate:controlled-rag
+# 1. Install PostgreSQL locally; create a role that can create databases
+# 2. Copy .env.example → .env.local; set RAMI_DB_* (loopback host; RAMI_DB_NAME=rami_ai)
+#    Password stays only in .env.local — never commit it
+npm install
+npm run db:restore-shared -- --confirm-replace-local-rami-ai
+npm run db:check
+npm run historical:check
 npm run validate:generation-rag
 ```
 
-Ask in chat: *“Show me examples for deliverables from previous RFPs”* → historical cards appear.
+Then read this file and `NEXT_STEPS.md`.
 
-- **Use as suggestion** → PENDING proposal (not a ProjectFact)
-- **Accept** → CONFIRMED ProjectFact
-- **Use as drafting reference** → section-scoped generation guidance only (does **not** add ProjectFacts)
-- **Reject** / **Remove** drafting reference → no fact change
+Private backups (`npm run db:backup` → `.rami-db-backups/`) are **gitignored**.
 
-Generation uses **already approved** drafting references. Clicking Generate does **not** retrieve.
-
-## E. Canonical information model (2026-08)
+## E. Canonical information model
 
 | Item | Count |
 |---|---:|
-| Canonical Fields | **59** (was 52; +7 evidence-promoted) |
-| Canonical Questions | **69** (was 62; +7 `18.x`) |
-| Canonical Sections | **20** (unchanged) |
+| Canonical Fields | **59** |
+| Canonical Questions | **69** |
+| Canonical Sections | **20** |
 
 `procurementStage` is **not** a Field. It remains `ProjectContext.documentStage`.
 
-## F. Exact next task
+## F. Known limitations
 
-Optional pgvector for later scale. Do **not** start productionization, training, or another Field expansion. See `NEXT_STEPS.md`.
+- pgvector not installed (corpus small; `REAL[]` acceptable)
+- Live LLM “quality looks better” eval for generation-RAG is mock-validated; optional local Ollama compare later
+- No production auth / deployment
+- Historical Suggested Additions (127) remain REFERENCE unless a future evidence pass promotes them
+
+## G. Exact next task
+
+Optional **pgvector** only if corpus/latency requires it. Do **not** start productionization, training, or another Field expansion. See `NEXT_STEPS.md`.

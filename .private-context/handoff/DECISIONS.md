@@ -319,3 +319,10 @@ Hard rules:
 
 **Status**: Active. Binding.
 
+---
+
+## #45 — Git-tracked shared dump is development handoff only
+**Decision**: `dev/database/rami_ai_shared.dump` (+ `rami_ai_shared.metadata.json`) is the portable **development** snapshot of local `rami_ai`. It is not a production backup, not a live PostgreSQL server, and must not include `.env.local` / passwords / API keys. Private dumps stay in `.rami-db-backups/` (gitignored) via `npm run db:backup`. Restore uses `npm run db:restore-shared -- --confirm-replace-local-rami-ai` and refuses non-loopback hosts. Snapshot must include current migrations (through `007`), historical/RAG tables, controlled proposals, and generation references when those exist in the source DB. Historical resources under `resources/historical-rfps/` remain REFERENCE. Generation references never automatically become ProjectFacts.
+
+**Status**: Active. Binding.
+

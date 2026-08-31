@@ -1,56 +1,70 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-31 (BA-approved generation-time RAG)
+Last updated: 2026-08-31 (full GitHub consolidation + shared DB snapshot refresh)
 
 Authoritative HEAD: `origin/main` (`git log -1`).
 
 ## Runtime truth
 
-### Information model
-- Canonical Fields: **59** (legacy 52 + 7 promoted)
-- Canonical Questions: **69** (workbook 62 + `18.1`–`18.7`)
-- Canonical Sections: **20** (no 21st section)
-- `procurementStage` → `ProjectContext.documentStage` only (not a ProjectFact)
+### Persistence
+- PostgreSQL is authoritative for live project state
+- Git tracks a **logical** development snapshot only:
+  - `dev/database/rami_ai_shared.dump`
+  - `dev/database/rami_ai_shared.metadata.json`
+- Git does **not** contain the live PostgreSQL server or passwords
+- Each machine runs PostgreSQL locally and restores the shared dump
+- Private dumps: `npm run db:backup` → `.rami-db-backups/` (gitignored)
 
-Promoted ProjectMemory Fields: `awardModel`, `callOffOrSowProcess`, `namedKeyPersonnel`, `clarificationContact`, `submissionChannel`, `governanceCadence`, `knowledgeTransferRequirements`.
+### Migrations
+Latest: **`007_project_generation_references.sql`**
 
-### Live demo
-- `rami-gen-core-demo` hydrates with new Fields unresolved
-- `rami-model-expansion-demo` is the safe conversational proof project
-- `rami-gen-rag-demo` is the safe generation-reference proof project (Deliverables)
+Applied set: `001` … `007` (7 migrations).
+
+### Information model (DB + code)
+| Item | Count |
+|---|---:|
+| Sections | 20 |
+| Fields | 59 |
+| Questions | 69 |
+| QuestionFields | 66 |
+| SectionFields | 78 |
+
+### Live development DB inventory (safe counts at snapshot time)
+| Table / metric | Count |
+|---|---:|
+| projects | 7 |
+| project_facts | 61 |
+| messages | 14 |
+| project_section_contents | 39 |
+| historical_rfp_documents | 7 |
+| historical_question_answers | 561 |
+| historical_knowledge_chunks | 732 |
+| historical_chunk_embeddings | 732 |
+| historical_rag_runtime | 1 |
+| historical_field_proposals | 7 (6 ACCEPTED, 1 REJECTED) |
+| project_generation_references | 2 (1 ACTIVE, 1 REVOKED) |
+
+Embeddings: `nomic-embed-text` / `nomic-embed-text-v1.5-ollama-prefixed` / 768-d / `REAL[]`.
+
+### Demo / proof projects
+- `rami-gen-core-demo` — generated RFP + DOCX
+- `rami-model-expansion-demo` — 59-field conversational proof
+- `rami-gen-rag-demo` — generation-reference proof (Deliverables)
+- `rami-rag-controlled-demo` — controlled chat RAG
+- `rami-persist-accept-20260830` — persistence acceptance fixture
 
 ### Controlled RAG (live chat)
-- Policy: `historicalRetrievalPolicy.ts` — no retrieval on ordinary turns
-- Routing: structured-first when Field/Section IDs known; hybrid for free-text; vector-only not default
-- Chat SSE: `historical_references` + `retrievalDebug`
-- UI: `HistoricalReferenceCard` (REFERENCE label)
-  - **Use as suggestion** → PENDING `historical_field_proposals`
-  - **Accept** → CONFIRMED ProjectFact
-  - **Use as drafting reference** → `project_generation_references` (ACTIVE, section-scoped)
-  - **Remove** → REVOKED (does not delete ProjectFacts)
-- PENDING never writes `project_facts`
-- Accept → ProjectFact `CONFIRMED` + `sourceType=historical-retrieval` + PROPOSED lineage in history
-- Reject → no fact; blocks re-propose of same chunk+field
-- Readiness: PROPOSED/REFERENCE provenance counts as unresolved
-- Extraction uses BA message only (historical text not auto-extracted)
+- Policy-gated retrieval only
+- REFERENCE → PROPOSED (`historical_field_proposals`) → BA CONFIRM → ProjectFact
+- Pending proposals never write `project_facts`
 
-### Generation-time RAG (BA-approved only)
-- Table: `project_generation_references` (migration `007`)
-- Status: `ACTIVE` | `REVOKED`
-- Scope: `STRUCTURE_AND_LANGUAGE` only
-- Default: **section-scoped** (max 3 ACTIVE refs per section)
-- `SectionGenerationContext` keeps two areas: ProjectFacts vs `approvedHistoricalReferences`
-- Prompt hierarchy: CURRENT PROJECT FACTS > APPROVED HISTORICAL REFERENCES > UNRESOLVED/TBC
-- Generation loads **pre-approved** refs only — **no silent retrieve on Generate / assemble / DOCX**
-- Lineage on `GeneratedSection`: `historicalReferenceIds`, `generationReferenceIds`, `draftingReferencesUsed`
-- Deterministic leakage sanitizer strips historical numbers/names not present in current facts
-- Adding/removing a reference does **not** regenerate APPROVED sections
-- Regeneration uses current ACTIVE refs; previous versions keep their old lineage
-- UI drafting lineage is metadata, not official RFP citation / not in DOCX
-- High-risk sections (`financialProposal`, `legalContractualTerms`, `evaluationCriteria`, `supportMaintenance`) use shorter excerpts
+### Generation-time RAG
+- BA **Use as drafting reference** → `project_generation_references`
+- Section-scoped; never auto-retrieve on Generate / assemble / DOCX
+- Never writes ProjectFacts; never changes readiness/gap semantics
 
-### Offline RAG foundation
-- 732 chunks · nomic-embed-text 768-d · REAL[] storage · pgvector not installed
-- Promoted Field IDs may be merged onto existing chunk metadata without re-embedding
+### Shared snapshot validation
+- `npm run validate:shared-dump` — TOC + metadata SHA
+- `npm run db:verify-shared-restore` — isolated restore into `rami_ai_shared_restore_test` (live `rami_ai` untouched)
 
 ## Next
 Optional pgvector when the corpus grows. Do not start productionization or training.

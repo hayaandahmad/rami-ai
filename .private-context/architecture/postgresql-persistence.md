@@ -1,6 +1,6 @@
 # PostgreSQL persistence architecture
 
-Status: **Implemented and live-validated** (primary Windows laptop, `rami_ai` on port 5433). PostgreSQL is the authoritative store for current project state.  
+Status: **Implemented and live-validated** (primary Windows laptop, local `rami_ai`). PostgreSQL is the authoritative store for current project state.  
 Do not implement RAG or training in this layer. Generated RFP prose is stored separately in `project_section_contents` (see `rfp-generation-architecture.md`).
 
 ## Runtime vs persistence
@@ -59,9 +59,19 @@ Git **does** contain a portable **development** snapshot of `rami_ai` (not the p
 
 ```text
 dev/database/rami_ai_shared.dump
+dev/database/rami_ai_shared.metadata.json
 ```
 
-Format: `pg_dump -Fc --no-owner --no-privileges`. Refresh only when you intend to replace the shared development state: `npm run db:dump-shared -- --write-repo-snapshot` then commit. Private backups remain `npm run db:backup` → `.rami-db-backups/` (gitignored).
+Format: `pg_dump -Fc --no-owner --no-privileges`. Refresh only when you intend to replace the shared development state:
+
+```text
+npm run db:dump-shared -- --write-repo-snapshot
+npm run db:write-shared-metadata
+npm run validate:shared-dump
+npm run db:verify-shared-restore
+```
+
+Then commit the dump + metadata. Private backups remain `npm run db:backup` → `.rami-db-backups/` (gitignored).
 
 Second machine (same development data; do not recreate projects by hand):
 
@@ -100,7 +110,7 @@ Chat and `/api/rami/session` require a configured database. They will not silent
 - Driver: `pg` (node-postgres). No ORM.
 - Migrations: versioned SQL in `src/server/db/migrations/` + `scripts/db-migrate.ts`
 - Seed: TypeScript from `RFP_SECTIONS`, `PROJECT_MEMORY_FIELDS`, question-bank map
-- Shared snapshot: `npm run db:dump-shared` / `db:restore-shared` / `db:verify-shared-restore` / `validate:shared-dump`
+- Shared snapshot: `npm run db:dump-shared` / `db:write-shared-metadata` / `db:restore-shared` / `db:verify-shared-restore` / `validate:shared-dump`
 
 ## Historical / generation-reference tables (separate from ProjectFacts)
 

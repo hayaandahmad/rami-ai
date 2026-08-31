@@ -41,6 +41,7 @@
     "db:backup": "npx tsx scripts/db-backup.ts",
     "db:restore": "npx tsx scripts/db-restore.ts",
     "db:dump-shared": "npx tsx scripts/db-dump-shared.ts",
+    "db:write-shared-metadata": "npx tsx scripts/db-write-shared-metadata.ts",
     "db:restore-shared": "npx tsx scripts/db-restore-shared.ts",
     "db:verify-shared-restore": "npx tsx scripts/db-verify-shared-restore.ts",
     "validate:shared-dump": "npx tsx scripts/validate-shared-dump.ts"

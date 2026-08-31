@@ -65,7 +65,7 @@ export function HistoricalReferenceCard({
       s.sectionId,
     ),
   );
-  const [draftSectionId, setDraftSectionId] = useState(
+  const [draftSectionId, setDraftSectionId] = useState<string>(
     sectionChoices[0]?.sectionId ?? 'deliverables',
   );
 

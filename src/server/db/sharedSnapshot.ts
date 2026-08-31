@@ -23,6 +23,14 @@ export const SHARED_DUMP_REQUIRED_TABLES = [
   'messages',
   'project_runtime',
   'project_section_states',
+  'project_section_contents',
+  'historical_rfp_documents',
+  'historical_question_answers',
+  'historical_knowledge_chunks',
+  'historical_chunk_embeddings',
+  'historical_rag_runtime',
+  'historical_field_proposals',
+  'project_generation_references',
 ] as const;
 
 export function getSharedDumpPath(cwd = process.cwd()): string {

@@ -158,3 +158,4 @@ See `derived/retrieval-eval-report.json`. Aggregate Hit@8 ≈ **0.93** for all t
 - Generation-time RAG: **BA-approved, section-scoped drafting references** (`project_generation_references`)
 - Silent retrieval on Generate / assemble / DOCX: **no**
 - Eval fixture: `derived/generation-rag-eval.json`
+- Shared development DB snapshot (`dev/database/rami_ai_shared.dump`) includes historical docs, Q&A, chunks, embeddings, proposals, and generation references so a second machine can restore without re-embedding unless intentionally required.

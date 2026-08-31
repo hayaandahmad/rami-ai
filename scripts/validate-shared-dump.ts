@@ -3,8 +3,10 @@
  * Offline checks for the committed shared development dump (no live restore).
  */
 import assert from 'node:assert/strict';
-import { existsSync, statSync } from 'fs';
+import { createHash } from 'crypto';
+import { existsSync, readFileSync, statSync } from 'fs';
 import { spawnSync } from 'child_process';
+import { join } from 'path';
 import { getSharedDumpPath, SHARED_DUMP_REQUIRED_TABLES } from '../src/server/db/sharedSnapshot';
 import { isLoopbackHost, assertSafeDatabaseName } from '../src/server/db/localSafety';
 import { resolvePgTool } from '../src/server/db/pgTools';
@@ -48,6 +50,21 @@ run('pg_restore --list contains required RAMI tables', () => {
       `dump TOC missing table ${table}`,
     );
   }
+});
+
+run('shared metadata matches dump SHA-256', () => {
+  const metaPath = join(process.cwd(), 'dev', 'database', 'rami_ai_shared.metadata.json');
+  assert.equal(existsSync(metaPath), true, `missing ${metaPath}`);
+  const meta = JSON.parse(readFileSync(metaPath, 'utf8')) as {
+    snapshotSha256?: string;
+    snapshotBytes?: number;
+    latestMigration?: string;
+  };
+  const dump = readFileSync(getSharedDumpPath());
+  const sha = createHash('sha256').update(dump).digest('hex');
+  assert.equal(meta.snapshotSha256?.toLowerCase(), sha.toLowerCase());
+  assert.equal(meta.snapshotBytes, dump.length);
+  assert.equal(meta.latestMigration, '007_project_generation_references.sql');
 });
 
 run('loopback host helper', () => {

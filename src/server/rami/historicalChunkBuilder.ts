@@ -55,6 +55,7 @@ function buildBase(
     | 'provenanceClass'
     | 'contentHash'
     | 'chunkId'
+    | 'historicalRfpId'
   > & { chunkIdParts: string[]; contentHashSource: string },
 ): HistoricalKnowledgeChunk {
   const contentHash = sha256(partial.contentHashSource);

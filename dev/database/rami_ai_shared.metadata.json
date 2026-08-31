@@ -1,0 +1,64 @@
+{
+  "sourceDatabaseName": "rami_ai",
+  "postgresqlVersion": "PostgreSQL 18.6 on x86_64-windows",
+  "snapshotFormat": "pg_dump -Fc --no-owner --no-privileges",
+  "createdAt": "2026-08-30T23:57:42.400Z",
+  "sourceCommitBeforeSnapshot": "d3f65c6515d931efd88bf8d25cc0e0a8206e449c",
+  "migrations": [
+    "001_init.sql",
+    "002_section_fields.sql",
+    "003_project_section_contents.sql",
+    "004_historical_rfp.sql",
+    "005_historical_rag_chunks.sql",
+    "006_historical_field_proposals.sql",
+    "007_project_generation_references.sql"
+  ],
+  "latestMigration": "007_project_generation_references.sql",
+  "canonical": {
+    "sections": 20,
+    "fields": 59,
+    "questions": 69,
+    "questionFields": 66,
+    "sectionFields": 78
+  },
+  "safeCounts": {
+    "projects": 7,
+    "project_facts": 61,
+    "messages": 14,
+    "project_runtime": 7,
+    "project_section_states": 140,
+    "project_section_contents": 39,
+    "historical_rfp_documents": 7,
+    "historical_question_answers": 561,
+    "historical_knowledge_chunks": 732,
+    "historical_chunk_embeddings": 732,
+    "historical_rag_runtime": 1,
+    "historical_field_proposals": 7,
+    "project_generation_references": 2,
+    "users": 1,
+    "schema_migrations": 7
+  },
+  "embedding": {
+    "model": "nomic-embed-text",
+    "version": "nomic-embed-text-v1.5-ollama-prefixed",
+    "dims": 768,
+    "count": 732,
+    "storage": "REAL[] (pgvector not installed)"
+  },
+  "generationReferences": {
+    "REVOKED": 1,
+    "ACTIVE": 1
+  },
+  "historicalProposals": {
+    "REJECTED": 1,
+    "ACCEPTED": 6
+  },
+  "snapshotRelativePath": "dev/database/rami_ai_shared.dump",
+  "snapshotBytes": 3150229,
+  "snapshotSha256": "604f658f942793963897f0c12e601a3981af549be372d56ffc91c398e175880f",
+  "notes": [
+    "Development handoff artifact only — not a production backup.",
+    "Git does not contain a live PostgreSQL server; each machine restores locally.",
+    "No passwords, API keys, or .env.local contents are included."
+  ]
+}

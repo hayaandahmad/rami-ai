@@ -177,3 +177,4 @@ infra/modal-poc/**/__pycache__/
 # Exception: portable shared DEVELOPMENT snapshot for second-machine handoff only.
 # Not a production backup. Private dumps stay gitignored above.
 !dev/database/rami_ai_shared.dump
+!dev/database/rami_ai_shared.metadata.json
