@@ -47,7 +47,8 @@
     "db:restore-shared": "npx tsx scripts/db-restore-shared.ts",
     "db:verify-shared-restore": "npx tsx scripts/db-verify-shared-restore.ts",
     "validate:shared-dump": "npx tsx scripts/validate-shared-dump.ts",
-    "validate:ui-phase-a1": "npx tsx scripts/validate-ui-phase-a1.ts"
+    "validate:ui-phase-a1": "npx tsx scripts/validate-ui-phase-a1.ts",
+    "validate:ui-phase-a2": "npx tsx scripts/validate-ui-phase-a2.ts"
   },
   "dependencies": {
     "docx": "^9.7.1",

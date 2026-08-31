@@ -35,6 +35,7 @@ RAMI is an AI-assisted BA/RFP workspace. Qwen3 8B is language only. TypeScript o
 | Silent retrieval on Generate / DOCX | **No** |
 | Auto ProjectFact from history | **No** |
 | Workspace dashboard (PostgreSQL-backed) | **Yes** — UI Phase A1 |
+| Project workspace BA UX | **Yes** — UI Phase A2 (progress, understanding, human blockers) |
 
 Workspace: `http://localhost:3000/workspace`  
 Demo: `http://localhost:3000/documents/rami-gen-core-demo/interview`  
@@ -83,4 +84,4 @@ Private backups (`npm run db:backup` → `.rami-db-backups/`) are **gitignored**
 
 ## G. Exact next task
 
-Optional **pgvector** only if corpus/latency requires it. Do **not** start productionization, training, or another Field expansion. See `NEXT_STEPS.md`.
+**Golden End-to-End RFP evaluation** (do not start automatically from this continuation). Then optional **pgvector** only if corpus/latency requires it. Do **not** start productionization, training, or another Field expansion. See `NEXT_STEPS.md`.

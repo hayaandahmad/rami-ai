@@ -1,5 +1,5 @@
 # Rami — Current Implementation State
-Last updated: 2026-08-31 (UI Phase A1 — workspace truth + engine control)
+Last updated: 2026-08-31 (UI Phase A2 — project workspace BA UX)
 
 Authoritative HEAD: `origin/main` (`git log -1`).
 
@@ -80,5 +80,16 @@ Embeddings: `nomic-embed-text` / `nomic-embed-text-v1.5-ollama-prefixed` / 768-d
 
 Validation: `npm run validate:ui-phase-a1`
 
+### Project workspace BA UX (Phase A2)
+- Section progress uses assembled PostgreSQL document state (approved / generated counts)
+- Readiness blockers use canonical Field labels, not raw field IDs
+- Compact Project Understanding panel on the conversation workspace
+- Approve confirmation; Word export distinguishes working draft vs all-sections-approved
+- Historical actions grouped: project information vs drafting help
+- Pending proposals shown as human-readable cards
+- Continue / Open from dashboard routes into `/documents/{key}/interview` (legacy `/review` is a pointer only)
+
+Validation: `npm run validate:ui-phase-a2`
+
 ## Next
-Golden End-to-End RFP evaluation. Optional pgvector when the corpus grows.
+Golden End-to-End RFP evaluation. Rich section editor and version comparison remain later UI work. Optional pgvector when the corpus grows.

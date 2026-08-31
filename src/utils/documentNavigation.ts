@@ -7,10 +7,10 @@ export function getDocumentActionHref(
 ): string {
   switch (nextAction) {
     case "continue-interview":
-      return `/documents/${documentId}/interview`;
     case "review-inputs":
     case "open-draft":
-      return `/documents/${documentId}/review`;
+      // Conversational workspace is the live BA surface; /review is a retained stub.
+      return `/documents/${documentId}/interview`;
     case "create":
       return "/documents/new";
     default:

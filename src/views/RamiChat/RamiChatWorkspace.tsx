@@ -1,12 +1,5 @@
 /**
- * RamiChatWorkspace — the main Phase 2 conversational workspace.
- *
- * States:
- * 1. Initial: full-screen centered chat, spacious, no split
- * 2. Active: scrollable chat, no split yet
- * 3. RFP workspace: left chat + right A4 preview (after intent=CREATE_RFP)
- *
- * Phase 2.1: applicabilityContext now synced from server via SSE events.
+ * RamiChatWorkspace — conversational BA workspace + RFP document pane.
  */
 
 'use client';
@@ -16,9 +9,10 @@ import { Sparkles, PanelRight, PanelRightClose } from 'lucide-react';
 import { useRamiChat } from '@/hooks/useRamiChat';
 import { ChatMessages } from '@/components/chat/ChatMessages';
 import { ChatComposer } from '@/components/chat/ChatComposer';
+import { ProjectUnderstandingPanel } from '@/components/chat/ProjectUnderstandingPanel';
 import { SectionProgress } from '@/components/rfp/SectionProgress';
 import { RfpDocumentPanel } from '@/components/rfp/RfpDocumentPanel';
-import type { SectionLifecycleState } from '@/types/sectionState';
+import type { AssembledProgressSummary } from '@/hooks/useRfpDocument';
 import type { RfpIntent } from '@/types/conversation';
 
 interface RamiChatWorkspaceProps {
@@ -31,9 +25,9 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
   const [rightPaneVisible, setRightPaneVisible] = useState(false);
   const [mobileTab, setMobileTab] = useState<'chat' | 'document'>('chat');
   const [forceDocumentPane, setForceDocumentPane] = useState(false);
-
-  // Section states live on the server; client tracks a lightweight display state
-  const [sectionStates] = useState<Record<string, SectionLifecycleState>>({});
+  const [assembledProgress, setAssembledProgress] = useState<AssembledProgressSummary | null>(
+    null,
+  );
 
   const onIntentChange = useCallback((intent: RfpIntent) => {
     if (intent === 'CREATE_RFP') {
@@ -41,37 +35,16 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
     }
   }, []);
 
-  // Completeness comes from server SSE — no client +3 heuristic
   const onFactsExtracted = useCallback((_facts: unknown[], _updatedFieldIds: string[]) => {}, []);
 
-  const {
-    messages,
-    status,
-    isGenerating,
-    rfpIntent,
-    errorMessage,
-    applicabilityContext,
-    historicalReferences,
-    pendingProposals,
-    refreshProposals,
-    sendMessage,
-    retryLastMessage,
-    clearError,
-  } = useRamiChat({ sessionId, documentId, onIntentChange, onFactsExtracted });
+  const onProgressSummary = useCallback((summary: AssembledProgressSummary | null) => {
+    setAssembledProgress(summary);
+    if (summary && summary.generatedApplicableCount > 0) {
+      setForceDocumentPane(true);
+      setRightPaneVisible(true);
+    }
+  }, []);
 
-  const completionPercent = applicabilityContext.completionPercent ?? 0;
-
-  const handleSubmit = useCallback(() => {
-    if (!composerValue.trim()) return;
-    sendMessage(composerValue);
-    setComposerValue('');
-  }, [composerValue, sendMessage]);
-
-  const showSplit =
-    (rfpIntent === 'CREATE_RFP' || forceDocumentPane) && rightPaneVisible;
-  const isInitialState = messages.length === 0 && !isGenerating && !showSplit;
-
-  // When opening a project that already has generated RFP content, show the document pane.
   useEffect(() => {
     const key = documentId || sessionId;
     if (!key) return;
@@ -92,36 +65,77 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
     };
   }, [documentId, sessionId]);
 
-  // Build applicability context from server-synced values
+  const {
+    messages,
+    status,
+    isGenerating,
+    rfpIntent,
+    errorMessage,
+    applicabilityContext,
+    historicalReferences,
+    pendingProposals,
+    understanding,
+    refreshProposals,
+    sendMessage,
+    retryLastMessage,
+    clearError,
+  } = useRamiChat({ sessionId, documentId, onIntentChange, onFactsExtracted });
+
+  const completionPercent =
+    understanding?.completionPercent ?? applicabilityContext.completionPercent ?? 0;
+
+  const handleSubmit = useCallback(() => {
+    if (!composerValue.trim()) return;
+    sendMessage(composerValue);
+    setComposerValue('');
+  }, [composerValue, sendMessage]);
+
+  const showSplit =
+    (rfpIntent === 'CREATE_RFP' || forceDocumentPane || Boolean(assembledProgress?.generatedApplicableCount)) &&
+    rightPaneVisible;
+  const isInitialState = messages.length === 0 && !isGenerating && !showSplit;
+
   const sectionApplicabilityCtx = {
     documentType: applicabilityContext.documentType ?? '',
     engagementType: applicabilityContext.engagementType ?? '',
     hasDeliveryMilestone: applicabilityContext.documentType === 'system-implementation',
-    hasSupportPeriod: ['system-implementation', 'support'].includes(applicabilityContext.documentType ?? ''),
+    hasSupportPeriod: ['system-implementation', 'support'].includes(
+      applicabilityContext.documentType ?? '',
+    ),
     hasNamedRoles: false,
     isLargeEngagement: applicabilityContext.documentType === 'system-implementation',
   };
 
+  const projectTitle =
+    understanding?.documentTitle ||
+    assembledProgress?.documentTitle ||
+    understanding?.documentType ||
+    'RFP workspace';
+
   return (
     <div className="flex h-full flex-col overflow-hidden bg-surface">
-      {/* ── Top bar ────────────────────────────────────────────────────────── */}
       <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-primary-100)] to-[var(--color-primary-50)] ring-1 ring-[var(--color-primary-200)]">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--color-primary-100)] to-[var(--color-primary-50)] ring-1 ring-[var(--color-primary-200)]">
             <Sparkles
               aria-hidden="true"
               className="h-4 w-4 text-[var(--color-primary-700)]"
               strokeWidth={1.75}
             />
           </div>
-          <div>
-            <p className="text-small font-semibold leading-tight text-text-primary">Rami</p>
-            <p className="text-caption leading-tight text-text-muted">
-              AI Business Analysis Assistant
+          <div className="min-w-0">
+            <p className="truncate text-small font-semibold leading-tight text-text-primary">
+              {projectTitle}
+            </p>
+            <p className="truncate text-caption leading-tight text-text-muted">
+              {understanding?.documentType || 'AI-assisted RFP analysis'}
+              {understanding?.engagementType ? ` · ${understanding.engagementType}` : ''}
               {rfpIntent === 'CREATE_RFP' && (
                 <>
-                  <span aria-hidden="true" className="mx-1.5">·</span>
-                  <span className="font-medium text-[var(--color-primary-700)]">RFP mode</span>
+                  <span aria-hidden="true" className="mx-1.5">
+                    ·
+                  </span>
+                  <span className="font-medium text-[var(--color-primary-700)]">Building RFP</span>
                 </>
               )}
             </p>
@@ -140,7 +154,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
                     : 'text-text-muted hover:text-text-secondary'
                 }`}
               >
-                Chat
+                Conversation
               </button>
               <button
                 type="button"
@@ -156,11 +170,11 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
             </div>
           )}
 
-          {showSplit && (
+          {(rfpIntent === 'CREATE_RFP' || forceDocumentPane || assembledProgress) && (
             <button
               type="button"
               onClick={() => setRightPaneVisible((v) => !v)}
-              aria-label={rightPaneVisible ? 'Hide document preview' : 'Show document preview'}
+              aria-label={rightPaneVisible ? 'Hide RFP document' : 'Show RFP document'}
               className="hidden items-center gap-1.5 rounded-control border border-border px-2.5 py-1.5 text-small text-text-secondary transition-hover hover:bg-surface-subtle md:flex"
             >
               {rightPaneVisible ? (
@@ -168,15 +182,13 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
               ) : (
                 <PanelRight aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
               )}
-              <span className="hidden lg:inline">Preview</span>
+              <span className="hidden lg:inline">RFP document</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* ── Main content area ──────────────────────────────────────────────── */}
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        {/* ── Initial centered state ──────────────────────────────────────── */}
         {isInitialState && (
           <div className="flex w-full flex-col">
             <div className="flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
@@ -191,7 +203,8 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
                 What would you like to work on?
               </h1>
               <p className="max-w-sm text-body text-text-secondary">
-                Tell me about your project and I&apos;ll help you prepare a professional RFP.
+                Describe the engagement. Rami will gather requirements and help you draft a
+                professional RFP.
               </p>
             </div>
 
@@ -205,17 +218,18 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
           </div>
         )}
 
-        {/* ── Active conversation ─────────────────────────────────────────── */}
         {!isInitialState && (
           <>
-            {/* Left: Chat pane */}
             <div
               className={`flex flex-col transition-all duration-300 ease-out ${
                 showSplit
-                  ? mobileTab === 'chat' ? 'flex w-full md:w-1/2' : 'hidden md:flex md:w-1/2'
+                  ? mobileTab === 'chat'
+                    ? 'flex w-full md:w-1/2'
+                    : 'hidden md:flex md:w-1/2'
                   : 'flex w-full'
               }`}
             >
+              <ProjectUnderstandingPanel understanding={understanding} />
               <ChatMessages
                 messages={messages}
                 status={status}
@@ -226,6 +240,7 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
                 documentKey={documentId || sessionId}
                 pendingProposals={pendingProposals}
                 onProposalChanged={() => void refreshProposals()}
+                currentlyClarifying={understanding?.currentlyClarifying}
               />
               <ChatComposer
                 value={composerValue}
@@ -249,15 +264,23 @@ export function RamiChatWorkspace({ sessionId, documentId }: RamiChatWorkspacePr
               >
                 <div className="shrink-0 p-3">
                   <SectionProgress
-                    sectionStates={sectionStates}
                     applicabilityContext={sectionApplicabilityCtx}
-                    applicableSectionCount={applicabilityContext.applicableSectionCount}
+                    applicableSectionCount={
+                      assembledProgress?.applicableSectionCount ??
+                      applicabilityContext.applicableSectionCount
+                    }
                     completionPercent={completionPercent}
+                    assembledApprovedCount={assembledProgress?.approvedApplicableCount}
+                    assembledGeneratedCount={assembledProgress?.generatedApplicableCount}
+                    sectionDocumentStatus={assembledProgress?.sectionDocumentStatus}
                   />
                 </div>
 
                 <div className="flex-1 overflow-hidden">
-                  <RfpDocumentPanel documentKey={documentId || sessionId} />
+                  <RfpDocumentPanel
+                    documentKey={documentId || sessionId}
+                    onProgressSummary={onProgressSummary}
+                  />
                 </div>
               </div>
             )}

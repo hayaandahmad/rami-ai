@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   FileText,
@@ -20,21 +20,24 @@ import {
 import { GeneratedSectionBlocks } from '@/components/rfp/GeneratedSectionBlocks';
 import {
   useRfpDocument,
+  type AssembledProgressSummary,
   type DocumentStatus,
   type SectionUiRow,
 } from '@/hooks/useRfpDocument';
 import type { GeneratedBlock, GeneratedSection } from '@/types/generatedSection';
 import type { SectionInformationReadiness } from '@/types/sectionReadiness';
+import { describeBlocker, exportStatusCopy } from '@/utils/fieldDisplay';
 
 interface RfpDocumentPanelProps {
   documentKey: string;
   onHasDocumentContent?: (has: boolean) => void;
+  onProgressSummary?: (summary: AssembledProgressSummary | null) => void;
 }
 
 const READINESS_LABEL: Record<SectionInformationReadiness, string> = {
-  NOT_APPLICABLE: 'N/A',
-  NOT_READY: 'Needs info',
-  DRAFTABLE_WITH_TBC: 'Draftable (TBC)',
+  NOT_APPLICABLE: 'Not applicable',
+  NOT_READY: 'Needs information',
+  DRAFTABLE_WITH_TBC: 'Draftable with TBC',
   READY_TO_DRAFT: 'Ready to draft',
 };
 
@@ -52,18 +55,41 @@ function canGenerate(row: SectionUiRow): boolean {
   );
 }
 
-export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
+export function RfpDocumentPanel({ documentKey, onProgressSummary }: RfpDocumentPanelProps) {
   const doc = useRfpDocument(documentKey);
   const [editing, setEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [confirmReopen, setConfirmReopen] = useState(false);
+  const [confirmApprove, setConfirmApprove] = useState(false);
+  const [busyElapsed, setBusyElapsed] = useState(0);
 
   const selected = doc.selected;
+
+  useEffect(() => {
+    onProgressSummary?.(doc.progressSummary);
+  }, [doc.progressSummary, onProgressSummary]);
+
+  useEffect(() => {
+    if (!doc.busy) {
+      setBusyElapsed(0);
+      return;
+    }
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      setBusyElapsed(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [doc.busy]);
 
   const blockers = useMemo(() => {
     const d = selected?.readinessDetail;
     if (!d) return [];
-    return d.criticalBlockers.filter((id) => id !== '__coverage_gap__');
+    const ids = d.criticalBlockers.filter((id) => id !== '__coverage_gap__');
+    const fallback = ids.length ? ids : d.missingFields.slice(0, 6);
+    return fallback.map((id) => {
+      const tbc = d.tbcFields.includes(id);
+      return describeBlocker(id, tbc ? 'tbc' : 'missing');
+    });
   }, [selected]);
 
   const startEdit = () => {
@@ -119,19 +145,25 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
 
   const onApprove = async () => {
     if (!selected?.generated) return;
+    if (!confirmApprove) {
+      setConfirmApprove(true);
+      return;
+    }
     try {
       await doc.approve(selected.sectionId);
+      setConfirmApprove(false);
     } catch {
       /* error set in hook */
     }
   };
 
-  const headerBadge =
-    doc.assembled?.complete
-      ? 'Complete'
-      : doc.hasGeneratedContent
-        ? 'In progress'
-        : 'No drafts yet';
+  const allApproved = Boolean(doc.assembled?.complete);
+  const exportCopy = exportStatusCopy(allApproved);
+  const headerBadge = allApproved
+    ? 'All sections approved'
+    : doc.hasGeneratedContent
+      ? 'Working draft'
+      : 'No drafts yet';
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-surface">
@@ -171,9 +203,11 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
             href={`/api/rami/generation/document/docx?documentKey=${encodeURIComponent(documentKey)}`}
             className="inline-flex items-center gap-1 rounded border border-border bg-white px-2 py-1 text-caption font-medium text-text-secondary hover:bg-surface-subtle"
             download
+            title={exportCopy.helper}
+            aria-label={exportCopy.buttonLabel}
           >
             <Download className="h-3.5 w-3.5" aria-hidden />
-            Word
+            {allApproved ? 'Export approved RFP' : 'Download Word'}
           </a>
           <button
             type="button"
@@ -186,6 +220,7 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
           </button>
         </div>
       </div>
+      <p className="border-b border-border px-3 py-1 text-[10px] text-text-muted">{exportCopy.helper}</p>
 
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Section navigation */}
@@ -195,6 +230,9 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
         >
           <p className="px-2 py-2 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
             Sections
+          </p>
+          <p className="px-2 pb-2 text-[10px] leading-snug text-text-muted">
+            Info chip = facts ready to draft. Doc chip = generated / approved.
           </p>
           <ul className="flex flex-col gap-0.5 px-1 pb-3">
             {doc.rows.map((row) => (
@@ -229,6 +267,7 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
               {doc.assembled.generatedApplicableCount}/
               {doc.assembled.applicableSectionCount} generated ·{' '}
               {doc.assembled.approvedApplicableCount} approved
+              {doc.assembled.complete ? ' · all sections approved' : ''}
             </p>
           )}
         </nav>
@@ -255,16 +294,23 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
               )}
 
               {selected.applicable && selected.readiness === 'NOT_READY' && (
-                <span className="inline-flex max-w-[14rem] items-start gap-1 text-caption text-[var(--color-warning-700)]">
-                  <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                  <span>
-                    Needs:{' '}
-                    {blockers.length
-                      ? blockers.join(', ')
-                      : selected.readinessDetail?.missingFields.slice(0, 4).join(', ') ||
-                        'more information'}
-                  </span>
-                </span>
+                <div className="w-full rounded-md border border-[var(--color-warning-100)] bg-[var(--color-warning-100)]/60 px-2.5 py-2 text-caption text-[var(--color-warning-700)]">
+                  <p className="mb-1 inline-flex items-center gap-1 font-medium">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    This section needs {blockers.length || 'more'}{' '}
+                    {blockers.length === 1 ? 'piece' : 'pieces'} of information
+                  </p>
+                  {blockers.length > 0 && (
+                    <ul className="list-disc pl-4">
+                      {blockers.map((label) => (
+                        <li key={label}>{label}</li>
+                      ))}
+                    </ul>
+                  )}
+                  <p className="mt-1 text-text-muted">
+                    Answer these in the conversation to make the section ready.
+                  </p>
+                </div>
               )}
 
               {canGenerate(selected) && !selected.generated && (
@@ -289,7 +335,7 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
                   <ActionButton
                     disabled={doc.busy}
                     onClick={() => void onApprove()}
-                    label="Approve"
+                    label="Approve section"
                     icon={<Check className="h-3.5 w-3.5" />}
                   />
                   <ActionButton
@@ -334,11 +380,34 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
             </div>
           )}
 
+          {confirmApprove && selected && (
+            <div className="shrink-0 border-b border-border bg-[var(--color-primary-50)] px-3 py-2 text-caption text-text-secondary">
+              <p className="mb-2 font-medium text-text-primary">
+                Approve this section? Once approved, regeneration requires reopening the section.
+                A new version is created if you later regenerate.
+              </p>
+              <div className="flex gap-2">
+                <ActionButton
+                  disabled={doc.busy}
+                  onClick={() => void onApprove()}
+                  label="Approve section"
+                  icon={<Check className="h-3.5 w-3.5" />}
+                />
+                <button
+                  type="button"
+                  className="rounded border border-border px-2 py-1 text-caption"
+                  onClick={() => setConfirmApprove(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
           {confirmReopen && selected && (
             <div className="shrink-0 border-b border-[var(--color-warning-100)] bg-[var(--color-warning-100)] px-3 py-2 text-caption text-[var(--color-warning-700)]">
               <p className="mb-2 font-medium">
-                This section is APPROVED. Regenerating or editing will create a new DRAFT
-                version (history kept). Confirm?
+                This section is approved. Regenerating or editing will create a new draft
+                version. Previous versions remain stored.
               </p>
               <div className="flex gap-2">
                 <ActionButton
@@ -377,8 +446,9 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
           {editing && selected && (
             <div className="flex shrink-0 flex-col gap-2 border-b border-border px-3 py-2">
               <p className="text-caption text-text-secondary">
-                Edit GeneratedSection blocks (JSON). Saves a new DRAFT version to
-                PostgreSQL. Does not change ProjectFacts.
+                Advanced structured editor (JSON). For technical correction of this draft only.
+                Save creates a new draft version and does not change confirmed project
+                information. A richer editor is planned later.
               </p>
               <textarea
                 className="h-40 w-full rounded border border-border bg-white p-2 font-mono text-[11px] text-text-primary"
@@ -443,8 +513,8 @@ export function RfpDocumentPanel({ documentKey }: RfpDocumentPanelProps) {
               <span className="inline-flex max-w-xs items-start gap-2 rounded-md bg-[var(--color-primary-800)] px-3 py-1.5 text-caption text-white shadow-lg">
                 <Loader2 className="mt-0.5 h-3.5 w-3.5 shrink-0 animate-spin" />
                 <span>
-                  Working… generation can take several minutes. Do not resubmit —
-                  existing drafts stay intact if this fails.
+                  Generating section… {busyElapsed}s elapsed. Existing drafts stay intact if
+                  this fails. Do not resubmit.
                 </span>
               </span>
             </div>

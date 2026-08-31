@@ -24,6 +24,7 @@ import type {
   SurfacedHistoricalReference,
   HistoricalFieldProposal,
 } from '@/types/historicalProposal';
+import type { ProjectUnderstanding } from '@/types/projectUnderstanding';
 
 const STORAGE_KEY_PREFIX = 'rami-chat-v1:';
 const MAX_STORED_MESSAGES = 50;
@@ -103,6 +104,7 @@ export function useRamiChat({
     SurfacedHistoricalReference[]
   >([]);
   const [pendingProposals, setPendingProposals] = useState<HistoricalFieldProposal[]>([]);
+  const [understanding, setUnderstanding] = useState<ProjectUnderstanding | null>(null);
   const [lastRetrievalDebug, setLastRetrievalDebug] = useState<
     StreamEvent['retrievalDebug'] | null
   >(null);
@@ -141,6 +143,8 @@ export function useRamiChat({
           applicableSectionCount?: number;
           completionPercent?: number;
           collectionSufficient?: boolean;
+          nextPriorityLabel?: string | null;
+          understanding?: ProjectUnderstanding;
         };
         if (!res.ok || !data.ok) {
           if (!cancelled) {
@@ -154,6 +158,7 @@ export function useRamiChat({
           setRfpIntent(data.rfpIntent);
           onIntentChange?.(data.rfpIntent);
         }
+        if (data.understanding) setUnderstanding(data.understanding);
         setApplicabilityContext((prev) => ({
           ...prev,
           documentType: data.documentType ?? prev.documentType,
@@ -352,6 +357,28 @@ export function useRamiChat({
                   setStatus('idle');
                   streamingIdRef.current = null;
                   void refreshProposals();
+                  void fetch(
+                    `/api/rami/session?sessionId=${encodeURIComponent(sessionId)}&documentId=${encodeURIComponent(documentId ?? sessionId)}`,
+                    { cache: 'no-store' },
+                  )
+                    .then((r) => r.json())
+                    .then((data) => {
+                      if (data?.ok && data.understanding) setUnderstanding(data.understanding);
+                      if (data?.ok) {
+                        setApplicabilityContext((prev) => ({
+                          ...prev,
+                          completionPercent:
+                            data.completionPercent ?? prev.completionPercent,
+                          collectionSufficient:
+                            data.collectionSufficient ?? prev.collectionSufficient,
+                          applicableSectionCount:
+                            data.applicableSectionCount ?? prev.applicableSectionCount,
+                          documentType: data.documentType ?? prev.documentType,
+                          engagementType: data.engagementType ?? prev.engagementType,
+                        }));
+                      }
+                    })
+                    .catch(() => undefined);
                   break;
 
                 case 'error':
@@ -407,6 +434,7 @@ export function useRamiChat({
     applicabilityContext,
     historicalReferences,
     pendingProposals,
+    understanding,
     lastRetrievalDebug,
     refreshProposals,
     sendMessage,

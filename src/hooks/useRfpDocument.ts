@@ -46,6 +46,16 @@ function deriveDocumentStatus(slot: AssembledRfpSectionSlot): DocumentStatus {
   return 'NOT_GENERATED';
 }
 
+export interface AssembledProgressSummary {
+  approvedApplicableCount: number;
+  generatedApplicableCount: number;
+  applicableSectionCount: number;
+  complete: boolean;
+  documentTitle?: string;
+  documentType?: string;
+  sectionDocumentStatus: Record<string, DocumentStatus>;
+}
+
 export function useRfpDocument(documentKey: string | undefined) {
   const [assembled, setAssembled] = useState<AssembledRfp | null>(null);
   const [readiness, setReadiness] = useState<SectionReadinessResult[]>([]);
@@ -211,6 +221,26 @@ export function useRfpDocument(documentKey: string | undefined) {
     assembled && assembled.generatedApplicableCount > 0,
   );
 
+  const progressSummary = useMemo(() => {
+    if (!assembled) return null;
+    const sectionDocumentStatus: Record<
+      string,
+      'APPROVED' | 'DRAFT' | 'NOT_GENERATED' | 'NOT_APPLICABLE'
+    > = {};
+    for (const slot of assembled.sections) {
+      sectionDocumentStatus[slot.sectionId] = deriveDocumentStatus(slot);
+    }
+    return {
+      approvedApplicableCount: assembled.approvedApplicableCount,
+      generatedApplicableCount: assembled.generatedApplicableCount,
+      applicableSectionCount: assembled.applicableSectionCount,
+      complete: assembled.complete,
+      documentTitle: documentMeta.documentTitle,
+      documentType: documentMeta.documentType,
+      sectionDocumentStatus,
+    };
+  }, [assembled, documentMeta.documentTitle, documentMeta.documentType]);
+
   return {
     assembled,
     documentMeta,
@@ -232,6 +262,7 @@ export function useRfpDocument(documentKey: string | undefined) {
     draftingReferences,
     revokeDraftingReference,
     hasGeneratedContent,
+    progressSummary,
     readinessLabel: (r?: SectionInformationReadiness) => r ?? 'NOT_APPLICABLE',
     approvalLabel: (a?: SectionApprovalStatus | null) => a ?? null,
     currentGenerated: selected?.generated as GeneratedSection | null,

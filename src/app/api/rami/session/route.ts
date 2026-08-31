@@ -1,6 +1,7 @@
 import { getOrHydrateSession, PersistenceError } from '@/server/rami/projectPersistence';
 import { analyzeGaps, buildApplicabilityContext } from '@/server/rami/gapEngine';
 import { RFP_SECTIONS, isSectionApplicable } from '@/schema/rfpSchema';
+import { buildProjectUnderstanding } from '@/server/rami/projectUnderstanding';
 
 export const runtime = 'nodejs';
 
@@ -19,8 +20,12 @@ export async function GET(req: Request) {
     });
     const ctx = buildApplicabilityContext(session.memory, session.projectContext);
     const applicableSectionCount = RFP_SECTIONS.filter((s) => isSectionApplicable(s, ctx)).length;
-    const docType = (session.memory.documentType?.current?.value as string | undefined) ?? '';
-    const engType = (session.memory.engagementType?.current?.value as string | undefined) ?? '';
+    const understanding = buildProjectUnderstanding(
+      session.memory,
+      session.projectContext,
+      gaps,
+      session.contextContradictions,
+    );
 
     return Response.json({
       ok: true,
@@ -29,12 +34,14 @@ export async function GET(req: Request) {
       rfpIntent: session.conversation.rfpIntent,
       language: session.conversation.language,
       messages: session.conversation.messages.filter((m) => m.role !== 'system'),
-      documentType: docType || undefined,
-      engagementType: engType || undefined,
+      documentType: understanding.documentType ?? undefined,
+      engagementType: understanding.engagementType ?? undefined,
       applicableSectionCount,
       completionPercent: gaps.completionPercent,
       collectionSufficient: gaps.collectionSufficient,
       nextActionType: gaps.nextAction.type,
+      nextPriorityLabel: gaps.nextPriorityLabel,
+      understanding,
     });
   } catch (err) {
     const persist = err instanceof PersistenceError;

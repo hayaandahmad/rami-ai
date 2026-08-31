@@ -9,6 +9,7 @@ import { useState } from 'react';
 import type { SurfacedHistoricalReference } from '@/types/historicalProposal';
 import type { HistoricalReference } from '@/types/historicalRag';
 import { RFP_SECTIONS } from '@/schema/rfpSchema';
+import { fieldLabel } from '@/utils/fieldDisplay';
 
 interface Props {
   reference: SurfacedHistoricalReference;
@@ -94,7 +95,7 @@ export function HistoricalReferenceCard({
         return;
       }
       setProposalId(data.proposal.proposalId);
-      setMessage('Saved as PROPOSED (not confirmed). Awaiting BA decision.');
+      setMessage('Saved as a suggestion — confirm it before it becomes project information.');
       onProposed?.(data.proposal.proposalId);
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Propose failed');
@@ -142,8 +143,8 @@ export function HistoricalReferenceCard({
       if (!data.ok) throw new Error(data.error || 'Decision failed');
       setMessage(
         decision === 'accept'
-          ? 'Accepted — current ProjectFact created (BA-confirmed).'
-          : 'Rejected — no ProjectFact created.',
+          ? 'Accepted — saved as confirmed project information.'
+          : 'Rejected — no project information created.',
       );
       if (decision === 'reject') onDismiss?.(reference.chunkId);
       onProposed?.(id!);
@@ -171,7 +172,7 @@ export function HistoricalReferenceCard({
       const data = await res.json();
       if (!data.ok) throw new Error(data.error || 'Drafting reference failed');
       setMessage(
-        `Drafting reference saved for ${draftSectionId}. This does not add project facts; values will not be copied.`,
+        `Drafting reference saved for ${sectionChoices.find((s) => s.sectionId === draftSectionId)?.title ?? 'the selected section'}. This does not add project facts.`,
       );
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Drafting reference failed');
@@ -209,80 +210,101 @@ export function HistoricalReferenceCard({
           {reference.historicalRfpTitle || reference.historicalRfpId}
         </span>
       </p>
-      {(reference.mappedFieldIds.length > 0 || reference.sectionIds.length > 0) && (
+      {(reference.mappedFieldIds.length > 0 || mappedSections.length > 0) && (
         <p className="mb-2 text-caption text-text-muted">
           Relevant to:{' '}
-          {[...reference.mappedFieldIds, ...reference.sectionIds].slice(0, 6).join(', ')}
+          {[
+            ...reference.mappedFieldIds.map(fieldLabel),
+            ...mappedSections.map((s) => s.title),
+          ]
+            .slice(0, 6)
+            .join(' · ')}
         </p>
       )}
       <p className="mb-3 whitespace-pre-wrap text-body text-text-primary leading-relaxed">
         {reference.excerpt.slice(0, 500)}
         {reference.excerpt.length > 500 ? '…' : ''}
       </p>
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void propose()}
-          className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption hover:bg-[var(--color-surface)]"
-        >
-          Use as suggestion
-        </button>
-        <label className="inline-flex items-center gap-1 text-caption text-text-muted">
-          Section
-          <select
-            className="rounded border border-[var(--color-border)] bg-white px-1 py-0.5 text-caption text-text-primary"
-            value={draftSectionId}
-            onChange={(e) => setDraftSectionId(e.target.value)}
-            disabled={busy}
-          >
-            {sectionChoices.map((s) => (
-              <option key={s.sectionId} value={s.sectionId}>
-                {s.title}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void approveDrafting()}
-          className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption hover:bg-[var(--color-surface)]"
-        >
-          Use as drafting reference
-        </button>
-        <span className="w-full text-[10px] text-text-muted">
-          Drafting reference = structure/wording for the selected section only. Does not add
-          ProjectFacts. Project-specific values will not be copied.
-        </span>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => setModifyOpen((v) => !v)}
-          className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption hover:bg-[var(--color-surface)]"
-        >
-          Modify &amp; accept
-        </button>
-        <button
-          type="button"
-          disabled={busy || !proposalId}
-          onClick={() => void decide('accept')}
-          className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption hover:bg-[var(--color-surface)]"
-        >
-          Accept
-        </button>
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => void decide('reject')}
-          className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption text-text-muted hover:bg-[var(--color-surface)]"
-        >
-          Dismiss
-        </button>
+      <div className="flex flex-col gap-3">
+        <div>
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+            Project information
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void propose()}
+              className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption hover:bg-[var(--color-surface)]"
+            >
+              Use as suggestion
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => setModifyOpen((v) => !v)}
+              className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption hover:bg-[var(--color-surface)]"
+            >
+              Modify &amp; accept
+            </button>
+            <button
+              type="button"
+              disabled={busy || !proposalId}
+              onClick={() => void decide('accept')}
+              className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption hover:bg-[var(--color-surface)]"
+            >
+              Accept
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void decide('reject')}
+              className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption text-text-muted hover:bg-[var(--color-surface)]"
+            >
+              Dismiss
+            </button>
+          </div>
+          <p className="mt-1 text-[10px] text-text-muted">
+            Becomes current project information only after you accept.
+          </p>
+        </div>
+        <div>
+          <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-text-muted">
+            Drafting help
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="inline-flex items-center gap-1 text-caption text-text-muted">
+              Section
+              <select
+                className="rounded border border-[var(--color-border)] bg-white px-1 py-0.5 text-caption text-text-primary"
+                value={draftSectionId}
+                onChange={(e) => setDraftSectionId(e.target.value)}
+                disabled={busy}
+              >
+                {sectionChoices.map((s) => (
+                  <option key={s.sectionId} value={s.sectionId}>
+                    {s.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void approveDrafting()}
+              className="rounded border border-[var(--color-border)] bg-white px-2.5 py-1 text-caption hover:bg-[var(--color-surface)]"
+            >
+              Use as drafting reference
+            </button>
+          </div>
+          <p className="mt-1 text-[10px] text-text-muted">
+            Guides wording for the selected section only. Does not add project facts.
+          </p>
+        </div>
         <button
           type="button"
           onClick={() => void viewSource()}
-          className="rounded border border-transparent px-2.5 py-1 text-caption text-[var(--color-primary-700)] underline-offset-2 hover:underline"
+          className="self-start rounded border border-transparent px-2.5 py-1 text-caption text-[var(--color-primary-700)] underline-offset-2 hover:underline"
         >
           View source
         </button>

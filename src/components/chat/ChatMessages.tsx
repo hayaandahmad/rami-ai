@@ -14,6 +14,7 @@ import { RamiMessage } from './RamiMessage';
 import { UserMessage } from './UserMessage';
 import { ThinkingIndicator } from './ThinkingIndicator';
 import { HistoricalReferenceCard } from './HistoricalReferenceCard';
+import { PendingProposalCard } from './PendingProposalCard';
 
 interface ChatMessagesProps {
   messages: ConversationMessage[];
@@ -25,6 +26,7 @@ interface ChatMessagesProps {
   documentKey?: string;
   pendingProposals?: HistoricalFieldProposal[];
   onProposalChanged?: () => void;
+  currentlyClarifying?: string | null;
 }
 
 const SCROLL_THRESHOLD = 80;
@@ -39,6 +41,7 @@ export function ChatMessages({
   documentKey,
   pendingProposals = [],
   onProposalChanged,
+  currentlyClarifying,
 }: ChatMessagesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -88,6 +91,11 @@ export function ChatMessages({
           )}
 
           <div className="flex flex-col gap-6">
+            {currentlyClarifying && messages.length > 0 && (
+              <p className="rounded-md border border-[var(--color-primary-100)] bg-[var(--color-primary-50)] px-3 py-2 text-caption text-[var(--color-primary-800)]">
+                {currentlyClarifying}
+              </p>
+            )}
             {messages.map((msg) => (
               <div key={msg.id}>
                 {msg.role === 'assistant' ? (
@@ -110,23 +118,25 @@ export function ChatMessages({
                     documentKey={documentKey}
                     defaultFieldId={ref.mappedFieldIds[0]}
                     onProposed={() => onProposalChanged?.()}
-                    onDismiss={(id) => setDismissed((prev) => new Set(prev).add(id))}
+                    onDismiss={(id: string) => setDismissed((prev) => new Set(prev).add(id))}
                   />
                 ))}
               </div>
             )}
 
-            {pendingProposals.length > 0 && (
-              <div className="rounded-md border border-dashed border-[var(--color-border)] px-3 py-2 text-caption text-text-muted">
-                <span className="font-semibold text-text-primary">
-                  PROPOSED (pending BA decision):{' '}
-                </span>
-                {pendingProposals
-                  .map(
-                    (p) =>
-                      `${p.fieldId} ← ${p.sourceReferences[0]?.historicalRfpTitle || p.sourceChunkIds[0]}`,
-                  )
-                  .join('; ')}
+            {documentKey && pendingProposals.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <p className="text-caption font-semibold uppercase tracking-wide text-text-muted">
+                  Suggested information — not confirmed for this project
+                </p>
+                {pendingProposals.map((p) => (
+                  <PendingProposalCard
+                    key={p.proposalId}
+                    proposal={p}
+                    documentKey={documentKey}
+                    onChanged={onProposalChanged}
+                  />
+                ))}
               </div>
             )}
 
@@ -142,8 +152,10 @@ export function ChatMessages({
                     {errorMessage.includes('Ollama') ||
                     errorMessage.includes('fetch') ||
                     errorMessage.includes('ECONNREFUSED')
-                      ? "Rami's local AI service is currently unavailable. Make sure Ollama is running."
-                      : errorMessage}
+                      ? "Rami cannot reach the local AI service. Make sure Ollama is running, then retry."
+                      : errorMessage.includes('Start Rami')
+                        ? 'Start Rami from the engine control when using Modal, then retry.'
+                        : errorMessage}
                   </p>
                   <div className="mt-2 flex gap-2">
                     <button

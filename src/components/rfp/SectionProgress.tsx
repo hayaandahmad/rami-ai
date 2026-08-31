@@ -16,10 +16,14 @@ interface SectionProgressProps {
   sectionStates?: Record<string, SectionLifecycleState>;
   applicabilityContext?: SectionApplicabilityContext;
   activeSection?: string | null;
-  /** Information completeness: 0–100 */
+  /** Information completeness: 0–100 from gap engine */
   completionPercent?: number;
   /** Override: total applicable section count (if already computed server-side) */
   applicableSectionCount?: number;
+  /** Authoritative approved count from assembled PostgreSQL document */
+  assembledApprovedCount?: number;
+  assembledGeneratedCount?: number;
+  sectionDocumentStatus?: Record<string, 'APPROVED' | 'DRAFT' | 'NOT_GENERATED' | 'NOT_APPLICABLE'>;
 }
 
 const STATE_LABEL: Record<SectionLifecycleState, string> = {
@@ -68,6 +72,9 @@ export function SectionProgress({
   activeSection,
   completionPercent = 0,
   applicableSectionCount,
+  assembledApprovedCount,
+  assembledGeneratedCount,
+  sectionDocumentStatus,
 }: SectionProgressProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -75,9 +82,14 @@ export function SectionProgress({
     isSectionApplicable(s, applicabilityContext),
   );
 
-  const approvedCount = applicableSections.filter(
+  const approvedFromLifecycle = applicableSections.filter(
     (s) => sectionStates[s.sectionId] === 'APPROVED',
   ).length;
+
+  const approvedCount =
+    assembledApprovedCount != null ? assembledApprovedCount : approvedFromLifecycle;
+
+  const generatedCount = assembledGeneratedCount;
 
   // Prefer server-computed count (reflects memory state); fall back to local filter
   const total = applicableSectionCount ?? applicableSections.length;
@@ -101,6 +113,11 @@ export function SectionProgress({
             <span className="text-small font-semibold tabular-nums text-text-primary">
               {approvedCount} / {total} approved
             </span>
+            {generatedCount != null && (
+              <span className="text-[10px] text-text-muted">
+                {generatedCount} generated
+              </span>
+            )}
           </div>
           <div className="h-7 w-px bg-border" aria-hidden="true" />
           <div className="flex flex-col items-start">
@@ -117,10 +134,14 @@ export function SectionProgress({
           {/* Mini dot indicators */}
           <div className="hidden items-center gap-0.5 sm:flex" aria-hidden="true">
             {applicableSections.slice(0, 10).map((s) => {
+              const docStatus = sectionDocumentStatus?.[s.sectionId];
               const state: SectionLifecycleState = (sectionStates[s.sectionId] as SectionLifecycleState) ?? 'NOT_STARTED';
               const isActive = s.sectionId === activeSection;
-              if (state === 'APPROVED') {
+              if (docStatus === 'APPROVED' || state === 'APPROVED') {
                 return <span key={s.sectionId} className="h-2 w-2 rounded-full bg-[var(--color-success-700)]" />;
+              }
+              if (docStatus === 'DRAFT') {
+                return <span key={s.sectionId} className="h-2 w-2 rounded-full bg-[var(--color-primary-400)]" />;
               }
               if (isActive || state === 'COLLECTING') {
                 return <span key={s.sectionId} className="h-2 w-2 rounded-full bg-[var(--color-primary-500)]" />;
@@ -156,33 +177,50 @@ export function SectionProgress({
       {/* Expanded section list */}
       {isExpanded && (
         <div className="border-t border-border px-2 py-2">
+          <p className="mb-2 px-2 text-[10px] leading-relaxed text-text-muted">
+            Information status is whether RAMI has enough facts to draft.
+            Document status is whether a draft exists and whether you approved it.
+          </p>
           <ul className="flex flex-col gap-0.5" role="list">
             {applicableSections.map((s) => {
+              const docStatus = sectionDocumentStatus?.[s.sectionId];
               const state: SectionLifecycleState = (sectionStates[s.sectionId] as SectionLifecycleState) ?? 'NOT_STARTED';
               const isActive = s.sectionId === activeSection;
+              const displayState: SectionLifecycleState =
+                docStatus === 'APPROVED'
+                  ? 'APPROVED'
+                  : docStatus === 'DRAFT'
+                    ? 'REVIEW'
+                    : state;
               return (
                 <li
                   key={s.sectionId}
                   className={`flex items-center gap-2.5 rounded-lg px-2 py-1.5 ${isActive ? 'bg-[var(--color-primary-50)]' : ''}`}
                 >
-                  <SectionIcon state={state} isActive={isActive} />
+                  <SectionIcon state={displayState} isActive={isActive} />
                   <span
                     className={`flex-1 text-small ${
                       isActive
                         ? 'font-medium text-[var(--color-primary-800)]'
-                        : state === 'APPROVED'
+                        : displayState === 'APPROVED'
                         ? 'text-text-secondary line-through'
                         : 'text-text-secondary'
                     }`}
                   >
                     {s.title}
                   </span>
-                  {isActive && (
+                  {docStatus === 'DRAFT' && (
+                    <span className="text-caption text-text-muted">Draft</span>
+                  )}
+                  {docStatus === 'APPROVED' && (
+                    <span className="text-caption text-[var(--color-success-700)]">Approved</span>
+                  )}
+                  {!docStatus && isActive && (
                     <span className="text-caption text-[var(--color-primary-600)]">
                       {STATE_LABEL[state]}
                     </span>
                   )}
-                  {!isActive && state !== 'NOT_STARTED' && state !== 'APPROVED' && (
+                  {!docStatus && !isActive && state !== 'NOT_STARTED' && state !== 'APPROVED' && (
                     <span className="text-caption text-text-muted">
                       {STATE_LABEL[state]}
                     </span>
