@@ -37,6 +37,12 @@ import { RFP_SECTIONS, isSectionApplicable } from '@/schema/rfpSchema';
 import type { ExtractionResult, StreamEvent } from '@/types/conversation';
 import type { NextAction } from '@/types/nextAction';
 import { getEngineState, isModalReadyForChat } from '@/server/ai/modalEngineControl';
+import { classifyStatusMessage } from '@/server/rami/projectStatusQuestion';
+import { answerProjectStatusQuestion } from '@/server/rami/projectStatusSnapshot';
+import { findProjectByDocumentKey } from '@/server/repositories/ProjectRepository';
+import { listCurrentSectionContents } from '@/server/repositories/ProjectSectionContentRepository';
+import type { RamiServerSession } from '@/server/rami/sessionStore';
+import type { ConversationLanguage, ExtractedFact, RfpIntent } from '@/types/conversation';
 
 function sseEvent(data: StreamEvent): string {
   return `data: ${JSON.stringify(data)}\n\n`;
@@ -44,6 +50,118 @@ function sseEvent(data: StreamEvent): string {
 
 interface ExtendedExtraction extends ExtractionResult, ExtractionSignals {
   extractedFacts: ExtractedFactWithKind[];
+}
+
+async function emitDeterministicStatusReply(input: {
+  encode: (event: StreamEvent) => void;
+  session: RamiServerSession;
+  sessionId: string;
+  conversationLanguage: ConversationLanguage;
+  extractedFacts: ExtractedFact[];
+  updatedFieldIds: string[];
+  rfpIntent: RfpIntent;
+  retrievalReason: string;
+}): Promise<boolean> {
+  const { encode, session, sessionId, conversationLanguage } = input;
+  session.projectContext = withActivePacks(session.projectContext, session.memory);
+  const gaps = analyzeGaps(session.memory, session.projectContext, {
+    contextContradictions: session.contextContradictions,
+  });
+  session.projectContext = {
+    ...session.projectContext,
+    collectionSufficient: gaps.collectionSufficient,
+  };
+
+  let generatedSections: Array<{
+    sectionId: string;
+    approvalStatus: 'DRAFT' | 'APPROVED';
+  }> = [];
+  try {
+    const project = await findProjectByDocumentKey(
+      session.conversation.documentId || session.sessionId,
+    );
+    if (project) {
+      const rows = await listCurrentSectionContents(project.project_id);
+      generatedSections = rows.map((row) => ({
+        sectionId: row.section_id,
+        approvalStatus: row.approval_status,
+      }));
+    }
+  } catch (genErr) {
+    console.error('[Rami chat] Status generated-section lookup failed (non-fatal):', genErr);
+  }
+
+  const { snapshot, reply } = answerProjectStatusQuestion({
+    memory: session.memory,
+    projectContext: session.projectContext,
+    contextContradictions: session.contextContradictions,
+    sectionStates: session.sectionStates,
+    generatedSections,
+    language: conversationLanguage,
+  });
+
+  const ctx = buildApplicabilityContext(session.memory, session.projectContext);
+  const applicableSectionCount = RFP_SECTIONS.filter((s) => isSectionApplicable(s, ctx)).length;
+  const docType = (session.memory.documentType?.current?.value as string | undefined) ?? '';
+  const engType = (session.memory.engagementType?.current?.value as string | undefined) ?? '';
+
+  encode({
+    type: 'facts',
+    facts: input.extractedFacts,
+    updatedFieldIds: input.updatedFieldIds,
+    rfpIntent: input.rfpIntent,
+    documentType: docType || undefined,
+    engagementType: engType || undefined,
+    applicableSectionCount,
+    completionPercent: gaps.completionPercent,
+    collectionSufficient: snapshot.collectionSufficient,
+    nextActionType: snapshot.nextAction.type,
+  });
+
+  encode({ type: 'text', chunk: reply });
+
+  const assistantMessage = {
+    id: `msg-${Date.now()}-a`,
+    role: 'assistant' as const,
+    content: reply,
+    language: conversationLanguage,
+    createdAt: new Date().toISOString(),
+    extractedFieldIds: input.updatedFieldIds,
+  };
+  session.conversation.messages.push(assistantMessage);
+
+  try {
+    await persistAssistantMessage(session, assistantMessage);
+    await persistRuntimeState(session);
+  } catch (persistErr) {
+    const msg =
+      persistErr instanceof PersistenceError
+        ? persistErr.message
+        : 'Rami replied but the response could not be saved to PostgreSQL.';
+    encode({ type: 'error', message: msg });
+    return false;
+  }
+
+  saveSession(session);
+  encode({
+    type: 'done',
+    sessionId,
+    rfpIntent: input.rfpIntent,
+    updatedFieldIds: input.updatedFieldIds,
+    language: conversationLanguage,
+    documentType: docType || undefined,
+    engagementType: engType || undefined,
+    applicableSectionCount,
+    completionPercent: gaps.completionPercent,
+    collectionSufficient: snapshot.collectionSufficient,
+    nextActionType: snapshot.nextAction.type,
+    retrievalDebug: {
+      triggered: false,
+      trigger: 'none',
+      reason: input.retrievalReason,
+    },
+  });
+  return true;
 }
 
 export async function POST(req: NextRequest) {
@@ -74,8 +192,11 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Modal cost control: never auto-start GPU on chat
-  if (getConfiguredProviderKind() === 'modal') {
+  // Modal cost control: never auto-start GPU on chat.
+  // Pure status / gap questions are answered from Gap Engine — no model required.
+  // Mixed status + fact messages still need extraction (model) then a status reply.
+  const statusKind = classifyStatusMessage(message);
+  if (statusKind !== 'pure_status' && getConfiguredProviderKind() === 'modal') {
     const state = getEngineState();
     if (state === 'STARTING' || state === 'LOADING' || state === 'WARMING_UP') {
       return new Response(
@@ -140,6 +261,20 @@ export async function POST(req: NextRequest) {
               ? persistErr.message
               : 'Could not save your message. The project was not updated.';
           encode({ type: 'error', message: msg });
+          return;
+        }
+
+        if (statusKind === 'pure_status') {
+          await emitDeterministicStatusReply({
+            encode,
+            session,
+            sessionId,
+            conversationLanguage,
+            extractedFacts: [],
+            updatedFieldIds: [],
+            rfpIntent: session.conversation.rfpIntent,
+            retrievalReason: 'pure project-status question — Gap Engine only; no model and no retrieval',
+          });
           return;
         }
 
@@ -241,6 +376,31 @@ export async function POST(req: NextRequest) {
           ...projectContext,
           collectionSufficient: gaps.collectionSufficient,
         };
+
+        if (statusKind === 'mixed_status_and_facts') {
+          try {
+            await persistRuntimeState(session);
+          } catch (persistErr) {
+            const msg =
+              persistErr instanceof PersistenceError
+                ? persistErr.message
+                : 'Could not save extracted project facts. The reply was not generated.';
+            encode({ type: 'error', message: msg });
+            return;
+          }
+          await emitDeterministicStatusReply({
+            encode,
+            session,
+            sessionId,
+            conversationLanguage,
+            extractedFacts: extractionResult.extractedFacts ?? [],
+            updatedFieldIds: memoryUpdate.applied,
+            rfpIntent: newIntent,
+            retrievalReason:
+              'mixed status + facts — extracted then Gap Engine status; no phrasing model and no retrieval',
+          });
+          return;
+        }
 
         // Controlled historical retrieval — never on ordinary turns; never writes ProjectFacts
         const focusFieldIds =

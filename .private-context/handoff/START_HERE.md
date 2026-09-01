@@ -21,7 +21,7 @@ git rev-parse HEAD
 git rev-parse origin/main
 ```
 
-These must match. The current checkpoint commit message begins with `feat(rami): harden generic RFP extraction and document assembly`.
+These must match. The current checkpoint commit message begins with `fix(rami): ground project status chat in gap engine`.
 
 **Historical base before this corrective tree:** `dcc7f6baf6ab6af90d9c40ca9183c7bb154dbc58`  
 **Current tip:** see `git log -1` after pull.
@@ -60,6 +60,7 @@ RAMI is an AI-assisted BA/RFP workspace. **Qwen3 8B** handles language only. **T
 | Generation-time drafting references | **Yes** — BA-approved, section-scoped only |
 | Engine panel (Start/Stop/Extend, timers, dismiss) | **Yes** — Phases 1–2, 5 |
 | Collapsible desktop sidebar | **Yes** — Phases 2–3 |
+| Project-status chat grounding | **Yes** — Gap Engine snapshot; pure status skips Qwen; mixed status+facts extract first |
 
 **URLs (local dev):**  
 - Workspace: `http://localhost:3000/workspace`  
@@ -116,6 +117,7 @@ npm run dev          # single dev server only — avoid parallel dev+build on .n
 npm run db:check
 npm run historical:check
 npm run validate:golden-readiness-structural
+npm run validate:chat-gap-grounding
 npm run validate:standard-annex-pack
 npm run validate:section-readiness
 npm run validate:phase1

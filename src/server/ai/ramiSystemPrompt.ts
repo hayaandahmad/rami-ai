@@ -5,6 +5,9 @@
 
 import type { NextAction } from '@/types/nextAction';
 import { PROJECT_MEMORY_FIELDS } from '@/schema/projectMemoryFields';
+import { RFP_SECTIONS } from '@/schema/rfpSchema';
+
+const CANONICAL_SECTION_TITLES = RFP_SECTIONS.map((s) => s.title).join('; ');
 
 export type ConversationLanguage = 'ar' | 'en';
 
@@ -56,7 +59,10 @@ SCOPE:
 
 CONSTRAINTS:
 - Historical RFP examples may be referenced as suggestions, never as confirmed facts for this project
-- All factual claims about the current project come from the Business Analyst`;
+- All factual claims about the current project come from the Business Analyst
+- When discussing document progress or missing information, use only canonical RFP section titles from CURRENT PROJECT STATE. Never invent sections such as "Executive Summary".
+- Cover Page, Table of Contents, and standard Annexes are prepared automatically when applicable — they are not BA information gaps.
+- Do not claim a section needs information merely because it has not been generated yet.`;
 
 const ARABIC_ADDITION = `
 
@@ -147,6 +153,7 @@ export function buildContextBlock(options: {
   if (options.collectionSufficient) {
     parts.push('- Collection sufficient: yes (stop interviewing)');
   }
+  parts.push(`- Canonical RFP sections (do not invent others): ${CANONICAL_SECTION_TITLES}`);
   if (options.nextAction) {
     parts.push('');
     parts.push(buildNextActionBlock(options.nextAction));

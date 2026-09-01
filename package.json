@@ -59,7 +59,8 @@
     "validate:project-delete": "npx tsx scripts/validate-project-delete.ts",
     "validate:final-handoff": "npx tsx scripts/final-handoff-integration.ts",
     "validate:golden-readiness-structural": "npx tsx scripts/validate-golden-readiness-structural.ts",
-    "validate:standard-annex-pack": "npx tsx scripts/validate-standard-annex-pack.ts"
+    "validate:standard-annex-pack": "npx tsx scripts/validate-standard-annex-pack.ts",
+    "validate:chat-gap-grounding": "npx tsx scripts/validate-chat-gap-grounding.ts"
   },
   "dependencies": {
     "docx": "^9.7.1",

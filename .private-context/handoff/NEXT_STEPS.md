@@ -1,6 +1,6 @@
 # Rami — Next Steps
 
-Last updated: 2026-08-31 (generic Golden corrective checkpoint published)
+Last updated: 2026-09-01 (chat gap-grounding checkpoint published)
 
 Entrypoint: `.private-context/handoff/START_HERE.md`
 
@@ -15,7 +15,7 @@ Entrypoint: `.private-context/handoff/START_HERE.md`
 - AI drafted vs automatic structural metrics
 - Canonical model **20 / 60 / 70** including `issuerEntity`
 - Shared development snapshot refreshed (`dev/database/rami_ai_shared.dump`)
-- Handoff docs updated
+- Project-status chat grounded in Gap Engine (pure status skips Qwen; mixed status+facts extract first)
 
 ```bash
 git pull
@@ -26,6 +26,7 @@ npm run historical:check
 npm run validate:shared-dump
 npm run validate:golden-readiness-structural
 npm run validate:standard-annex-pack
+npm run validate:chat-gap-grounding
 ```
 
 ## NEXT (do not start automatically)

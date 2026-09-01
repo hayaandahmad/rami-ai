@@ -1,6 +1,6 @@
 # Rami — Current Implementation State
 
-Last updated: 2026-08-31 (generic Golden corrective checkpoint)
+Last updated: 2026-09-01 (chat gap-grounding checkpoint)
 
 Authoritative HEAD: `origin/main` (`git log -1` after pull).
 
@@ -95,6 +95,12 @@ Existing projects may have **no** `issuerEntity` fact until the BA states an iss
 - AI drafted count (`generatedApplicableCount`) is distinct from automatic structural count (`structuralPreparedCount`)
 - Approval counts are unchanged
 
+### Chat project-status grounding
+- “What is missing?” / “what do you still need?” answers are built from Gap Engine + section readiness, not a free-form model guess
+- Pure status questions do **not** call Qwen and do not mutate ProjectFacts
+- Mixed status + factual messages extract/persist the facts first, recompute Gap Engine, then return the deterministic status reply
+- Canonical section titles only; standard Annexes are not reported as missing BA information
+
 ## Phases 1–5 (still in this tree)
 
 Engine/chat polish, layout, document workspace, Edit with Rami, manual editor, version history, delete — see prior checkpoint. Invariants below still hold.
@@ -117,6 +123,7 @@ npm run db:check
 npm run historical:check
 npm run validate:shared-dump
 npm run validate:golden-readiness-structural
+npm run validate:chat-gap-grounding
 npm run validate:standard-annex-pack
 npm run validate:section-readiness
 npm run validate:phase1

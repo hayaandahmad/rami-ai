@@ -388,4 +388,11 @@ Production source must remain generic — no project-specific (Natiq) corrective
 
 **Status**: Active. Binding.
 
+---
+
+## #53 — Project-status chat is Gap Engine grounded
+**Decision**: When the BA asks what is missing / what RAMI still needs, Qwen may not invent progress. TypeScript builds the answer from PostgreSQL ProjectFacts → Gap Engine → applicability → readiness. Pure status questions skip extraction and Qwen. Mixed messages that also assert project facts run the normal extract/persist/trust path first, then return status from the recomputed authoritative state. Canonical section titles only; standard Annexes are automatically prepared, not “missing appendices.”
+
+**Status**: Active. Binding.
+
 
